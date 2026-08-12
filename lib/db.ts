@@ -1,0 +1,214 @@
+// 东方集市 · 数据持久层 — JSON 文件读写
+import fs from 'fs'
+import path from 'path'
+import { getCachedData, invalidateCache, CACHE_TTL } from '@/lib/cache'
+
+const DATA_DIR = path.join(process.cwd(), 'data')
+const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
+const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json')
+
+export interface Supplier {
+  id: string
+  name: string
+  contact?: string
+  phone?: string
+  email?: string
+  address?: string
+  region?: string
+  status: 'active' | 'inactive'
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Product {
+  id: string
+  code?: string
+  name: string
+  nameEn?: string
+  subtitle: string
+  subtitleEn?: string
+  description: string
+  descriptionEn?: string
+  story: string
+  storyEn?: string
+  price: number
+  originalPrice?: number
+  costPrice?: number
+  stock?: number
+  supplierId?: string
+  supplier?: Supplier
+  category: string
+  tags: string[]
+  tagsEn?: string[]
+  image: string
+  detailImages: string[]
+  video?: string
+  videoEnabled?: boolean
+  craft: string
+  craftEn?: string
+  material: string
+  origin: string
+  rating: number
+  reviewCount: number
+  featured: boolean
+  active: boolean
+}
+
+// 商品编码分类前缀映射 — 规律性: {前缀}-{4位序号}, 如 CG-0001
+const CATEGORY_CODE_PREFIX: Record<string, string> = {
+  'cultural-gifts': 'CG',
+  'home-decor': 'HD',
+  'creative-gifts': 'GI',
+}
+
+// 根据分类生成规律性商品编码 (在该前缀下递增, 跳过已占用)
+export function generateProductCode(category: string, existingCodes: Set<string>): string {
+  const prefix = CATEGORY_CODE_PREFIX[category] || 'GEN'
+  let maxNum = 0
+  const re = new RegExp(`^${prefix}-(\\d+)$`)
+  for (const code of existingCodes) {
+    if (!code) continue
+    const m = code.match(re)
+    if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10))
+  }
+  let num = maxNum + 1
+  while (existingCodes.has(`${prefix}-${String(num).padStart(4, '0')}`)) num++
+  return `${prefix}-${String(num).padStart(4, '0')}`
+}
+
+// 校验商品编码格式是否合法
+export function isValidProductCode(code: string): boolean {
+  return /^[A-Z]{2,4}-\d{3,6}$/.test(code)
+}
+
+export interface Review {
+  id: string
+  productId: string
+  author: string
+  avatar: string
+  rating: number
+  date: string
+  content: string
+  location: string
+  orderId?: string
+  customerEmail?: string
+  source?: string
+  approved?: boolean
+  hidden?: boolean
+  deleted?: boolean
+  createdAt?: string
+}
+
+// ---- 读取 ----
+
+export function getAllProducts(): Product[] {
+  ensureFile(PRODUCTS_FILE)
+  return getCachedData('products', PRODUCTS_FILE, () => {
+    const raw = fs.readFileSync(PRODUCTS_FILE, 'utf-8').replace(/^\uFEFF/, '')
+    return JSON.parse(raw) as Product[]
+  }, CACHE_TTL.products)
+}
+
+export function getActiveProducts(): Product[] {
+  return getAllProducts().filter((p) => p.active)
+}
+
+export function getProductById(id: string): Product | undefined {
+  return getAllProducts().find((p) => p.id === id)
+}
+
+export function getProductsByCategory(slug: string): Product[] {
+  return getActiveProducts().filter((p) => p.category === slug)
+}
+
+export function getFeaturedProducts(): Product[] {
+  return getActiveProducts().filter((p) => p.featured)
+}
+
+// ---- 写入 ----
+
+export function saveAllProducts(products: Product[]): void {
+  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf-8')
+  invalidateCache('products')
+}
+
+export function addProduct(product: Product): Product {
+  const all = getAllProducts()
+  all.push(product)
+  saveAllProducts(all)
+  return product
+}
+
+export function updateProduct(id: string, data: Partial<Product>): Product | null {
+  const all = getAllProducts()
+  const idx = all.findIndex((p) => p.id === id)
+  if (idx === -1) return null
+  all[idx] = { ...all[idx], ...data }
+  saveAllProducts(all)
+  return all[idx]
+}
+
+export function deleteProduct(id: string): boolean {
+  const all = getAllProducts()
+  const idx = all.findIndex((p) => p.id === id)
+  if (idx === -1) return false
+  all.splice(idx, 1)
+  saveAllProducts(all)
+  return true
+}
+
+// ---- 评价 ----
+
+export function getAllReviews(): Review[] {
+  ensureFile(REVIEWS_FILE)
+  return getCachedData('reviews', REVIEWS_FILE, () => {
+    const raw = fs.readFileSync(REVIEWS_FILE, 'utf-8').replace(/^\uFEFF/, '')
+    return JSON.parse(raw) as Review[]
+  }, CACHE_TTL.reviews)
+}
+
+export function getReviewsByProduct(productId: string): Review[] {
+  return getAllReviews().filter((r) => r.productId === productId)
+}
+
+export function addReview(data: Omit<Review, 'id' | 'date' | 'avatar' | 'approved' | 'createdAt'> & { approved?: boolean }): Review {
+  const all = getAllReviews()
+  const review: Review = {
+    id: 'REV-' + Date.now().toString(36).toUpperCase(),
+    productId: data.productId,
+    author: data.author || 'Anonymous',
+    avatar: (data.author || 'A')[0].toUpperCase(),
+    rating: data.rating,
+    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    content: data.content || '',
+    location: data.location || 'Verified Buyer',
+    approved: data.approved !== undefined ? data.approved : false,
+    createdAt: new Date().toISOString(),
+  }
+  all.unshift(review as any)
+  fs.writeFileSync(REVIEWS_FILE, JSON.stringify(all, null, 2), 'utf-8')
+  invalidateCache('reviews')
+  return review
+}
+
+export function updateReview(id: string, updates: Partial<Review>): Review | null {
+  const all = getAllReviews()
+  const idx = all.findIndex((r) => r.id === id)
+  if (idx === -1) return null
+  all[idx] = { ...all[idx], ...updates }
+  fs.writeFileSync(REVIEWS_FILE, JSON.stringify(all, null, 2), 'utf-8')
+  invalidateCache('reviews')
+  return all[idx]
+}
+
+// ---- 辅助 ----
+
+function ensureFile(filePath: string): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+  }
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '[]', 'utf-8')
+  }
+}

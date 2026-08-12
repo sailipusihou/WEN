@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs><clipPath id="c"><circle cx="50" cy="50" r="50"/></clipPath></defs>
+  <circle cx="50" cy="50" r="50" fill="#D8C0C0"/>
+  <g clip-path="url(#c)">
+    <circle cx="50" cy="46" r="24" fill="#F0DCC8"/>
+    <path d="M22,34 Q22,10 50,8 Q78,10 78,34 L76,26 Q50,14 24,26 Z" fill="#1A1A1A"/>
+    <ellipse cx="50" cy="6" rx="14" ry="6" fill="#2A2A2A"/>
+    <rect x="46" y="2" width="8" height="5" rx="1" fill="#C0C0C8"/>
+    <path d="M48,2 L50,0 L52,2" fill="#C0C0C8"/>
+    <ellipse cx="42" cy="44" rx="3.5" ry="4" fill="#fff"/><ellipse cx="58" cy="44" rx="3.5" ry="4" fill="#fff"/>
+    <ellipse cx="42" cy="44" rx="2" ry="2.5" fill="#333"/><ellipse cx="58" cy="44" rx="2" ry="2.5" fill="#333"/>
+    <ellipse cx="38" cy="50" rx="3" ry="2" fill="rgba(180,80,80,0.06)"/><ellipse cx="62" cy="50" rx="3" ry="2" fill="rgba(180,80,80,0.06)"/>
+    <path d="M42,54 Q50,58 58,54" stroke="#A05050" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="64" cy="50" rx="5" ry="6" fill="#E8D0D0" opacity="0.5" transform="rotate(20 64 50)"/>
+    <path d="M66,46 L72,42 L74,46 L68,50" stroke="#C090A0" stroke-width="0.8" fill="none" opacity="0.6"/>
+    <path d="M28,76 Q50,86 72,76 L70,94 L30,94 Z" fill="#8A2A2A"/>
+    <path d="M30,82 L70,82" stroke="#C05050" stroke-width="1" opacity="0.3"/>
+  </g>
+  <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+</svg>

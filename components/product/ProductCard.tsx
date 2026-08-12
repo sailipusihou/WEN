@@ -1,0 +1,151 @@
+'use client'
+
+import { useRef } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { Plus, Heart } from 'lucide-react'
+import { useCart } from '@/context/CartContext'
+import { useCurrency } from '@/context/CurrencyContext'
+import { useToast } from '@/context/ToastContext'
+import { convertPrice, formatPrice } from '@/lib/cart-types'
+import type { Product } from '@/lib/products'
+import OptimizedImage from '@/components/ui/OptimizedImage'
+import { useProductPrice } from '@/lib/promotion-client'
+
+interface ProductCardProps { product: Product; index?: number }
+
+export default function ProductCard({ product, index = 0 }: ProductCardProps) {
+  const { addItem } = useCart()
+  const { currency } = useCurrency()
+  const { addToast } = useToast()
+  const eff = useProductPrice(product)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handleVideoEnter = () => {
+    videoRef.current?.play().catch(() => {})
+  }
+  const handleVideoLeave = () => {
+    const v = videoRef.current
+    if (v) { v.pause(); v.currentTime = 0 }
+  }
+
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      })
+      if (res.ok) {
+        addToast('Saved to wishlist', 'success')
+      } else if (res.status === 401) {
+        addToast('Please sign in to save items', 'error')
+      } else {
+        addToast('Could not save to wishlist', 'error')
+      }
+    } catch {
+      addToast('Connection error', 'error')
+    }
+  }
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    addItem({
+      id: product.id, name: product.name,
+      nameEn: product.nameEn || product.name,
+      image: product.image, price: eff.price,
+      category: product.category,
+    })
+    addToast('Added to cart', 'success')
+  }
+
+  const hoverImage = product.detailImages?.[0] || product.image
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-20px' }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
+    >
+      <Link href={`/products/${product.id}`} className="block group" onMouseEnter={handleVideoEnter} onMouseLeave={handleVideoLeave}>
+        {/* 4:5 Image with hover reveal */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#EDE8E0]">
+          <OptimizedImage
+            src={product.image}
+            alt={product.nameEn || product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-0"
+            objectFit="cover"
+            placeholder="blur"
+          />
+          <OptimizedImage
+            src={hoverImage}
+            alt={product.nameEn || product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-100"
+            objectFit="cover"
+            placeholder="blur"
+          />
+          {product.videoEnabled && product.video && (
+            <video
+              ref={videoRef}
+              src={product.video}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            />
+          )}
+          {/* Collection tag */}
+          <div className="absolute top-3 left-3">
+            <span className="font-sans text-[8px] text-white/70 bg-black/15 backdrop-blur-sm px-2 py-0.5 tracking-[0.1em] uppercase rounded-sm">
+              {product.category === 'cultural-gifts' ? 'Cultural Gifts' : product.category === 'home-decor' ? 'Home Decor' : 'Gift Ideas'}
+            </span>
+          </div>
+          {/* Wishlist */}
+          <button
+            onClick={handleToggleWishlist}
+            type="button"
+            className="absolute top-3 right-3 w-9 h-9 bg-white/85 hover:bg-white text-[#2D2F33] flex items-center justify-center transition-all duration-300 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 shadow-soft z-10"
+            aria-label="Add to wishlist"
+          >
+            <Heart size={15} strokeWidth={1.5} />
+          </button>
+          {/* Quick add */}
+          <button
+            onClick={handleAddToCart}
+            type="button"
+            className="absolute bottom-3 right-3 w-9 h-9 bg-white/85 hover:bg-white text-[#2D2F33] flex items-center justify-center transition-all duration-300 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 shadow-soft z-10"
+            aria-label="Add to cart"
+          >
+            <Plus size={15} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="mt-3 md:mt-4 space-y-1">
+          <p className="font-sans text-[8px] text-[#8BA8A0]/50 tracking-[0.12em] uppercase">
+            {product.category === 'cultural-gifts' ? 'Cultural Gifts' : product.category === 'home-decor' ? 'Home Decor' : 'Creative Gifts'}
+          </p>
+          <h3 className="font-en text-sm md:text-base text-[#2D2F33] font-medium leading-tight group-hover:text-[#8BA8A0] transition-colors duration-300">
+            {product.nameEn || product.name}
+          </h3>
+          <p className="font-sans text-[11px] text-[#6B6F75]/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
+          <div className="flex items-baseline gap-2 pt-0.5">
+            <span className="font-en text-sm font-medium text-[#2D2F33]">{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+            {(eff.originalPrice || product.originalPrice) && (
+              <span className="font-sans text-[10px] text-[#6B6F75]/35 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
+            )}
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  )
+}

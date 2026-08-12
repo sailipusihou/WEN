@@ -1,0 +1,1787 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink-deep: #1A1C1E;
+  --ink: #2D2F33;
+  --ink-mid: #4A4D52;
+  --ink-soft: #6B6F75;
+  --ink-faint: #8E9298;
+  --paper: #F2EFEA;
+  --paper-light: #F8F6F2;
+  --paper-warm: #EDE8E0;
+  --paper-dark: #E5DFD5;
+  --jade: #8BA8A0;
+  --jade-light: #A8C4BC;
+  --jade-dark: #6E8B83;
+  --jade-pale: #CBDCD6;
+  --bronze: #A0885A;
+  --bronze-light: #C4B08C;
+  --bronze-dark: #7D6A44;
+  --bronze-pale: #E0D4BE;
+  --indigo: #3B4252;
+  --indigo-light: #4F5A6E;
+  --indigo-dark: #2A3040;
+  --indigo-pale: #D5DAE4;
+  --amber: #C49A5E;
+  --amber-light: #D8B88A;
+  --amber-dark: #A37E48;
+  --coral: #C46A54;
+  --coral-light: #D48874;
+  --coral-dark: #A55440;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--ink);
+  font-feature-settings: 'palt' on;
+}
+
+::selection {
+  background-color: rgba(139, 168, 160, 0.2);
+  color: var(--ink);
+}
+
+/* Typography refinement */
+.font-en {
+  font-family: var(--font-playfair), Georgia, serif;
+  letter-spacing: 0.02em;
+}
+
+.font-sans {
+  font-family: var(--font-inter), var(--font-noto-sans-sc), system-ui, sans-serif;
+}
+
+/* Scrollbar - minimal, elegant */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 168, 160, 0.2); border-radius: 2px; }
+
+/* —— Component presets —— */
+
+/* Input field */
+.input-refined {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--paper-dark);
+  background-color: white;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.875rem;
+  color: var(--ink);
+  transition: all 0.3s ease;
+}
+.input-refined:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(196, 106, 84, 0.1);
+}
+.input-refined::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.4;
+}
+
+/* Divider */
+.divider-refined {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(139, 122, 101, 0.12) 20%,
+    rgba(139, 122, 101, 0.2) 50%,
+    rgba(139, 122, 101, 0.12) 80%,
+    transparent 100%
+  );
+}
+
+/* === Frontend glass system (Header / dropdowns / mobile drawer) === */
+
+:root {
+  /* Height of the in-flow top bar + sticky header, used to let full-bleed
+     heroes (e.g. homepage video) slide up behind the glass top bar. */
+  --topbar-h: 2.4375rem;   /* 39px measured on small screens */
+  --header-h: 4.0625rem;   /* 65px h-16 + border */
+  --header-offset: calc(var(--topbar-h) + var(--header-h));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --topbar-h: 1.625rem;  /* 26px measured on desktop */
+    --header-h: 5.0625rem; /* 81px h-20 + border */
+  }
+}
+
+/* Header at rest: fully transparent so the full-bleed hero fills the top;
+   glass is reserved for the scrolled state and for interactive chips. */
+.glass-header {
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: background-color 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
+}
+
+/* Header after scroll: denser glass so content stays readable underneath */
+.glass-header--scrolled {
+  background-color: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border-bottom: 1px solid rgba(229, 223, 213, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 32px rgba(26, 28, 30, 0.08);
+}
+
+/* Shared frosted panel for the search dropdown / mega menu:
+   translucent light glass that lets the page behind show through. */
+.glass-surface {
+  background-color: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 12px 40px rgba(26, 28, 30, 0.08);
+}
+
+/* Mobile navigation drawer (right-side glass panel) */
+.glass-drawer {
+  background-color: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.60), -16px 0 48px rgba(26, 28, 30, 0.10);
+}
+
+/* Fallback for browsers without backdrop-filter (older Safari, some WebViews):
+   swap the blur for a nearly-opaque tint so text stays readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-header { background-color: rgba(248, 246, 242, 0.96); }
+  .glass-header--scrolled { background-color: rgba(248, 246, 242, 0.98); }
+  .glass-surface { background-color: rgba(248, 246, 242, 0.98); }
+  .glass-drawer { background-color: rgba(248, 246, 242, 0.99); }
+}
+
+/* Anchored sections land below the sticky glass header */
+[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+/* === Admin theme (unchanged from prior, safe to keep) === */
+[data-admin-theme="dark"] {
+  --adm-bg: #111827;
+  --adm-sidebar: #0f172a;
+  --adm-card: #1e293b;
+  --adm-input: #334155;
+  --adm-input-border: #475569;
+  --adm-text: #f1f5f9;
+  --adm-text-secondary: #94a3b8;
+  --adm-border: #334155;
+  --adm-accent: #818cf8;
+  --adm-accent-bg: rgba(129,140,248,0.12);
+  --adm-accent-text: #ffffff;
+}
+[data-admin-theme="light"] {
+  --adm-bg: #ffffff;
+  --adm-sidebar: #ffffff;
+  --adm-card: #ffffff;
+  --adm-input: #ffffff;
+  --adm-input-border: #d1d5db;
+  --adm-text: #111827;
+  --adm-text-secondary: #4b5563;
+  --adm-border: #e5e7eb;
+  --adm-accent: #6366f1;
+  --adm-accent-bg: rgba(99,102,241,0.08);
+  --adm-accent-text: #ffffff;
+}
+[data-admin-theme] body { background-color: var(--adm-bg) !important; color: var(--adm-text); }
+.adm-page { background-color: var(--adm-bg); }
+.adm-card { background-color: var(--adm-card); border-color: var(--adm-border); }
+.adm-text { color: var(--adm-text); }
+.adm-text2 { color: var(--adm-text-secondary); }
+.adm-input { background-color: var(--adm-input); border-color: var(--adm-input-border); color: var(--adm-text); }
+.adm-input:focus { border-color: var(--adm-accent); outline: none; }
+.adm-border { border-color: var(--adm-border); }
+.adm-accent { color: var(--adm-accent); }
+.adm-accent-bg { background-color: var(--adm-accent-bg); }
+.adm-hover-bg { transition: background-color 0.15s; }
+[data-admin-theme="dark"] .adm-hover-bg:hover { background-color: rgba(255,255,255,0.06); }
+[data-admin-theme="light"] .adm-hover-bg:hover { background-color: rgba(0,0,0,0.04); }
+.adm-sidebar-bg { }
+[data-admin-theme="dark"] .adm-sidebar-bg { background-color: #0f172a; }
+[data-admin-theme="light"] .adm-sidebar-bg { background-color: #ffffff; }
+[data-admin-theme="dark"] .adm-text-primary { color: #f1f5f9; }
+[data-admin-theme="light"] .adm-text-primary { color: #0f172a; }
+[data-admin-theme="dark"] .adm-text-secondary { color: #94a3b8; }
+[data-admin-theme="light"] .adm-text-secondary { color: #475569; }
+[data-admin-theme] .adm-content { color: var(--adm-text); }
+
+/* === Admin Panel Style (Glass / Transparent / Solid) === */
+[data-admin-panel-style="glass"][data-admin-theme="dark"] {
+  --adm-card: rgba(30, 41, 59, 0.65);
+  --adm-sidebar: rgba(15, 23, 42, 0.7);
+  --adm-input: rgba(51, 65, 85, 0.55);
+  --adm-border: rgba(71, 85, 105, 0.5);
+  --adm-accent-bg: rgba(129, 140, 248, 0.15);
+  --patch-card-bg: rgba(30, 41, 59, 0.65);
+  --patch-card-border: rgba(71, 85, 105, 0.5);
+  --patch-input-bg: rgba(51, 65, 85, 0.55);
+  --patch-input-border: rgba(71, 85, 105, 0.5);
+  --patch-hover-bg: rgba(255, 255, 255, 0.06);
+}
+[data-admin-panel-style="glass"][data-admin-theme="light"] {
+  --adm-card: rgba(255, 255, 255, 0.65);
+  --adm-sidebar: rgba(255, 255, 255, 0.7);
+  --adm-input: rgba(255, 255, 255, 0.55);
+  --adm-border: rgba(209, 213, 219, 0.6);
+  --adm-accent-bg: rgba(99, 102, 241, 0.1);
+  --patch-card-bg: rgba(255, 255, 255, 0.65);
+  --patch-card-border: rgba(209, 213, 219, 0.6);
+  --patch-input-bg: rgba(255, 255, 255, 0.55);
+  --patch-input-border: rgba(209, 213, 219, 0.6);
+  --patch-hover-bg: rgba(0, 0, 0, 0.04);
+}
+
+/* Glass mode - 全局所有卡片/面板/容器统一毛玻璃效果 */
+[data-admin-panel-style="glass"] .adm-card,
+[data-admin-panel-style="glass"] .adm-panel-card,
+[data-admin-panel-style="glass"] .adm-card-card,
+[data-admin-panel-style="glass"] .bg-gray-800,
+[data-admin-panel-style="glass"] .bg-gray-800\/50,
+[data-admin-panel-style="glass"] .bg-gray-700,
+[data-admin-panel-style="glass"] .bg-gray-900,
+[data-admin-panel-style="glass"] .bg-gray-900\/50,
+[data-admin-panel-style="glass"] .bg-slate-800,
+[data-admin-panel-style="glass"] .bg-slate-900,
+[data-admin-panel-style="glass"] .bg-white,
+[data-admin-panel-style="glass"] .bg-white\/5,
+[data-admin-panel-style="glass"] .bg-white\/10,
+[data-admin-panel-style="glass"] .bg-slate-50,
+[data-admin-panel-style="glass"] .bg-gray-50,
+[data-admin-panel-style="glass"] .bg-indigo-500\/10,
+[data-admin-panel-style="glass"] .bg-indigo-500\/5,
+[data-admin-panel-style="glass"] .adm-dropdown-menu,
+[data-admin-panel-style="glass"] [style*="--adm-card"],
+[data-admin-panel-style="glass"] [style*="--adm-sidebar"],
+[data-admin-panel-style="glass"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="glass"] [style*="background-color: var(--adm-sidebar)"],
+[data-admin-panel-style="glass"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="glass"] [style*="backgroundColor: var(--adm-sidebar)"],
+[data-admin-panel-style="glass"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="glass"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="glass"] .shadow-xl,
+[data-admin-panel-style="glass"] .shadow-2xl,
+[data-admin-panel-style="glass"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="glass"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="glass"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="glass"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+}
+
+/* Glass mode - 表格头部背景也应用毛玻璃 */
+[data-admin-panel-style="glass"] thead tr {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+}
+
+/* Glass mode - 弹窗内部的头部区域 */
+[data-admin-panel-style="glass"] .sticky.top-0 {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+}
+
+/* === Cyber (赛博朋克) — 黑底霓虹发光边框 + 扫描线网格 === */
+[data-admin-panel-style="cyber"][data-admin-theme="dark"] {
+  --adm-card: rgba(12, 14, 22, 0.92);
+  --adm-sidebar: rgba(8, 10, 16, 0.96);
+  --adm-input: rgba(20, 22, 35, 0.8);
+  --adm-border: rgba(0, 210, 180, 0.5);
+  --adm-text: #e2e8f0;
+  --adm-text-secondary: #94a3b8;
+  --adm-accent: #00d4b4;
+  --adm-accent-bg: rgba(0, 212, 180, 0.15);
+  --patch-card-bg: rgba(12, 14, 22, 0.92);
+  --patch-card-border: rgba(0, 210, 180, 0.5);
+  --patch-input-bg: rgba(20, 22, 35, 0.8);
+  --patch-input-border: rgba(0, 210, 180, 0.35);
+  --patch-hover-bg: rgba(0, 212, 180, 0.1);
+}
+[data-admin-panel-style="cyber"][data-admin-theme="light"] {
+  --adm-card: rgba(250, 252, 255, 0.94);
+  --adm-sidebar: rgba(248, 250, 252, 0.96);
+  --adm-input: rgba(255, 255, 255, 0.85);
+  --adm-border: rgba(0, 150, 136, 0.45);
+  --adm-text: #0f172a;
+  --adm-text-secondary: #475569;
+  --adm-accent: #0891b2;
+  --adm-accent-bg: rgba(8, 145, 178, 0.12);
+  --patch-card-bg: rgba(250, 252, 255, 0.94);
+  --patch-card-border: rgba(0, 150, 136, 0.45);
+  --patch-input-bg: rgba(255, 255, 255, 0.85);
+  --patch-input-border: rgba(0, 150, 136, 0.35);
+  --patch-hover-bg: rgba(8, 145, 178, 0.08);
+}
+[data-admin-panel-style="cyber"] .adm-card,
+[data-admin-panel-style="cyber"] .adm-panel-card,
+[data-admin-panel-style="cyber"] .adm-card-card,
+[data-admin-panel-style="cyber"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="cyber"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="cyber"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="cyber"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="cyber"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="cyber"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="cyber"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="cyber"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  border: 1px solid var(--adm-border) !important;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 200, 180, 0.02) 0px, rgba(0, 200, 180, 0.02) 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(90deg, rgba(0, 200, 180, 0.02) 0px, rgba(0, 200, 180, 0.02) 1px, transparent 1px, transparent 32px) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 200, 180, 0.1),
+    0 0 8px rgba(0, 200, 180, 0.15),
+    inset 0 0 15px rgba(0, 200, 180, 0.03) !important;
+  border-radius: 2px !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="cyber"] .adm-card > *,
+[data-admin-panel-style="cyber"] .adm-panel-card > *,
+[data-admin-panel-style="cyber"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="cyber"] thead tr {
+  border-bottom: 1px solid var(--adm-border) !important;
+}
+[data-admin-panel-style="cyber"] thead th {
+  font-weight: 600;
+}
+[data-admin-panel-style="cyber"] .adm-accent {
+  font-weight: 600;
+}
+
+/* === Brutalist (粗野主义) — 厚黑边框 + 偏移立体阴影 + 硬边 === */
+[data-admin-panel-style="brutalist"][data-admin-theme="dark"] {
+  --adm-card: #1e293b;
+  --adm-sidebar: #0f172a;
+  --adm-input: #334155;
+  --adm-border: #f1f5f9;
+  --adm-text: #f1f5f9;
+  --adm-text-secondary: #94a3b8;
+  --adm-accent: #f97316;
+  --adm-accent-bg: rgba(249, 115, 22, 0.18);
+  --patch-card-bg: #1e293b;
+  --patch-card-border: #f1f5f9;
+  --patch-input-bg: #334155;
+  --patch-input-border: #f1f5f9;
+  --patch-hover-bg: rgba(249, 115, 22, 0.12);
+}
+[data-admin-panel-style="brutalist"][data-admin-theme="light"] {
+  --adm-card: #ffffff;
+  --adm-sidebar: #ffffff;
+  --adm-input: #ffffff;
+  --adm-border: #111827;
+  --adm-accent: #ea580c;
+  --adm-accent-bg: rgba(234, 88, 12, 0.15);
+  --patch-card-bg: #ffffff;
+  --patch-card-border: #111827;
+  --patch-input-bg: #ffffff;
+  --patch-input-border: #111827;
+  --patch-hover-bg: rgba(234, 88, 12, 0.1);
+}
+[data-admin-panel-style="brutalist"] .adm-card,
+[data-admin-panel-style="brutalist"] .adm-panel-card,
+[data-admin-panel-style="brutalist"] .adm-card-card,
+[data-admin-panel-style="brutalist"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="brutalist"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="brutalist"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="brutalist"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="brutalist"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="brutalist"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="brutalist"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="brutalist"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  background-color: var(--adm-card) !important;
+  background-image: none !important;
+  border: 3px solid var(--adm-border) !important;
+  border-radius: 0 !important;
+  box-shadow: 5px 5px 0 var(--adm-border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  font-weight: 500;
+  isolation: isolate;
+}
+[data-admin-panel-style="brutalist"] .adm-card > *,
+[data-admin-panel-style="brutalist"] .adm-panel-card > *,
+[data-admin-panel-style="brutalist"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="brutalist"] .adm-input {
+  background-color: var(--adm-input) !important;
+  border: 2px solid var(--adm-border) !important;
+  border-radius: 0 !important;
+  color: var(--adm-text) !important;
+  box-shadow: 3px 3px 0 var(--adm-border) !important;
+}
+[data-admin-panel-style="brutalist"] .adm-input:focus {
+  border-color: var(--adm-accent) !important;
+  box-shadow: 3px 3px 0 var(--adm-accent) !important;
+  outline: none;
+}
+[data-admin-panel-style="brutalist"] thead tr {
+  background-color: var(--adm-border) !important;
+  border-bottom: 3px solid var(--adm-border) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+[data-admin-panel-style="brutalist"][data-admin-theme="dark"] thead th {
+  color: #0f172a !important;
+  font-weight: 700;
+}
+[data-admin-panel-style="brutalist"][data-admin-theme="light"] thead th {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+[data-admin-panel-style="brutalist"] button {
+  border-radius: 0 !important;
+  font-weight: 600 !important;
+}
+[data-admin-panel-style="brutalist"] .sticky.top-0 {
+  background-color: var(--adm-sidebar) !important;
+  border-bottom: 3px solid var(--adm-border) !important;
+}
+
+/* === Gold (黄金) — 深棕色背景 + 金色金属渐变边框 + 浮雕光泽 === */
+[data-admin-panel-style="gold"][data-admin-theme="dark"] {
+  --adm-card: rgba(30, 20, 10, 0.94);
+  --adm-sidebar: rgba(24, 16, 8, 0.97);
+  --adm-input: rgba(40, 28, 12, 0.85);
+  --adm-border: rgba(212, 175, 55, 0.6);
+  --adm-text: #f5f0e6;
+  --adm-text-secondary: #b8a88a;
+  --adm-accent: #e6c24a;
+  --adm-accent-bg: rgba(230, 194, 74, 0.18);
+  --patch-card-bg: rgba(30, 20, 10, 0.94);
+  --patch-card-border: rgba(212, 175, 55, 0.6);
+  --patch-input-bg: rgba(40, 28, 12, 0.85);
+  --patch-input-border: rgba(212, 175, 55, 0.45);
+  --patch-hover-bg: rgba(230, 194, 74, 0.1);
+}
+[data-admin-panel-style="gold"][data-admin-theme="light"] {
+  --adm-card: rgba(255, 250, 235, 0.96);
+  --adm-sidebar: rgba(255, 248, 225, 0.98);
+  --adm-input: rgba(255, 245, 220, 0.85);
+  --adm-border: rgba(180, 140, 50, 0.7);
+  --adm-text: #3d2e1a;
+  --adm-text-secondary: #6b5840;
+  --adm-accent: #b8860b;
+  --adm-accent-bg: rgba(184, 134, 11, 0.15);
+  --patch-card-bg: rgba(255, 250, 235, 0.96);
+  --patch-card-border: rgba(180, 140, 50, 0.7);
+  --patch-input-bg: rgba(255, 245, 220, 0.85);
+  --patch-input-border: rgba(180, 140, 50, 0.55);
+  --patch-hover-bg: rgba(184, 134, 11, 0.08);
+}
+[data-admin-panel-style="gold"] .adm-card,
+[data-admin-panel-style="gold"] .adm-panel-card,
+[data-admin-panel-style="gold"] .adm-card-card,
+[data-admin-panel-style="gold"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="gold"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="gold"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="gold"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="gold"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="gold"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="gold"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="gold"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  border: 1px solid transparent !important;
+  background-image:
+    linear-gradient(var(--adm-card), var(--adm-card)),
+    linear-gradient(135deg, #d4af37 0%, #f5e6a8 25%, #b8860b 50%, #f5e6a8 75%, #d4af37 100%) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 230, 150, 0.25) !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="gold"] .adm-card > *,
+[data-admin-panel-style="gold"] .adm-panel-card > *,
+[data-admin-panel-style="gold"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="gold"] thead tr {
+  background-image: linear-gradient(180deg, rgba(212, 175, 55, 0.18), rgba(212, 175, 55, 0.06)) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.45) !important;
+}
+[data-admin-panel-style="gold"] thead th {
+  font-weight: 600;
+}
+[data-admin-panel-style="gold"] .adm-accent {
+  font-weight: 600;
+}
+
+/* === Matrix (矩阵) — 黑底绿色终端 + CRT 扫描线 === */
+[data-admin-panel-style="matrix"][data-admin-theme="dark"] {
+  --adm-card: rgba(2, 12, 2, 0.94);
+  --adm-sidebar: rgba(1, 8, 1, 0.97);
+  --adm-input: rgba(5, 20, 5, 0.85);
+  --adm-border: rgba(0, 220, 60, 0.55);
+  --adm-text: #d4ffd4;
+  --adm-text-secondary: #7ab87a;
+  --adm-accent: #00dd3a;
+  --adm-accent-bg: rgba(0, 221, 58, 0.18);
+  --patch-card-bg: rgba(2, 12, 2, 0.94);
+  --patch-card-border: rgba(0, 220, 60, 0.55);
+  --patch-input-bg: rgba(5, 20, 5, 0.85);
+  --patch-input-border: rgba(0, 220, 60, 0.4);
+  --patch-hover-bg: rgba(0, 221, 58, 0.1);
+}
+[data-admin-panel-style="matrix"][data-admin-theme="light"] {
+  --adm-card: rgba(245, 255, 245, 0.95);
+  --adm-sidebar: rgba(240, 252, 240, 0.97);
+  --adm-input: rgba(255, 255, 255, 0.85);
+  --adm-border: rgba(0, 150, 40, 0.6);
+  --adm-text: #0a3a0a;
+  --adm-text-secondary: #4a7a4a;
+  --adm-accent: #0a8a2a;
+  --adm-accent-bg: rgba(10, 138, 42, 0.15);
+  --patch-card-bg: rgba(245, 255, 245, 0.95);
+  --patch-card-border: rgba(0, 150, 40, 0.6);
+  --patch-input-bg: rgba(255, 255, 255, 0.85);
+  --patch-input-border: rgba(0, 150, 40, 0.45);
+  --patch-hover-bg: rgba(10, 138, 42, 0.08);
+}
+[data-admin-panel-style="matrix"] .adm-card,
+[data-admin-panel-style="matrix"] .adm-panel-card,
+[data-admin-panel-style="matrix"] .adm-card-card,
+[data-admin-panel-style="matrix"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="matrix"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="matrix"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="matrix"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="matrix"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="matrix"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="matrix"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="matrix"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  border: 1px solid var(--adm-border) !important;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 220, 60, 0.025) 0px, rgba(0, 220, 60, 0.025) 1px, transparent 1px, transparent 5px) !important;
+  box-shadow:
+    0 0 6px rgba(0, 220, 60, 0.2),
+    inset 0 0 20px rgba(0, 220, 60, 0.04) !important;
+  border-radius: 4px !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="matrix"] .adm-card > *,
+[data-admin-panel-style="matrix"] .adm-panel-card > *,
+[data-admin-panel-style="matrix"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="matrix"] thead tr {
+  background-color: rgba(0, 50, 10, 0.5) !important;
+  border-bottom: 1px solid var(--adm-border) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'Courier New', 'Consolas', monospace;
+}
+[data-admin-panel-style="matrix"] thead th {
+  color: var(--adm-accent) !important;
+  font-family: 'Courier New', 'Consolas', monospace;
+  font-weight: 600;
+}
+[data-admin-panel-style="matrix"] .adm-accent {
+  font-weight: 600;
+  font-family: 'Courier New', 'Consolas', monospace;
+}
+[data-admin-panel-style="matrix"] .sticky.top-0 {
+  background-color: var(--adm-sidebar) !important;
+  border-bottom: 1px solid var(--adm-border) !important;
+}
+
+/* === Holo (全息) — 流动彩虹渐变边框 + 梦幻模糊光晕 === */
+[data-admin-panel-style="holo"][data-admin-theme="dark"] {
+  --adm-card: rgba(22, 14, 40, 0.78);
+  --adm-sidebar: rgba(18, 10, 32, 0.82);
+  --adm-input: rgba(35, 22, 58, 0.65);
+  --adm-border: rgba(168, 85, 247, 0.5);
+  --adm-text: #f0eaff;
+  --adm-text-secondary: #b8a8d8;
+  --adm-accent: #d8b4fe;
+  --adm-accent-bg: rgba(216, 180, 254, 0.18);
+  --patch-card-bg: rgba(22, 14, 40, 0.78);
+  --patch-card-border: rgba(168, 85, 247, 0.5);
+  --patch-input-bg: rgba(35, 22, 58, 0.65);
+  --patch-input-border: rgba(168, 85, 247, 0.4);
+  --patch-hover-bg: rgba(216, 180, 254, 0.1);
+}
+[data-admin-panel-style="holo"][data-admin-theme="light"] {
+  --adm-card: rgba(252, 245, 255, 0.82);
+  --adm-sidebar: rgba(248, 240, 255, 0.86);
+  --adm-input: rgba(250, 242, 255, 0.7);
+  --adm-border: rgba(147, 51, 234, 0.4);
+  --adm-text: #2d1b4e;
+  --adm-text-secondary: #6b5a8a;
+  --adm-accent: #7c3aed;
+  --adm-accent-bg: rgba(124, 58, 237, 0.12);
+  --patch-card-bg: rgba(252, 245, 255, 0.82);
+  --patch-card-border: rgba(147, 51, 234, 0.4);
+  --patch-input-bg: rgba(250, 242, 255, 0.7);
+  --patch-input-border: rgba(147, 51, 234, 0.3);
+  --patch-hover-bg: rgba(124, 58, 237, 0.08);
+}
+[data-admin-panel-style="holo"] .adm-card,
+[data-admin-panel-style="holo"] .adm-panel-card,
+[data-admin-panel-style="holo"] .adm-card-card,
+[data-admin-panel-style="holo"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="holo"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="holo"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="holo"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="holo"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="holo"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="holo"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="holo"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  border: 1px solid transparent !important;
+  background-image:
+    linear-gradient(var(--adm-card), var(--adm-card)),
+    linear-gradient(135deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  background-size: 100% 100%, 300% 300% !important;
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow:
+    0 0 12px rgba(168, 85, 247, 0.2),
+    0 0 24px rgba(131, 56, 236, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  animation: holoShift 12s linear infinite;
+  isolation: isolate;
+}
+@keyframes holoShift {
+  0% { background-position: 0% 0%, 0% 50%; }
+  50% { background-position: 0% 0%, 100% 50%; }
+  100% { background-position: 0% 0%, 0% 50%; }
+}
+[data-admin-panel-style="holo"] .adm-card > *,
+[data-admin-panel-style="holo"] .adm-panel-card > *,
+[data-admin-panel-style="holo"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="holo"] thead tr {
+  background-image: linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.15), rgba(236, 72, 153, 0.15)) !important;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.45) !important;
+}
+[data-admin-panel-style="holo"] thead th {
+  font-weight: 600;
+}
+[data-admin-panel-style="holo"] .adm-accent {
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* === Mono (纯白厚边) — 纯白卡片 + 3px厚黑边 + 偏移阴影 + 无圆角 === */
+[data-admin-panel-style="mono"][data-admin-theme="dark"] {
+  --adm-card: #ffffff;
+  --adm-sidebar: #f5f5f5;
+  --adm-input: #ffffff;
+  --adm-border: #1a1a1a;
+  --adm-text: #1a1a1a;
+  --adm-text-secondary: #666666;
+  --adm-accent: #e53e3e;
+  --adm-accent-bg: rgba(229, 62, 62, 0.12);
+  --patch-card-bg: #ffffff;
+  --patch-card-border: #1a1a1a;
+  --patch-input-bg: #ffffff;
+  --patch-input-border: #1a1a1a;
+  --patch-hover-bg: rgba(229, 62, 62, 0.08);
+}
+[data-admin-panel-style="mono"][data-admin-theme="light"] {
+  --adm-card: #ffffff;
+  --adm-sidebar: #fafafa;
+  --adm-input: #ffffff;
+  --adm-border: #1a1a1a;
+  --adm-accent: #e53e3e;
+  --adm-accent-bg: rgba(229, 62, 62, 0.12);
+  --patch-card-bg: #ffffff;
+  --patch-card-border: #1a1a1a;
+  --patch-input-bg: #ffffff;
+  --patch-input-border: #1a1a1a;
+  --patch-hover-bg: rgba(229, 62, 62, 0.08);
+}
+[data-admin-panel-style="mono"] .adm-card,
+[data-admin-panel-style="mono"] .adm-panel-card,
+[data-admin-panel-style="mono"] .adm-card-card,
+[data-admin-panel-style="mono"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="mono"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="mono"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="mono"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="mono"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="mono"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="mono"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="mono"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 3px solid #1a1a1a !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0 #1a1a1a !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #1a1a1a !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="mono"] .adm-card > *,
+[data-admin-panel-style="mono"] .adm-panel-card > *,
+[data-admin-panel-style="mono"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="mono"] .adm-input {
+  background-color: #ffffff !important;
+  border: 2px solid #1a1a1a !important;
+  border-radius: 0 !important;
+  color: #1a1a1a !important;
+  box-shadow: 3px 3px 0 #1a1a1a !important;
+}
+[data-admin-panel-style="mono"] .adm-input:focus {
+  border-color: #e53e3e !important;
+  box-shadow: 3px 3px 0 #e53e3e !important;
+  outline: none;
+}
+[data-admin-panel-style="mono"] thead tr {
+  background-color: #1a1a1a !important;
+  border-bottom: 3px solid #1a1a1a !important;
+}
+[data-admin-panel-style="mono"] thead th {
+  color: #ffffff !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+[data-admin-panel-style="mono"] button {
+  border-radius: 0 !important;
+  font-weight: 600 !important;
+}
+[data-admin-panel-style="mono"] .sticky.top-0 {
+  background-color: #f5f5f5 !important;
+  border-bottom: 3px solid #1a1a1a !important;
+}
+[data-admin-panel-style="mono"] .adm-text,
+[data-admin-panel-style="mono"] .adm-text2,
+[data-admin-panel-style="mono"] .adm-text-primary,
+[data-admin-panel-style="mono"] .adm-text-secondary {
+  color: #1a1a1a !important;
+}
+[data-admin-panel-style="mono"] .adm-text2,
+[data-admin-panel-style="mono"] .adm-text-secondary {
+  color: #666666 !important;
+}
+
+/* === Midnight (午夜深蓝) — 深蓝渐变底 + 星点微光 + 靛蓝边框 === */
+[data-admin-panel-style="midnight"][data-admin-theme="dark"] {
+  --adm-card: rgba(12, 20, 45, 0.92);
+  --adm-sidebar: rgba(8, 14, 32, 0.95);
+  --adm-input: rgba(20, 30, 58, 0.8);
+  --adm-border: rgba(99, 102, 241, 0.4);
+  --adm-text: #e0e7ff;
+  --adm-text-secondary: #818cf8;
+  --adm-accent: #818cf8;
+  --adm-accent-bg: rgba(129, 140, 248, 0.18);
+  --patch-card-bg: rgba(12, 20, 45, 0.92);
+  --patch-card-border: rgba(99, 102, 241, 0.4);
+  --patch-input-bg: rgba(20, 30, 58, 0.8);
+  --patch-input-border: rgba(99, 102, 241, 0.3);
+  --patch-hover-bg: rgba(129, 140, 248, 0.1);
+}
+[data-admin-panel-style="midnight"][data-admin-theme="light"] {
+  --adm-card: rgba(25, 35, 70, 0.9);
+  --adm-sidebar: rgba(18, 25, 50, 0.93);
+  --adm-input: rgba(35, 48, 85, 0.75);
+  --adm-border: rgba(129, 140, 248, 0.45);
+  --adm-text: #e0e7ff;
+  --adm-text-secondary: #a5b4fc;
+  --adm-accent: #a5b4fc;
+  --adm-accent-bg: rgba(165, 180, 252, 0.15);
+  --patch-card-bg: rgba(25, 35, 70, 0.9);
+  --patch-card-border: rgba(129, 140, 248, 0.45);
+  --patch-input-bg: rgba(35, 48, 85, 0.75);
+  --patch-input-border: rgba(129, 140, 248, 0.35);
+  --patch-hover-bg: rgba(165, 180, 252, 0.08);
+}
+[data-admin-panel-style="midnight"] .adm-card,
+[data-admin-panel-style="midnight"] .adm-panel-card,
+[data-admin-panel-style="midnight"] .adm-card-card,
+[data-admin-panel-style="midnight"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="midnight"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="midnight"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="midnight"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="midnight"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="midnight"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="midnight"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="midnight"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  background-image:
+    linear-gradient(160deg, rgba(12, 20, 45, 0.95) 0%, rgba(18, 28, 58, 0.9) 50%, rgba(10, 18, 40, 0.95) 100%),
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.6) 50%, transparent 50%),
+    radial-gradient(1px 1px at 80px 70px, rgba(255,255,255,0.4) 50%, transparent 50%),
+    radial-gradient(1px 1px at 140px 20px, rgba(255,255,255,0.5) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 200px 90px, rgba(255,255,255,0.3) 50%, transparent 50%),
+    radial-gradient(1px 1px at 260px 50px, rgba(255,255,255,0.6) 50%, transparent 50%) !important;
+  background-size: 100% 100%, 300px 120px !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(129, 140, 248, 0.2) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  isolation: isolate;
+}
+[data-admin-panel-style="midnight"] .adm-card > *,
+[data-admin-panel-style="midnight"] .adm-panel-card > *,
+[data-admin-panel-style="midnight"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="midnight"] thead tr {
+  background-image: linear-gradient(90deg, rgba(79, 70, 229, 0.3), rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.3)) !important;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.5) !important;
+}
+[data-admin-panel-style="midnight"] thead th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+[data-admin-panel-style="midnight"] .adm-accent {
+  font-weight: 600;
+}
+
+/* === Obsidian (黑曜石) — 纯黑高对比 + 细亮边 + 锋利阴影 === */
+[data-admin-panel-style="obsidian"][data-admin-theme="dark"] {
+  --adm-card: rgba(0, 0, 0, 0.96);
+  --adm-sidebar: rgba(0, 0, 0, 0.98);
+  --adm-input: rgba(18, 18, 18, 0.9);
+  --adm-border: rgba(255, 255, 255, 0.15);
+  --adm-text: #ffffff;
+  --adm-text-secondary: #a3a3a3;
+  --adm-accent: #ffffff;
+  --adm-accent-bg: rgba(255, 255, 255, 0.12);
+  --adm-accent-text: #0a0a0a;
+  --patch-card-bg: rgba(0, 0, 0, 0.96);
+  --patch-card-border: rgba(255, 255, 255, 0.15);
+  --patch-input-bg: rgba(18, 18, 18, 0.9);
+  --patch-input-border: rgba(255, 255, 255, 0.2);
+  --patch-hover-bg: rgba(255, 255, 255, 0.06);
+}
+[data-admin-panel-style="obsidian"][data-admin-theme="light"] {
+  --adm-card: rgba(10, 10, 10, 0.94);
+  --adm-sidebar: rgba(5, 5, 5, 0.97);
+  --adm-input: rgba(25, 25, 25, 0.88);
+  --adm-border: rgba(255, 255, 255, 0.18);
+  --adm-text: #ffffff;
+  --adm-text-secondary: #a3a3a3;
+  --adm-accent: #ffffff;
+  --adm-accent-bg: rgba(255, 255, 255, 0.12);
+  --adm-accent-text: #0a0a0a;
+  --patch-card-bg: rgba(10, 10, 10, 0.94);
+  --patch-card-border: rgba(255, 255, 255, 0.18);
+  --patch-input-bg: rgba(25, 25, 25, 0.88);
+  --patch-input-border: rgba(255, 255, 255, 0.15);
+  --patch-hover-bg: rgba(255, 255, 255, 0.06);
+}
+[data-admin-panel-style="obsidian"] .adm-card,
+[data-admin-panel-style="obsidian"] .adm-panel-card,
+[data-admin-panel-style="obsidian"] .adm-card-card,
+[data-admin-panel-style="obsidian"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="obsidian"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="obsidian"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="obsidian"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="obsidian"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="obsidian"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="obsidian"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="obsidian"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  background-color: #000000 !important;
+  background-image:
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.02) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="obsidian"] .adm-card > *,
+[data-admin-panel-style="obsidian"] .adm-panel-card > *,
+[data-admin-panel-style="obsidian"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="obsidian"] .adm-input {
+  background-color: rgba(18, 18, 18, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+[data-admin-panel-style="obsidian"] .adm-input:focus {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  outline: none;
+}
+[data-admin-panel-style="obsidian"] thead tr {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+[data-admin-panel-style="obsidian"] thead th {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+[data-admin-panel-style="obsidian"] .adm-accent {
+  font-weight: 600;
+}
+[data-admin-panel-style="obsidian"] .sticky.top-0 {
+  background-color: rgba(0, 0, 0, 0.97) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* === Noir (黑色电影) — 高对比黑白灰 + 斜角光 + 粗衬线感 === */
+[data-admin-panel-style="noir"][data-admin-theme="dark"] {
+  --adm-card: rgba(16, 16, 16, 0.95);
+  --adm-sidebar: rgba(8, 8, 8, 0.98);
+  --adm-input: rgba(28, 28, 28, 0.88);
+  --adm-border: rgba(212, 212, 212, 0.4);
+  --adm-text: #f5f5f5;
+  --adm-text-secondary: #a1a1aa;
+  --adm-accent: #fafafa;
+  --adm-accent-bg: rgba(250, 250, 250, 0.12);
+  --adm-accent-text: #171717;
+  --patch-card-bg: rgba(16, 16, 16, 0.95);
+  --patch-card-border: rgba(212, 212, 212, 0.4);
+  --patch-input-bg: rgba(28, 28, 28, 0.88);
+  --patch-input-border: rgba(212, 212, 212, 0.3);
+  --patch-hover-bg: rgba(250, 250, 250, 0.06);
+}
+[data-admin-panel-style="noir"][data-admin-theme="light"] {
+  --adm-card: rgba(20, 20, 20, 0.93);
+  --adm-sidebar: rgba(12, 12, 12, 0.96);
+  --adm-input: rgba(35, 35, 35, 0.85);
+  --adm-border: rgba(200, 200, 200, 0.45);
+  --adm-text: #f5f5f5;
+  --adm-text-secondary: #a1a1aa;
+  --adm-accent: #fafafa;
+  --adm-accent-bg: rgba(250, 250, 250, 0.1);
+  --adm-accent-text: #171717;
+  --patch-card-bg: rgba(20, 20, 20, 0.93);
+  --patch-card-border: rgba(200, 200, 200, 0.45);
+  --patch-input-bg: rgba(35, 35, 35, 0.85);
+  --patch-input-border: rgba(200, 200, 200, 0.35);
+  --patch-hover-bg: rgba(250, 250, 250, 0.06);
+}
+[data-admin-panel-style="noir"] .adm-card,
+[data-admin-panel-style="noir"] .adm-panel-card,
+[data-admin-panel-style="noir"] .adm-card-card,
+[data-admin-panel-style="noir"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="noir"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="noir"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="noir"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="noir"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="noir"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="noir"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="noir"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  background-image:
+    linear-gradient(135deg, rgba(16,16,16,0.98) 0%, rgba(28,28,28,0.95) 35%, rgba(12,12,12,0.98) 100%),
+    linear-gradient(135deg, transparent 0%, transparent 50%, rgba(255,255,255,0.04) 50%, transparent 80%) !important;
+  border: 1px solid rgba(200, 200, 200, 0.35) !important;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="noir"] .adm-card > *,
+[data-admin-panel-style="noir"] .adm-panel-card > *,
+[data-admin-panel-style="noir"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="noir"] thead tr {
+  background-image: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02), rgba(255,255,255,0.08)) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+[data-admin-panel-style="noir"] thead th {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+[data-admin-panel-style="noir"] .adm-accent {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* === Slate (板岩灰) — 高级灰调 + 微纹理 + 低调精致 === */
+[data-admin-panel-style="slate"][data-admin-theme="dark"] {
+  --adm-card: rgba(24, 28, 36, 0.95);
+  --adm-sidebar: rgba(18, 22, 28, 0.98);
+  --adm-input: rgba(36, 42, 52, 0.88);
+  --adm-border: rgba(100, 116, 139, 0.35);
+  --adm-text: #e2e8f0;
+  --adm-text-secondary: #94a3b8;
+  --adm-accent: #94a3b8;
+  --adm-accent-bg: rgba(148, 163, 184, 0.15);
+  --adm-accent-text: #0f172a;
+  --patch-card-bg: rgba(24, 28, 36, 0.95);
+  --patch-card-border: rgba(100, 116, 139, 0.35);
+  --patch-input-bg: rgba(36, 42, 52, 0.88);
+  --patch-input-border: rgba(100, 116, 139, 0.3);
+  --patch-hover-bg: rgba(148, 163, 184, 0.08);
+}
+[data-admin-panel-style="slate"][data-admin-theme="light"] {
+  --adm-card: rgba(30, 36, 46, 0.92);
+  --adm-sidebar: rgba(22, 28, 36, 0.96);
+  --adm-input: rgba(42, 50, 62, 0.85);
+  --adm-border: rgba(148, 163, 184, 0.4);
+  --adm-text: #e2e8f0;
+  --adm-text-secondary: #94a3b8;
+  --adm-accent: #cbd5e1;
+  --adm-accent-bg: rgba(203, 213, 225, 0.12);
+  --adm-accent-text: #0f172a;
+  --patch-card-bg: rgba(30, 36, 46, 0.92);
+  --patch-card-border: rgba(148, 163, 184, 0.4);
+  --patch-input-bg: rgba(42, 50, 62, 0.85);
+  --patch-input-border: rgba(148, 163, 184, 0.3);
+  --patch-hover-bg: rgba(203, 213, 225, 0.06);
+}
+[data-admin-panel-style="slate"] .adm-card,
+[data-admin-panel-style="slate"] .adm-panel-card,
+[data-admin-panel-style="slate"] .adm-card-card,
+[data-admin-panel-style="slate"] [style*="background-color: var(--adm-card)"],
+[data-admin-panel-style="slate"] [style*="backgroundColor: var(--adm-card)"],
+[data-admin-panel-style="slate"] .rounded-xl.border.overflow-hidden,
+[data-admin-panel-style="slate"] .rounded-lg.border.overflow-hidden,
+[data-admin-panel-style="slate"] .fixed.inset-0.z-50 > div[class*="rounded-xl"],
+[data-admin-panel-style="slate"] .fixed.inset-0.z-50 > div[class*="shadow-2xl"],
+[data-admin-panel-style="slate"] main > div > div.space-y-5 > div[class*="rounded"][class*="border"],
+[data-admin-panel-style="slate"] main > div > div.space-y-5 > div[class*="rounded-xl"] {
+  position: relative;
+  background-image:
+    linear-gradient(180deg, rgba(30, 34, 44, 0.98) 0%, rgba(20, 24, 32, 0.98) 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.008) 0px, rgba(255,255,255,0.008) 1px, transparent 1px, transparent 2px) !important;
+  border: 1px solid rgba(100, 116, 139, 0.3) !important;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  isolation: isolate;
+}
+[data-admin-panel-style="slate"] .adm-card > *,
+[data-admin-panel-style="slate"] .adm-panel-card > *,
+[data-admin-panel-style="slate"] .adm-card-card > * {
+  position: relative;
+  z-index: 2;
+}
+[data-admin-panel-style="slate"] thead tr {
+  background-image: linear-gradient(180deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.6)) !important;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.4) !important;
+}
+[data-admin-panel-style="slate"] thead th {
+  font-weight: 500;
+  color: #cbd5e1 !important;
+}
+[data-admin-panel-style="slate"] .adm-accent {
+  font-weight: 500;
+}
+
+/* === Global Hover Effects === */
+.adm-hover-bg {
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.08);
+}
+[data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Default - 简洁背景变化 */
+[data-sidebar-hover="default"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.08);
+}
+[data-sidebar-hover="default"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Glass - 毛玻璃质感 */
+[data-sidebar-hover="glass"] .adm-hover-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-sidebar-hover="glass"] .adm-hover-bg:hover::before {
+  opacity: 1 !important;
+}
+[data-sidebar-hover="glass"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.06);
+}
+[data-sidebar-hover="glass"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Apple - 苹果风格（微妙缩放 + 柔和阴影） */
+[data-sidebar-hover="apple"] .adm-hover-bg {
+  transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+}
+[data-sidebar-hover="apple"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.06);
+  transform: scale(1.01);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+[data-sidebar-hover="apple"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Shimmer - 轻微光泽扫过 */
+[data-sidebar-hover="shimmer"] .adm-hover-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transform: skewX(-15deg);
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+[data-sidebar-hover="shimmer"][data-admin-theme="dark"] .adm-hover-bg::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+[data-sidebar-hover="shimmer"] .adm-hover-bg:hover::before {
+  left: 150% !important;
+}
+[data-sidebar-hover="shimmer"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.06);
+}
+[data-sidebar-hover="shimmer"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Indicator - 左侧指示条 */
+[data-sidebar-hover="indicator"] .adm-hover-bg::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 2px;
+  height: 60%;
+  background-color: var(--adm-accent);
+  border-radius: 0 2px 2px 0;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+[data-sidebar-hover="indicator"] .adm-hover-bg:hover::before,
+[data-sidebar-hover="indicator"] .adm-accent-bg::before {
+  transform: translateY(-50%) scaleY(1) !important;
+}
+[data-sidebar-hover="indicator"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.06);
+}
+[data-sidebar-hover="indicator"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Pulse - 柔和脉冲 */
+[data-sidebar-hover="pulse"] .adm-hover-bg:hover {
+  background-color: rgba(128, 128, 128, 0.06);
+  animation: soft-pulse 2s ease-in-out infinite;
+}
+[data-sidebar-hover="pulse"][data-admin-theme="dark"] .adm-hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+@keyframes soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(128, 128, 128, 0.1); }
+  50% { box-shadow: 0 0 0 4px transparent; }
+}
+
+/* === Card Hover Effects (same system) === */
+.adm-card-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.2s ease;
+}
+.adm-card-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  background-color: rgba(128, 128, 128, 0.04);
+}
+[data-admin-theme="dark"] .adm-card-card:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Default - 简洁上浮 */
+[data-sidebar-hover="default"] .adm-card-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Glass - 毛玻璃质感 */
+[data-sidebar-hover="glass"] .adm-card-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-sidebar-hover="glass"] .adm-card-card:hover::before {
+  opacity: 1 !important;
+}
+[data-sidebar-hover="glass"] .adm-card-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Apple - 苹果风格（精致缩放 + 柔和阴影） */
+[data-sidebar-hover="apple"] .adm-card-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+}
+[data-sidebar-hover="apple"] .adm-card-card:hover {
+  transform: scale(1.015) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.04);
+}
+[data-sidebar-hover="apple"][data-admin-theme="dark"] .adm-card-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Shimmer - 轻微光泽扫过 */
+[data-sidebar-hover="shimmer"] .adm-card-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transform: skewX(-15deg);
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+[data-sidebar-hover="shimmer"][data-admin-theme="dark"] .adm-card-card::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+[data-sidebar-hover="shimmer"] .adm-card-card:hover::before {
+  left: 150% !important;
+}
+[data-sidebar-hover="shimmer"] .adm-card-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Indicator - 顶部指示条 */
+[data-sidebar-hover="indicator"] .adm-card-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  height: 2px;
+  width: 50%;
+  background-color: var(--adm-accent);
+  border-radius: 0 0 2px 2px;
+  transition: transform 0.25s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+[data-sidebar-hover="indicator"] .adm-card-card:hover::before {
+  transform: translateX(-50%) scaleX(1) !important;
+}
+[data-sidebar-hover="indicator"] .adm-card-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Pulse - 柔和脉冲 */
+[data-sidebar-hover="pulse"] .adm-card-card:hover {
+  transform: translateY(-2px);
+  animation: card-soft-pulse 2.5s ease-in-out infinite;
+}
+@keyframes card-soft-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 0 0 0 rgba(128, 128, 128, 0.1); }
+  50% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 0 0 6px transparent; }
+}
+
+/* 实时通知滑入动画 */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* === 亮色主题下硬编码暗色类的修正补丁 ===
+   问题: 多个 admin 页面直接用了 bg-gray-800/700, bg-white/5, text-gray-200/400 等硬编码暗色类,
+   切到亮色主题后仍保持深灰背景+浅灰文字, 导致面板与白光主题不对照。
+   方案: 在 [data-admin-theme="light"] 下把这些类强制映射到浅色, 暗色主题完全不受影响。 */
+[data-admin-theme="light"] {
+  /* 卡片/面板背景 — 深灰 → 浅白带边框 */
+  --patch-card-bg: #ffffff;
+  --patch-card-border: #e5e7eb;
+  --patch-input-bg: #f9fafb;
+  --patch-input-border: #d1d5db;
+  --patch-hover-bg: #f3f4f6;
+  --patch-text: #111827;
+  --patch-text-secondary: #6b7280;
+  --patch-text-muted: #9ca3af;
+}
+
+/* 面板/卡片背景: bg-gray-800, bg-gray-800/50 */
+[data-admin-theme="light"] .bg-gray-800,
+[data-admin-theme="light"] .bg-gray-800\/50 {
+  background-color: var(--patch-card-bg) !important;
+}
+/* 卡片内层/悬停背景: bg-gray-700, bg-gray-700/30, bg-gray-700/50 */
+[data-admin-theme="light"] .bg-gray-700,
+[data-admin-theme="light"] .bg-gray-700\/30,
+[data-admin-theme="light"] .bg-gray-700\/50 {
+  background-color: var(--patch-hover-bg) !important;
+}
+/* 输入框/气泡背景: bg-gray-700 (在消息页用作气泡) 上面已覆盖 */
+[data-admin-theme="light"] .bg-gray-600 {
+  background-color: var(--patch-input-border) !important;
+}
+
+/* 边框: border-gray-700, border-gray-600 */
+[data-admin-theme="light"] .border-gray-700,
+[data-admin-theme="light"] .border-gray-600 {
+  border-color: var(--patch-card-border) !important;
+}
+
+/* 半透明白色背景 (bg-white/5, bg-white/10) — 暗色下是浅色叠加, 亮色下应是浅灰 */
+[data-admin-theme="light"] .bg-white\/5,
+[data-admin-theme="light"] .bg-white\/10 {
+  background-color: var(--patch-hover-bg) !important;
+}
+
+/* 文字颜色: text-gray-200 (主文字) → 深色 */
+[data-admin-theme="light"] .text-gray-200 {
+  color: var(--patch-text) !important;
+}
+/* text-gray-400 (次文字) */
+[data-admin-theme="light"] .text-gray-400 {
+  color: var(--patch-text-secondary) !important;
+}
+/* text-gray-500, text-gray-600 (弱文字) */
+[data-admin-theme="light"] .text-gray-500,
+[data-admin-theme="light"] .text-gray-600 {
+  color: var(--patch-text-muted) !important;
+}
+/* placeholder 文字 */
+[data-admin-theme="light"] .placeholder\:text-gray-500::placeholder {
+  color: var(--patch-text-muted) !important;
+}
+
+/* 紫色品牌色在亮色下用更深的紫以保证对比度 */
+[data-admin-theme="light"] .text-indigo-400 { color: #4f46e5 !important; }
+[data-admin-theme="light"] .text-indigo-400\/80 { color: #4338ca !important; }
+[data-admin-theme="light"] .bg-indigo-500\/20 { background-color: rgba(79, 70, 229, 0.12) !important; }
+[data-admin-theme="light"] .bg-indigo-500\/10 { background-color: rgba(79, 70, 229, 0.08) !important; }
+[data-admin-theme="light"] .hover\:bg-gray-50:hover { background-color: var(--patch-hover-bg) !important; }
+[data-admin-theme="light"] .hover\:bg-gray-700\/50:hover { background-color: var(--patch-hover-bg) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/5:hover { background-color: var(--patch-hover-bg) !important; }
+
+/* products 页 status badge 在亮色下的绿色/灰色 */
+[data-admin-theme="light"] .bg-green-100 { background-color: #dcfce7 !important; }
+[data-admin-theme="light"] .text-green-700 { color: #15803d !important; }
+[data-admin-theme="light"] .hover\:bg-green-200:hover { background-color: #bbf7d0 !important; }
+[data-admin-theme="light"] .bg-gray-100 { background-color: #f3f4f6 !important; }
+[data-admin-theme="light"] .text-gray-500 { color: var(--patch-text-muted) !important; }
+[data-admin-theme="light"] .hover\:bg-gray-200:hover { background-color: #e5e7eb !important; }
+[data-admin-theme="light"] .bg-gray-200 { background-color: #e5e7eb !important; }
+[data-admin-theme="light"] .hover\:bg-gray-700:hover { background-color: var(--patch-hover-bg) !important; }
+[data-admin-theme="light"] .bg-gray-50 { background-color: #f9fafb !important; }
+
+/* login 页输入框 — 暗色硬编码, 亮色下改为浅色 */
+[data-admin-theme="light"] .bg-gray-700 { background-color: var(--patch-input-bg) !important; }
+[data-admin-theme="light"] .border-gray-600 { border-color: var(--patch-input-border) !important; }
+[data-admin-theme="light"] .placeholder\:text-gray-500::placeholder { color: #9ca3af !important; }
+
+/* ===== Layered Glass Cards (分层玻璃卡片) — theme-aware, off by default ===== */
+[data-glass-layered="true"] .adm-card,
+[data-glass-layered="true"] .adm-panel-card,
+[data-glass-layered="true"] .adm-card-card,
+[data-glass-layered="true"] [style*="background-color: var(--adm-card)"]:not(input):not(select):not(textarea):not([class*="fixed"]),
+[data-glass-layered="true"] [style*="backgroundColor: var(--adm-card)"]:not(input):not(select):not(textarea):not([class*="fixed"]) {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--adm-card) 74%, transparent), color-mix(in srgb, var(--adm-card) 48%, transparent)) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 78%, transparent) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 10px 30px color-mix(in srgb, #000 38%, transparent),
+    0 3px 10px color-mix(in srgb, #000 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 45%, transparent) !important;
+  transform: perspective(900px) translateZ(0px);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.3s ease !important;
+}
+[data-glass-layered="true"] .adm-card:hover,
+[data-glass-layered="true"] .adm-panel-card:hover,
+[data-glass-layered="true"] .adm-card-card:hover,
+[data-glass-layered="true"] [style*="background-color: var(--adm-card)"]:not(input):not(select):not(textarea):not([class*="fixed"]):hover,
+[data-glass-layered="true"] [style*="backgroundColor: var(--adm-card)"]:not(input):not(select):not(textarea):not([class*="fixed"]):hover {
+  z-index: 3;
+  transform: none;
+  box-shadow:
+    0 10px 30px color-mix(in srgb, #000 38%, transparent),
+    0 3px 10px color-mix(in srgb, #000 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 45%, transparent) !important;
+}
+
+/* ===== Glass Sidebar (玻璃侧边栏) — floating rounded panel, theme-aware ===== */
+[data-glass-sidebar="true"] aside {
+  margin: 12px;
+  height: calc(100% - 24px);
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--adm-sidebar) 84%, transparent), color-mix(in srgb, var(--adm-sidebar) 62%, transparent)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 72%, transparent) !important;
+  box-shadow:
+    0 18px 44px color-mix(in srgb, #000 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 45%, transparent) !important;
+}
+[data-glass-sidebar="true"] aside .adm-nav-item {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+[data-glass-sidebar="true"] aside .adm-nav-item:hover {
+  background-color: color-mix(in srgb, var(--adm-accent) 12%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--adm-accent) 22%, transparent);
+}
+[data-glass-sidebar="true"] aside .adm-nav-item.adm-accent-bg {
+  background-color: color-mix(in srgb, var(--adm-accent) 18%, transparent) !important;
+}
+
+/* ===== Glass Topbar (玻璃顶栏) — floating rounded panel, theme-aware ===== */
+[data-glass-topbar="true"] .adm-topbar {
+  position: relative;
+  z-index: 60;
+  margin: 12px 12px 0;
+  height: calc(3.5rem - 12px) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--adm-sidebar) 80%, transparent), color-mix(in srgb, var(--adm-sidebar) 56%, transparent)) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  backdrop-filter: blur(16px) saturate(150%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 70%, transparent) !important;
+  box-shadow:
+    0 12px 32px color-mix(in srgb, #000 34%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 42%, transparent) !important;
+}
+
+/* ===== 页面加载水滴动效：每次刷新/切页时，白色水滴从标题右侧飞向首个功能按钮 ===== */
+.adm-topbar {
+  position: relative;
+}
+.adm-load-comet {
+  position: absolute;
+  top: 50%;
+  left: 132px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #ffffff 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0.35) 100%);
+  box-shadow:
+    0 0 10px 2px rgba(255,255,255,0.7),
+    0 0 26px 8px rgba(255,255,255,0.16);
+  opacity: 0;
+  z-index: 70;
+  pointer-events: none;
+  will-change: left, opacity, transform;
+  animation: adm-comet 1.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+.adm-load-comet::before,
+.adm-load-comet::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  pointer-events: none;
+}
+.adm-load-comet::before {
+  width: 140px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.22) 45%, rgba(255,255,255,0.95) 100%);
+}
+.adm-load-comet::after {
+  width: 210px;
+  height: 6px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 55%, rgba(255,255,255,0.35) 100%);
+  filter: blur(3px);
+}
+@keyframes adm-comet {
+  0% {
+    left: 132px;
+    opacity: 0;
+    transform: translateX(-56px) scale(0.5);
+  }
+  10% {
+    left: 132px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 250px);
+    opacity: 0;
+    transform: translateX(0) scale(0.9);
+  }
+}
+
+/* ===== Glass Menus (玻璃下拉/弹窗) — theme-aware ===== */
+[data-glass-menus="true"] .adm-dropdown-menu {
+  background: color-mix(in srgb, var(--adm-card) 88%, transparent) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 72%, transparent) !important;
+  box-shadow:
+    0 16px 40px color-mix(in srgb, #000 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 40%, transparent) !important;
+}
+
+/* ===== Glass Messages Panel (消息面板) — 圆角悬浮磨砂 ===== */
+[data-glass-menus="true"] .adm-messages-panel[style*="var(--adm-sidebar)"] {
+  margin: 12px;
+  height: calc(100% - 24px) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--adm-sidebar) 84%, transparent), color-mix(in srgb, var(--adm-sidebar) 62%, transparent)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 72%, transparent) !important;
+  box-shadow:
+    0 18px 44px color-mix(in srgb, #000 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 45%, transparent) !important;
+}
+/* 关闭状态完全移出屏幕（带边距） */
+[data-glass-menus="true"] .adm-messages-panel[style*="var(--adm-sidebar)"]:not(.translate-x-0) {
+  transform: translateX(calc(100% + 24px)) !important;
+}
+
+/* ===== Glass AI Panel (AI 助手面板) — 圆角悬浮磨砂 ===== */
+[data-glass-menus="true"] .adm-ai-panel {
+  margin: 12px;
+  height: calc(100% - 24px) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--adm-card) 86%, transparent), color-mix(in srgb, var(--adm-card) 64%, transparent)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid color-mix(in srgb, var(--adm-border) 72%, transparent) !important;
+  box-shadow:
+    0 18px 44px color-mix(in srgb, #000 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 45%, transparent) !important;
+}
+
+/* ===== Aurora (极光) — 深空紫罗兰 / 霓虹青紫 ===== */
+[data-admin-panel-style="aurora"][data-admin-theme="dark"] {
+  --adm-bg: #0c0718;
+  --adm-card: rgba(33, 21, 62, 0.92);
+  --adm-sidebar: rgba(20, 11, 44, 0.95);
+  --adm-input: rgba(47, 32, 86, 0.78);
+  --adm-input-border: rgba(167, 139, 250, 0.28);
+  --adm-border: rgba(167, 139, 250, 0.36);
+  --adm-text: #f3e8ff;
+  --adm-text-secondary: #c4b5fd;
+  --adm-accent: #a78bfa;
+  --adm-accent-bg: rgba(167, 139, 250, 0.16);
+  --adm-accent-text: #ffffff;
+  --patch-card-bg: rgba(33, 21, 62, 0.92);
+  --patch-card-border: rgba(167, 139, 250, 0.36);
+  --patch-input-bg: rgba(47, 32, 86, 0.78);
+  --patch-input-border: rgba(167, 139, 250, 0.28);
+  --patch-hover-bg: rgba(167, 139, 250, 0.1);
+}
+[data-admin-panel-style="aurora"][data-admin-theme="light"] {
+  --adm-bg: #f5f2ff;
+  --adm-card: rgba(255, 255, 255, 0.72);
+  --adm-sidebar: rgba(243, 238, 255, 0.85);
+  --adm-input: rgba(237, 231, 255, 0.9);
+  --adm-input-border: rgba(167, 139, 250, 0.3);
+  --adm-border: rgba(167, 139, 250, 0.35);
+  --adm-text: #2e1b4d;
+  --adm-text-secondary: #6d5a9e;
+  --adm-accent: #7c3aed;
+  --adm-accent-bg: rgba(124, 58, 237, 0.12);
+  --adm-accent-text: #ffffff;
+  --patch-card-bg: rgba(255, 255, 255, 0.72);
+  --patch-card-border: rgba(167, 139, 250, 0.35);
+  --patch-input-bg: rgba(237, 231, 255, 0.9);
+  --patch-input-border: rgba(167, 139, 250, 0.3);
+  --patch-hover-bg: rgba(124, 58, 237, 0.08);
+}
+
+/* ===== Ocean (深海) — 深青 / 青蓝霓虹 ===== */
+[data-admin-panel-style="ocean"][data-admin-theme="dark"] {
+  --adm-bg: #031018;
+  --adm-card: rgba(9, 34, 46, 0.92);
+  --adm-sidebar: rgba(5, 24, 34, 0.95);
+  --adm-input: rgba(13, 48, 62, 0.78);
+  --adm-input-border: rgba(34, 211, 238, 0.28);
+  --adm-border: rgba(34, 211, 238, 0.34);
+  --adm-text: #e0faff;
+  --adm-text-secondary: #7dd3fc;
+  --adm-accent: #22d3ee;
+  --adm-accent-bg: rgba(34, 211, 238, 0.16);
+  --adm-accent-text: #04212b;
+  --patch-card-bg: rgba(9, 34, 46, 0.92);
+  --patch-card-border: rgba(34, 211, 238, 0.34);
+  --patch-input-bg: rgba(13, 48, 62, 0.78);
+  --patch-input-border: rgba(34, 211, 238, 0.28);
+  --patch-hover-bg: rgba(34, 211, 238, 0.1);
+}
+[data-admin-panel-style="ocean"][data-admin-theme="light"] {
+  --adm-bg: #effcff;
+  --adm-card: rgba(255, 255, 255, 0.75);
+  --adm-sidebar: rgba(224, 248, 255, 0.85);
+  --adm-input: rgba(214, 242, 250, 0.9);
+  --adm-input-border: rgba(34, 211, 238, 0.32);
+  --adm-border: rgba(8, 145, 178, 0.28);
+  --adm-text: #083344;
+  --adm-text-secondary: #155e75;
+  --adm-accent: #0891b2;
+  --adm-accent-bg: rgba(8, 145, 178, 0.12);
+  --adm-accent-text: #ffffff;
+  --patch-card-bg: rgba(255, 255, 255, 0.75);
+  --patch-card-border: rgba(8, 145, 178, 0.28);
+  --patch-input-bg: rgba(214, 242, 250, 0.9);
+  --patch-input-border: rgba(34, 211, 238, 0.32);
+  --patch-hover-bg: rgba(8, 145, 178, 0.08);
+}
+
+/* ===== Sunset (暮色) — 暖梅 / 橙粉 ===== */
+[data-admin-panel-style="sunset"][data-admin-theme="dark"] {
+  --adm-bg: #170a0d;
+  --adm-card: rgba(48, 19, 30, 0.92);
+  --adm-sidebar: rgba(32, 11, 20, 0.95);
+  --adm-input: rgba(70, 29, 40, 0.78);
+  --adm-input-border: rgba(251, 146, 60, 0.28);
+  --adm-border: rgba(251, 146, 60, 0.35);
+  --adm-text: #fff1f0;
+  --adm-text-secondary: #fdba74;
+  --adm-accent: #fb923c;
+  --adm-accent-bg: rgba(251, 146, 60, 0.16);
+  --adm-accent-text: #2a0f08;
+  --patch-card-bg: rgba(48, 19, 30, 0.92);
+  --patch-card-border: rgba(251, 146, 60, 0.35);
+  --patch-input-bg: rgba(70, 29, 40, 0.78);
+  --patch-input-border: rgba(251, 146, 60, 0.28);
+  --patch-hover-bg: rgba(251, 146, 60, 0.1);
+}
+[data-admin-panel-style="sunset"][data-admin-theme="light"] {
+  --adm-bg: #fff7f0;
+  --adm-card: rgba(255, 255, 255, 0.75);
+  --adm-sidebar: rgba(255, 240, 226, 0.85);
+  --adm-input: rgba(255, 230, 210, 0.9);
+  --adm-input-border: rgba(249, 115, 22, 0.3);
+  --adm-border: rgba(249, 115, 22, 0.32);
+  --adm-text: #431407;
+  --adm-text-secondary: #9a3412;
+  --adm-accent: #ea580c;
+  --adm-accent-bg: rgba(234, 88, 12, 0.12);
+  --adm-accent-text: #ffffff;
+  --patch-card-bg: rgba(255, 255, 255, 0.75);
+  --patch-card-border: rgba(249, 115, 22, 0.32);
+  --patch-input-bg: rgba(255, 230, 210, 0.9);
+  --patch-input-border: rgba(249, 115, 22, 0.3);
+  --patch-hover-bg: rgba(234, 88, 12, 0.08);
+}
+
+/* ===== List Hover Float & Blur (列表悬停浮动+虚化) — optional ===== */
+[data-glass-lists="true"] tbody tr,
+[data-glass-lists="true"] .adm-nav-item,
+[data-glass-lists="true"] .adm-dropdown-item,
+[data-glass-lists="true"] [class*="list-item"],
+[data-glass-lists="true"] [class*="rounded-lg"][class*="border"] {
+  position: relative;
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    background-color 0.25s ease,
+    backdrop-filter 0.3s ease,
+    -webkit-backdrop-filter 0.3s ease !important;
+}
+[data-glass-lists="true"] tbody tr:hover,
+[data-glass-lists="true"] .adm-nav-item:hover,
+[data-glass-lists="true"] .adm-dropdown-item:hover,
+[data-glass-lists="true"] [class*="list-item"]:hover,
+[data-glass-lists="true"] [class*="rounded-lg"][class*="border"]:hover {
+  z-index: 3;
+  transform: perspective(800px) translateZ(12px);
+  -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+  backdrop-filter: blur(10px) saturate(140%) !important;
+  background-color: color-mix(in srgb, var(--adm-card) 78%, transparent) !important;
+  box-shadow:
+    0 10px 26px color-mix(in srgb, #000 34%, transparent),
+    0 3px 8px color-mix(in srgb, #000 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--adm-border) 38%, transparent) !important;
+}
+
+/* Obsidian (and similar) themes use a white accent: solid-accent buttons must
+   use the theme's accent-text color so labels stay readable. */
+[data-admin-panel-style="obsidian"] [style*="background-color: var(--adm-accent)"],
+[data-admin-panel-style="obsidian"] [style*="backgroundColor: var(--adm-accent)"] {
+  color: var(--adm-accent-text) !important;
+}

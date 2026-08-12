@@ -1,0 +1,89 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { ArrowUpLeft } from 'lucide-react'
+import ProductCard from '@/components/product/ProductCard'
+import type { Product, Category } from '@/lib/products'
+import OptimizedImage from '@/components/ui/OptimizedImage'
+
+export default function CategoryClient({
+  category,
+  products,
+}: {
+  category: Category | null
+  products: Product[]
+}) {
+  if (!category) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#F8F5F0]">
+        <p className="font-en text-2xl text-[#6B6B6B]">Collection not found</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-[#F8F5F0]">
+      {/* Hero Banner */}
+      <section className="relative py-20 md:py-28 overflow-hidden bg-[#2C2C2C]">
+        {category.image && (
+          <OptimizedImage
+            src={category.image}
+            alt={category.nameEn || category.name}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-35"
+            objectFit="cover"
+            placeholder="blur"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A1A]/70 via-[#1A1A1A]/40 to-[#1A1A1A]/80" />
+        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <h1 className="font-en text-4xl md:text-6xl text-white font-semibold tracking-tight">
+              {category.nameEn || category.name}
+            </h1>
+            <p className="mt-4 text-white/50 font-sans text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+              {category.descriptionEn || category.description}
+            </p>
+            <p className="mt-2 text-white/30 font-sans text-[10px] tracking-wider uppercase">
+              {products.length} pieces
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Products */}
+      <section className="py-16 md:py-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#6B6B6B]/50 tracking-wider uppercase mb-10">
+            <Link href="/" className="hover:text-[#2C2C2C] transition-colors">Home</Link>
+            <span>/</span>
+            <span className="text-[#8B7D5C]">{category.nameEn || category.name}</span>
+          </nav>
+
+          {products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+              {products.map((product, i) => (
+                <ProductCard key={product.id} product={product} index={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="font-sans text-sm text-[#6B6B6B]/50">This collection is being curated. Check back soon.</p>
+            </div>
+          )}
+
+          <div className="mt-16 text-center">
+            <Link href="/products"
+              className="inline-flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors tracking-wider uppercase font-sans font-medium">
+              <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to All Products
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
