@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
-import { getSocialAccountById, updateSocialAccount } from '@/lib/social-accounts'
+import { getSocialAccountById, updateSocialAccount, canUserManageAccount } from '@/lib/social-accounts'
 import { createTikTokVideoPost, uploadTikTokVideoChunk, refreshTikTokToken } from '@/lib/tiktok'
 import fs from 'fs'
 import path from 'path'
@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
 
     if (account.platform !== 'tiktok') {
       return NextResponse.json({ error: 'This API only supports TikTok' }, { status: 400 })
+    }
+
+    // 修复: 非管理员不能使用他人的社交账号发布
+    if (!canUserManageAccount(auth.user, account)) {
+      return NextResponse.json({ error: 'Forbidden: not your account' }, { status: 403 })
     }
 
     if (!account.accessToken) {

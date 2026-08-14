@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
-import { getSocialAccountById } from '@/lib/social-accounts'
+import { getSocialAccountById, canUserManageAccount } from '@/lib/social-accounts'
 import { publishInstagramMedia, publishInstagramContainer, refreshInstagramToken } from '@/lib/instagram'
 
 export const runtime = 'nodejs'
@@ -29,6 +29,11 @@ export async function POST(req: NextRequest) {
 
     if (account.platform !== 'instagram') {
       return NextResponse.json({ error: 'This API only supports Instagram' }, { status: 400 })
+    }
+
+    // 修复: 非管理员不能使用他人的社交账号发布
+    if (!canUserManageAccount(auth.user, account)) {
+      return NextResponse.json({ error: 'Forbidden: not your account' }, { status: 403 })
     }
 
     if (!account.accessToken) {

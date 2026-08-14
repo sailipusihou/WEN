@@ -698,9 +698,10 @@ export async function PUT(req: NextRequest) {
     const body = await req.json()
     if (!body.id) return NextResponse.json({ error: "Order ID required" }, { status: 400 })
 
-    const operatorName = body.operatorName || auth.user.name || "System"
-    const operatorRole = body.operatorRole || auth.user.role || "system"
-    const operatorId = body.operatorId || auth.user.id || "system"
+    // 修复 H7: operator 身份一律取自会话, 不接受客户端伪造
+    const operatorName = auth.user.name || "System"
+    const operatorRole = auth.user.role || "system"
+    const operatorId = auth.user.id || "system"
 
     const repo = getRepository()
     let updated: Order | null = null
@@ -771,6 +772,10 @@ export async function PUT(req: NextRequest) {
     }
 
     if (body.assignedTo !== undefined) {
+      // 修复 H7: 指派操作需要 orders_assign 权限 (原 orders_process 即可指派)
+      if (!auth.user.permissions.includes('orders_assign')) {
+        return NextResponse.json({ error: 'Forbidden: missing permission orders_assign' }, { status: 403 })
+      }
       updated = repo.orders.update(body.id, {
         assignedTo: body.assignedTo,
         assignedToName: body.assignedToName,

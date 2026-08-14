@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { publishLinkedInPost } from '@/lib/linkedin'
-import { getSocialAccountById } from '@/lib/social-accounts'
+import { getSocialAccountById, canUserManageAccount } from '@/lib/social-accounts'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
 
     if (account.platform !== 'linkedin') {
       return NextResponse.json({ error: 'This API only supports LinkedIn' }, { status: 400 })
+    }
+
+    // 修复: 非管理员不能使用他人的社交账号发布
+    if (!canUserManageAccount(auth.user, account)) {
+      return NextResponse.json({ error: 'Forbidden: not your account' }, { status: 403 })
     }
 
     if (!account.accessToken) {

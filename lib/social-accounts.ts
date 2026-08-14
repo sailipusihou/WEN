@@ -26,6 +26,16 @@ export interface SocialAccount {
   updatedAt: string
 }
 
+// 修复: 非管理员只能使用自己的社交账号 (super_admin/admin 可管理全部)
+export function canUserManageAccount(
+  user: { id: string; role: string },
+  account: { staffId?: string } | null | undefined
+): boolean {
+  if (!account) return false
+  if (['super_admin', 'admin'].includes(user.role)) return true
+  return account.staffId === user.id
+}
+
 function ensureFile(): void {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true })
