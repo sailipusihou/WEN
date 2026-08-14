@@ -12,6 +12,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product, Review } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
+import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
 import { trackReferralVisit } from '@/lib/referral-client'
 
@@ -274,6 +275,8 @@ export default function ProductDetailClient({
           {/* Gallery */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="relative aspect-[4/5] bg-[#EDE8DC]/30 overflow-hidden mb-3 group">
+              {/* 促销角标: 主图左上角显示促销价格字样 */}
+              <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4" />
               <OptimizedImage
                 src={images[selectedImage]}
                 alt={product.nameEn || product.name}
@@ -321,7 +324,9 @@ export default function ProductDetailClient({
 
             {/* Price */}
             <div className="flex items-baseline gap-3 mt-6">
-              <span className="font-en text-3xl font-semibold text-[#2C2C2C]">{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+              {/* 促销价重点标注: 强调色大号 + SALE 标签 */}
+              <span className={`font-en text-3xl font-semibold ${eff.discount > 0 ? 'text-[#B8452E]' : 'text-[#2C2C2C]'}`}>{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+              {eff.discount > 0 && <PromoSaleTag />}
               {(eff.originalPrice || product.originalPrice) && (
                 <span className="font-sans text-sm text-[#6B6B6B]/40 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
               )}

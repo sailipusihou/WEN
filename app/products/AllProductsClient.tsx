@@ -10,6 +10,7 @@ import { convertPrice, formatPrice } from "@/lib/cart-types"
 import type { Product } from "@/lib/products"
 import { useActivePromotions } from "@/lib/promotion-client"
 import { computePromotionForProduct } from "@/lib/promotion-shared"
+import { PromoSaleTag, promoPriceClass } from "@/components/product/PromoBadge"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
 
@@ -343,8 +344,9 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                     <p className="font-sans text-[11px] text-[#6B6B6B]/50 mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-en text-base font-medium text-[#2C2C2C]">
+                    <p className={`font-en text-base font-medium ${promoPriceClass(eff, 'text-[#2C2C2C]')}`}>
                       {formatPrice(convertPrice(eff.price, currency), currency)}
+                      {eff.discount > 0 && <PromoSaleTag />}
                     </p>
                     {(eff.originalPrice || product.originalPrice) && (
                       <p className="font-sans text-xs text-[#6B6B6B]/40 line-through">

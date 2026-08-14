@@ -11,6 +11,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
+import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 
 export default function ShowroomCard({ product, index = 0 }: { product: Product; index?: number }) {
   const tiltRef = useRef<HTMLDivElement>(null)
@@ -142,6 +143,9 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             {String(index + 1).padStart(2, '0')}
           </span>
 
+          {/* 促销角标: 商品图显示促销价格字样 (序号右侧) */}
+          <PromoImageBadge eff={eff} currency={currency} className="top-3 left-10" />
+
           {/* Wishlist */}
           <button
             onClick={handleToggleWishlist}
@@ -173,8 +177,10 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <span className="font-en text-sm text-[#A0885A] block">
+              {/* 促销价重点标注: 强调色 + SALE 标签 */}
+              <span className={`font-en text-sm block ${eff.discount > 0 ? 'text-[#B8452E] font-semibold' : 'text-[#A0885A]'}`}>
                 {formatPrice(convertPrice(eff.price, currency), currency)}
+                {eff.discount > 0 && <PromoSaleTag />}
               </span>
               {eff.originalPrice && (
                 <span className="font-sans text-[9px] text-[#6B6F75]/45 line-through block">

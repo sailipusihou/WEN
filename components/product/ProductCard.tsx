@@ -11,6 +11,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
+import { PromoImageBadge, PromoSaleTag, promoPriceClass } from '@/components/product/PromoBadge'
 
 interface ProductCardProps { product: Product; index?: number }
 
@@ -118,6 +119,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           >
             <Heart size={15} strokeWidth={1.5} />
           </button>
+          {/* 促销角标: 商品图左下角显示促销价格字样 */}
+          <PromoImageBadge eff={eff} currency={currency} />
           {/* Quick add */}
           <button
             onClick={handleAddToCart}
@@ -139,7 +142,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           </h3>
           <p className="font-sans text-[11px] text-[#6B6F75]/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
           <div className="flex items-baseline gap-2 pt-0.5">
-            <span className="font-en text-sm font-medium text-[#2D2F33]">{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+            {/* 促销价重点标注: 强调色 + SALE 标签 */}
+            <span className={`font-en text-sm font-medium ${eff.discount > 0 ? 'text-[#B8452E] font-semibold' : 'text-[#2D2F33]'}`}>{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+            {eff.discount > 0 && <PromoSaleTag />}
             {(eff.originalPrice || product.originalPrice) && (
               <span className="font-sans text-[10px] text-[#6B6F75]/35 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
             )}
