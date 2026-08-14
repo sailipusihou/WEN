@@ -61,6 +61,17 @@ export interface PublicUser {
   bio?: string
   preferredCurrency?: string
   wishlist?: string[]
+  coupons?: Array<{
+    code: string
+    name: string
+    discountType: 'percent' | 'fixed'
+    value: number
+    minSpend: number
+    maxDiscount?: number
+    issuedAt: string
+    expiresAt: string
+    used: boolean
+  }>
   addresses: UserAddress[]
   createdAt: string
 }
@@ -175,7 +186,7 @@ export function toPublicUser(user: User): PublicUser {
     lastName: user.lastName, phone: user.phone,
     avatar: user.avatar, dob: user.dob, gender: user.gender,
     bio: user.bio, preferredCurrency: user.preferredCurrency,
-    addresses: user.addresses, createdAt: user.createdAt,
+    addresses: user.addresses, coupons: user.coupons, createdAt: user.createdAt,
   }
 }
 

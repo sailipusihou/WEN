@@ -8,6 +8,10 @@ export const metadata = {
   description: 'Discover handcrafted ceramics, silk, bamboo, incense, and artisan objects that honor Chinese tradition and elevate everyday life.',
 }
 
+// 首页禁用静态缓存 / 客户端 router cache — 商品价格变更后立刻反映
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function HomePage() {
   await headers()
   const repo = getRepository()

@@ -2,6 +2,10 @@ import { getRepository } from '@/lib/repository'
 import AllProductsClient from './AllProductsClient'
 import type { Metadata } from 'next'
 
+// 商品列表页禁用静态缓存 / 客户端 router cache — 保证改价后看到最新数据
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata: Metadata = {
   title: 'All Products',
   description: 'Browse our full collection of handcrafted handcrafted objects. Celadon, silk, bamboo, incense, and artisan objects that honor Chinese tradition and elevate everyday life.',

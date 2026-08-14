@@ -4,6 +4,10 @@ import type { Metadata } from 'next'
 import { formatPrice } from '@/lib/cart-types'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
+// 商品详情页禁用静态缓存 / 客户端 router cache — 改价后立刻反映最新数据
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, Package, MapPin, Heart, LogOut, Star } from "lucide-react"
+import { User, Package, MapPin, Heart, LogOut, Star, Ticket, Copy, Check } from "lucide-react"
 
 export default function AccountPage() {
   const router = useRouter()
@@ -11,6 +11,7 @@ export default function AccountPage() {
   const [customer, setCustomer] = useState<any>(null)
   const [customerTiers, setCustomerTiers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -30,10 +31,18 @@ export default function AccountPage() {
     localStorage.removeItem("otm_user"); router.push("/"); window.location.reload()
   }
 
+  const copyCoupon = async (code: string) => {
+    try { await navigator.clipboard.writeText(code) } catch { /* ignore */ }
+    setCopiedCoupon(code)
+    setTimeout(() => setCopiedCoupon(null), 2000)
+  }
+
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-otb-terracotta border-t-transparent rounded-full animate-spin" /></div>
   if (!user) return null
   
   const totalOrders = customer?.totalOrders || orders.length
+  const coupons = user.coupons || []
+  const availableCoupons = coupons.filter((c: any) => !c.used && new Date(c.expiresAt).getTime() > Date.now())
   const tierInfo = customerTiers.length > 0
     ? (customerTiers.find(t => totalOrders >= t.minOrders && totalOrders <= t.maxOrders)
        || customerTiers.find(t => t.id === customer?.tier)
@@ -65,7 +74,7 @@ export default function AccountPage() {
         </div>
         <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm font-sans text-otb-ink/40 hover:text-red-500 transition-colors"><LogOut size={14} /> Sign Out</button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-2xl font-serif font-bold text-otb-terracotta">{totalOrders}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Total Orders</p>
@@ -73,6 +82,10 @@ export default function AccountPage() {
         <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-2xl font-serif font-bold text-otb-ink">${(customer?.totalSpent || orders.reduce((s, o) => s + (o.total || 0), 0)).toFixed(2)}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Total Spent</p>
+        </div>
+        <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-4">
+          <p className="text-2xl font-serif font-bold text-otb-ink">{availableCoupons.length}</p>
+          <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Available Coupons</p>
         </div>
         <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-sm font-serif font-bold text-otb-ink">{new Date(user.createdAt).toLocaleDateString()}</p>
@@ -106,6 +119,47 @@ export default function AccountPage() {
           <h3 className="font-serif text-base text-otb-ink group-hover:text-otb-terracotta transition-colors">Wishlist</h3>
           <p className="font-sans text-xs text-otb-ink/40 mt-1">{user.wishlist?.length || 0} saved items</p>
         </Link>
+      </div>
+
+      {/* My Coupons */}
+      <div className="mt-10">
+        <h2 className="font-serif text-xl text-otb-ink mb-4 flex items-center gap-2">
+          <Ticket size={18} className="text-otb-terracotta" /> My Coupons
+        </h2>
+        {coupons.length === 0 ? (
+          <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-8 text-center">
+            <p className="font-sans text-sm text-otb-ink/40">No coupons yet. New-user welcome coupons will appear here after you sign up.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {coupons.map((c: any) => {
+              const status = c.used ? 'used' : new Date(c.expiresAt).getTime() < Date.now() ? 'expired' : 'active'
+              const discountLabel = c.discountType === 'percent' ? `${c.value}% OFF` : `$${c.value} OFF`
+              return (
+                <div key={c.code + c.issuedAt}
+                  className={`bg-white/70 border rounded-sm p-5 flex flex-col ${status === 'active' ? 'border-otb-terracotta/30' : 'border-otb-sand/50 opacity-60'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <button onClick={() => copyCoupon(c.code)} className="inline-flex items-center gap-1.5 font-mono text-sm font-bold text-otb-terracotta hover:opacity-70 transition-opacity" title="Copy code">
+                      {c.code}
+                      {copiedCoupon === c.code ? <Check size={14} className="text-green-600" /> : <Copy size={13} className="text-otb-ink/40" />}
+                    </button>
+                    <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: status === 'active' ? 'rgba(194,120,84,0.12)' : status === 'used' ? 'rgba(107,114,128,0.14)' : 'rgba(245,158,11,0.14)',
+                        color: status === 'active' ? '#C27854' : status === 'used' ? '#6B7280' : '#D97706',
+                      }}>
+                      {status === 'active' ? 'Available' : status === 'used' ? 'Used' : 'Expired'}
+                    </span>
+                  </div>
+                  <p className="font-serif text-2xl font-bold text-otb-ink">{discountLabel}</p>
+                  <p className="font-sans text-xs text-otb-ink/50 mt-1">{c.name}</p>
+                  {c.minSpend > 0 && <p className="font-sans text-[11px] text-otb-ink/40 mt-2">Min spend ${c.minSpend}</p>}
+                  <p className="font-sans text-[11px] text-otb-ink/40 mt-1">Valid until {new Date(c.expiresAt).toLocaleDateString()}</p>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
 }
