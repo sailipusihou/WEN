@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
-import { CNY_TO_USD } from "@/lib/cart-types"
 import {
   type Order,
   type OrderStatus,
@@ -504,22 +503,17 @@ export async function POST(req: NextRequest) {
     const settings = repo.settings.get()
     const total = Math.round((calculatedSubtotal - couponDiscount + shippingCalc.cost) * 100) / 100
 
-    // 修复 M2: 订单金额统一以实收币种 (USD) 入库 — 商品数据库价格为 CNY,
-    // 展示/支付均为 USD 换算值; 此前 CNY 数值标 USD 导致显示虚高 7.2 倍、对账错乱
-    const toUsd = (cny: number) => Math.round((cny / CNY_TO_USD) * 100) / 100
-    const orderTotalUsd = toUsd(total)
-    const orderSubtotalUsd = toUsd(calculatedSubtotal)
-    const orderDiscountUsd = toUsd(couponDiscount)
-    const orderShippingUsd = toUsd(shippingCalc.cost)
+    // 价格基准已统一为 USD: 商品价/运费/优惠券均以 USD 计价, 订单金额直接入库
+    const orderTotalUsd = total
 
     const order: Order = {
       id,
-      items: validatedItems.map(it => ({ ...it, price: toUsd(it.price), subtotal: toUsd(it.subtotal) })),
+      items: validatedItems,
       shipping: body.shipping || {},
-      subtotal: orderSubtotalUsd,
-      discount: orderDiscountUsd,
+      subtotal: calculatedSubtotal,
+      discount: couponDiscount,
       couponCode,
-      shippingCost: orderShippingUsd,
+      shippingCost: shippingCalc.cost,
       total: orderTotalUsd,
       currency: "USD",
       status: "pending",

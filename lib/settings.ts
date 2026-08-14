@@ -378,10 +378,10 @@ const DATA_DIR = path.join(process.cwd(), "data")
 const FILE = path.join(DATA_DIR, "settings.json")
 
 const DEFAULT_ZONES: ShippingZone[] = [
-  { id: "us-canada", name: "United States & Canada", countries: ["United States", "Canada"], baseCost: 250, freeThreshold: 3000, estimatedDaysMin: 7, estimatedDaysMax: 14, carriers: ["UPS", "FedEx", "USPS"] },
-  { id: "europe", name: "Europe", countries: ["United Kingdom", "Germany", "France", "Italy", "Spain", "Netherlands", "Other"], baseCost: 350, freeThreshold: 4000, estimatedDaysMin: 10, estimatedDaysMax: 18, carriers: ["DHL", "FedEx", "UPS"] },
-  { id: "asia-pacific", name: "Asia Pacific", countries: ["Australia", "Japan", "South Korea", "Singapore"], baseCost: 300, freeThreshold: 3500, estimatedDaysMin: 8, estimatedDaysMax: 15, carriers: ["DHL", "EMS", "FedEx"] },
-  { id: "rest-of-world", name: "Rest of World", countries: ["Other"], baseCost: 400, freeThreshold: 5000, estimatedDaysMin: 12, estimatedDaysMax: 21, carriers: ["DHL", "EMS"] },
+  { id: "us-canada", name: "United States & Canada", countries: ["United States", "Canada"], baseCost: 34.72, freeThreshold: 416.67, estimatedDaysMin: 7, estimatedDaysMax: 14, carriers: ["UPS", "FedEx", "USPS"] },
+  { id: "europe", name: "Europe", countries: ["United Kingdom", "Germany", "France", "Italy", "Spain", "Netherlands", "Other"], baseCost: 48.61, freeThreshold: 555.56, estimatedDaysMin: 10, estimatedDaysMax: 18, carriers: ["DHL", "FedEx", "UPS"] },
+  { id: "asia-pacific", name: "Asia Pacific", countries: ["Australia", "Japan", "South Korea", "Singapore"], baseCost: 41.67, freeThreshold: 486.11, estimatedDaysMin: 8, estimatedDaysMax: 15, carriers: ["DHL", "EMS", "FedEx"] },
+  { id: "rest-of-world", name: "Rest of World", countries: ["Other"], baseCost: 55.56, freeThreshold: 694.44, estimatedDaysMin: 12, estimatedDaysMax: 21, carriers: ["DHL", "EMS"] },
 ]
 
 const DEFAULT_FRONTEND: FrontendContent = {
@@ -525,8 +525,8 @@ export const DEFAULTS: SiteSettings = {
   footerEmail: "hello@lowflame.com",
   footerPhone: "+86 400-888-8888",
   currency: "USD",
-  shippingFreeThreshold: 3000,
-  shippingCost: 250,
+  shippingFreeThreshold: 416.67,
+  shippingCost: 34.72,
   smtpHost: "",
   smtpPort: 587,
   smtpUser: "",
@@ -969,7 +969,7 @@ export function calculateShipping(country: string, subtotal: number): { cost: nu
   const zone = getShippingZoneForCountry(country)
   if (!zone) {
     const defaultZone = getSettings().shippingZones.find(z => z.countries.includes("Other"))
-    const cost = defaultZone ? (subtotal >= defaultZone.freeThreshold ? 0 : defaultZone.baseCost) : 250
+    const cost = defaultZone ? (subtotal >= defaultZone.freeThreshold ? 0 : defaultZone.baseCost) : 34.72
     return { cost, estimatedDays: defaultZone ? `${defaultZone.estimatedDaysMin}-${defaultZone.estimatedDaysMax}` : "14-21", zone: defaultZone }
   }
   const cost = subtotal >= zone.freeThreshold ? 0 : zone.baseCost

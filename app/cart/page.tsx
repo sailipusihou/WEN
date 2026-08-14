@@ -120,7 +120,7 @@ export default function CartPage() {
                   <span className="text-[#2C2C2C]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
                 {shipping > 0 && (
-                  <p className="font-sans text-[10px] text-[#6B6B6B]/40">Free shipping on orders over {formatPrice(convertPrice(3000, currency), currency)}</p>
+                  <p className="font-sans text-[10px] text-[#6B6B6B]/40">Free shipping on orders over {formatPrice(convertPrice(416.67, currency), currency)}</p>
                 )}
                 <div className="border-t border-[#EDE8DC]/60 pt-3 flex justify-between font-medium text-[#2C2C2C]">
                   <span className="font-sans text-sm">Total</span>

@@ -5,10 +5,54 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Save, ArrowLeft, Upload, X, ImagePlus, Link as LinkIcon, Factory, RefreshCw, Plus, Video } from "lucide-react"
 import type { Product } from "@/lib/db"
+import { CNY_TO_USD } from "@/lib/cart-types"
 
 interface SupplierOption { id: string; name: string; region?: string }
 
 interface ProductFormProps { initial?: Product | null }
+
+// 美元/人民币双向换算输入 (USD 为存储基准; 在 ¥ 框输入人民币自动换算成美元)
+function UsdCnyField({ label, value, onUsdChange, required, placeholder }: {
+  label: string
+  value: string
+  onUsdChange: (v: string) => void
+  required?: boolean
+  placeholder?: string
+}) {
+  const [cny, setCny] = useState(value ? String(Math.round(Number(value) * CNY_TO_USD * 100) / 100) : "")
+  const [editing, setEditing] = useState<"usd" | "cny">("usd")
+  useEffect(() => {
+    if (editing !== "cny") setCny(value ? String(Math.round(Number(value) * CNY_TO_USD * 100) / 100) : "")
+  }, [value, editing])
+  const inputCls = "w-full px-4 py-2.5 rounded-lg text-sm"
+  const inputStyle = { backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-40">$</span>
+          <input type="number" step="0.01" required={required} value={value}
+            onFocus={() => setEditing("usd")}
+            onChange={e => onUsdChange(e.target.value)}
+            className={`${inputCls} pl-7`} style={inputStyle} placeholder={placeholder || "USD"} />
+        </div>
+        <span className="text-xs opacity-40">≈</span>
+        <div className="flex-1 relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-40">¥</span>
+          <input type="number" step="0.01" value={cny}
+            onFocus={() => setEditing("cny")}
+            onChange={e => {
+              setCny(e.target.value)
+              const v = Number(e.target.value)
+              if (!Number.isNaN(v) && v > 0) onUsdChange(String(Math.round((v / CNY_TO_USD) * 100) / 100))
+            }}
+            className={`${inputCls} pl-7`} style={inputStyle} placeholder="CNY" />
+        </div>
+      </div>
+      <p className="text-[10px] opacity-40 mt-1">直接填美元，或在 ¥ 框输入人民币自动换算为美元</p>
+    </Field>
+  )
+}
 
 export default function ProductForm({ initial }: ProductFormProps) {
   const router = useRouter()
@@ -355,12 +399,8 @@ export default function ProductForm({ initial }: ProductFormProps) {
         {/* Pricing */}
         <Section title="Pricing">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Price (USD) *">
-              <input type="number" step="0.01" value={form.price} onChange={e => update("price", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} required />
-            </Field>
-            <Field label="Original Price">
-              <input type="number" step="0.01" value={form.originalPrice} onChange={e => update("originalPrice", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
-            </Field>
+            <UsdCnyField label="Price (USD) *" value={form.price} onUsdChange={v => update("price", v)} required />
+            <UsdCnyField label="Original Price (划线价)" value={form.originalPrice} onUsdChange={v => update("originalPrice", v)} />
             <Field label="Rating (0-5)">
               <input type="number" step="0.1" min="0" max="5" value={form.rating} onChange={e => update("rating", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
             </Field>
@@ -378,9 +418,7 @@ export default function ProductForm({ initial }: ProductFormProps) {
                 ))}
               </select>
             </Field>
-            <Field label="Cost Price (USD)">
-              <input type="number" step="0.01" value={form.costPrice} onChange={e => update("costPrice", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} placeholder="Supplier cost" />
-            </Field>
+            <UsdCnyField label="Cost Price (USD)" value={form.costPrice} onUsdChange={v => update("costPrice", v)} placeholder="Supplier cost" />
             <Field label="Stock Quantity">
               <input type="number" min="0" value={form.stock} onChange={e => update("stock", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
             </Field>
