@@ -59,6 +59,12 @@ function MessagesPage() {
   const productPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // 无登录 cookie 直接跳登录页, 避免匿名 401 噪音
+    if (!document.cookie.includes('user_token=')) {
+      router.push("/login")
+      setLoading(false)
+      return
+    }
     fetch("/api/auth/user").then(r => r.ok ? r.json() : Promise.reject()).then(d => { setUser(d.user); setLoading(false) }).catch(() => { router.push("/login"); setLoading(false) })
   }, [router])
 
