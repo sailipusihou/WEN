@@ -26,6 +26,8 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [avatarInfoOpen, setAvatarInfoOpen] = useState(false)
   const [shipments, setShipments] = useState<any[]>([])
+  // staff 头像加载失败回退到首字母占位
+  const [staffAvatarFailed, setStaffAvatarFailed] = useState(false)
 
   // ---- 订单完成后评价 (评论仅从订单入口发起, 核验后自动展示在商品页) ----
   const [userEmail, setUserEmail] = useState("")
@@ -263,8 +265,8 @@ export default function OrderDetailPage() {
                     if (meta) setAvatarInfoOpen(true)
                   }}
                 >
-                  {order.assignedToAvatar ? (
-                    <img src={order.assignedToAvatar} alt="" className="w-full h-full object-cover" />
+                  {order.assignedToAvatar && !staffAvatarFailed ? (
+                    <img src={order.assignedToAvatar} alt="" className="w-full h-full object-cover" onError={() => setStaffAvatarFailed(true)} />
                   ) : (
                     order.assignedToName.charAt(0).toUpperCase()
                   )}

@@ -15,6 +15,12 @@ export default function ProfilePage() {
   const [showNew, setShowNew] = useState(false)
   const [systemAvatars, setSystemAvatars] = useState<any[]>([])
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  // 头像图片加载失败时回退到首字母占位 (修复: 失效头像显示空白)
+  const [avatarFailed, setAvatarFailed] = useState(false)
+
+  useEffect(() => {
+    setAvatarFailed(false)
+  }, [form.avatar])
 
   useEffect(() => {
     fetch("/api/auth/user").then(r => r.ok ? r.json() : Promise.reject()).then(d => {
@@ -78,8 +84,8 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <div className="relative group">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-otb-sand/30 flex items-center justify-center">
-              {form.avatar ? (
-                <img src={form.avatar} className="w-full h-full object-cover" />
+              {form.avatar && !avatarFailed ? (
+                <img src={form.avatar} className="w-full h-full object-cover" onError={() => setAvatarFailed(true)} />
               ) : (
                 <span className="text-2xl font-bold text-otb-terracotta">{(user.firstName || user.email || "U").charAt(0).toUpperCase()}</span>
               )}

@@ -11,6 +11,10 @@ export default function AccountPage() {
   const [customer, setCustomer] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null)
+  // 头像图片加载失败时回退到占位图标
+  const [avatarFailed, setAvatarFailed] = useState(false)
+
+  useEffect(() => { setAvatarFailed(false) }, [user?.avatar])
 
   useEffect(() => {
     Promise.all([
@@ -81,8 +85,8 @@ export default function AccountPage() {
         </Link>
         <Link href="/account/profile" className="bg-white/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
           <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center bg-otb-terracotta/10 mb-3">
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+          {user?.avatar && !avatarFailed ? (
+            <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={() => setAvatarFailed(true)} />
           ) : (
             <User size={28} className="text-otb-terracotta" />
           )}
