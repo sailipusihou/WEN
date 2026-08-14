@@ -123,6 +123,12 @@ export default function AccountPage() {
               return (
                 <div key={c.code + c.issuedAt}
                   className={`bg-white/70 border rounded-sm p-5 flex flex-col ${status === 'active' ? 'border-otb-terracotta/30' : 'border-otb-sand/50 opacity-60'}`}>
+                  {/* 优惠券图 (后台 AI 生图生成) */}
+                  {c.imageUrl && (
+                    <div className="mb-3 overflow-hidden rounded-sm">
+                      <img src={c.imageUrl} alt={c.name} className="w-full h-24 object-cover" />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between mb-3">
                     <button onClick={() => copyCoupon(c.code)} className="inline-flex items-center gap-1.5 font-mono text-sm font-bold text-otb-terracotta hover:opacity-70 transition-opacity" title="Copy code">
                       {c.code}

@@ -28,6 +28,8 @@ export interface Coupon {
   validDays: number
   // 全局使用上限 (修复 H2: 原优惠券无上限, welcome 券可被无限刷)
   maxUsage?: number
+  // 优惠券图片 (后台 AI 生图生成, 前端展示用)
+  imageUrl?: string
   active: boolean
   usedCount: number
   createdAt: string

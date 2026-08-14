@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Percent, Ticket, Plus, Trash2, Eye, EyeOff, Package, Layers, Globe,
-  Copy, Check, Sparkles, Pencil, X, Clock, TrendingUp, Gift, Tag, CalendarClock, Wand2,
+  Copy, Check, Sparkles, Pencil, X, Clock, TrendingUp, Gift, Tag, CalendarClock, Wand2, ImageIcon,
 } from 'lucide-react'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 
@@ -56,7 +56,7 @@ export default function AdminPromotionsPage() {
   const [pForm, setPForm] = useState({ ...emptyPromo })
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null)
   // New / edit coupon form
-  const emptyCoupon = { code: '', name: '', kind: 'manual', discountType: 'percent', value: '', minSpend: '', maxDiscount: '', validDays: '30', active: true }
+  const emptyCoupon = { code: '', name: '', kind: 'manual', discountType: 'percent', value: '', minSpend: '', maxDiscount: '', validDays: '30', active: true, imageUrl: '' }
   const [cForm, setCForm] = useState({ ...emptyCoupon })
   const [editingCouponId, setEditingCouponId] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
@@ -154,10 +154,40 @@ export default function AdminPromotionsPage() {
     setCForm({
       code: c.code || '', name: c.name || '', kind: c.kind || 'manual', discountType: c.discountType || 'percent',
       value: String(c.value ?? ''), minSpend: String(c.minSpend ?? ''), maxDiscount: c.maxDiscount ? String(c.maxDiscount) : '',
-      validDays: String(c.validDays ?? 30), active: c.active !== false,
+      validDays: String(c.validDays ?? 30), active: c.active !== false, imageUrl: c.imageUrl || '',
     })
   }
   const resetCouponForm = () => { setCForm({ ...emptyCoupon }); setEditingCouponId(null) }
+
+  // ---- 优惠券图生成 (复用后台已配置的 AI 生图) ----
+  const [couponImgGenerating, setCouponImgGenerating] = useState(false)
+  const [couponImgError, setCouponImgError] = useState('')
+  const generateCouponImage = async () => {
+    const code = cForm.code.trim() || 'COUPON'
+    const name = cForm.name.trim() || code
+    const value = Number(cForm.value) || 0
+    const discountLabel = value > 0 ? (cForm.discountType === 'percent' ? `${value}% OFF` : `$${value} OFF`) : 'SPECIAL OFFER'
+    const prompt = `Elegant e-commerce discount coupon design for "${name}" (code ${code}), large "${discountLabel}" in the center, luxurious oriental aesthetic with warm gold and deep red tones, subtle traditional Chinese pattern background, clean premium layout, high detail, vector style, square format`
+    setCouponImgGenerating(true)
+    setCouponImgError('')
+    try {
+      const res = await fetch('/api/marketing/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'text', prompt, size: '1024x1024', count: 1, platform: 'general' }),
+      })
+      const d = await res.json()
+      if (res.ok && d.images && d.images.length > 0) {
+        setCForm(s => ({ ...s, imageUrl: d.images[0] }))
+      } else {
+        setCouponImgError(d.error || 'Image generation failed')
+      }
+    } catch {
+      setCouponImgError('Connection error')
+    } finally {
+      setCouponImgGenerating(false)
+    }
+  }
 
   const generateCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -178,6 +208,7 @@ export default function AdminPromotionsPage() {
       maxDiscount: cForm.maxDiscount ? Number(cForm.maxDiscount) : undefined,
       validDays: Number(cForm.validDays) || 30,
       active: cForm.active,
+      imageUrl: cForm.imageUrl || undefined,
     }
     const res = await fetch('/api/coupons', {
       method: editingCouponId ? 'PUT' : 'POST',
@@ -432,6 +463,9 @@ export default function AdminPromotionsPage() {
               <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.4) }}
                 className="rounded-xl border p-5" style={{ backgroundColor: 'var(--adm-card)', borderColor: 'var(--adm-border)' }}>
                 <div className="flex items-start justify-between gap-3">
+                  {c.imageUrl && (
+                    <img src={c.imageUrl} alt={c.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <button onClick={() => copyCode(c.code)} className="inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-lg transition-colors"
@@ -532,6 +566,31 @@ export default function AdminPromotionsPage() {
                 <CalendarClock size={16} style={{ color: 'var(--adm-text-secondary)' }} className="shrink-0" />
               </div>
             </Field>
+
+            {/* 优惠券图生成 (复用后台 AI 生图) */}
+            <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: 'var(--adm-border)' }}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image</p>
+                <button onClick={generateCouponImage} disabled={couponImgGenerating}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--adm-accent-bg)', color: 'var(--adm-accent)' }}>
+                  <ImageIcon size={13} /> {couponImgGenerating ? 'Generating...' : 'Generate with AI'}
+                </button>
+              </div>
+              {cForm.imageUrl ? (
+                <div className="relative">
+                  <img src={cForm.imageUrl} alt="Coupon preview" className="w-full max-h-48 object-cover rounded-md" />
+                  <button onClick={() => setCForm(s => ({ ...s, imageUrl: '' }))}
+                    className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/50 text-white hover:bg-black/70" title="Remove image">
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-[11px]" style={{ color: 'var(--adm-text-secondary)' }}>根据券名/折扣自动生成优惠券效果图，保存后关联到该券并可在前端展示</p>
+              )}
+              {couponImgError && <p className="text-[11px] text-red-500">{couponImgError}</p>}
+            </div>
+
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={cForm.active} onChange={e => setCForm(s => ({ ...s, active: e.target.checked }))} className="w-4 h-4" />
               <span className="text-sm" style={{ color: 'var(--adm-text)' }}>Active</span>
