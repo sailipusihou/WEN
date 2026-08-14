@@ -9,7 +9,6 @@ export default function AccountPage() {
   const [user, setUser] = useState<any>(null)
   const [orders, setOrders] = useState<any[]>([])
   const [customer, setCustomer] = useState<any>(null)
-  const [customerTiers, setCustomerTiers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null)
 
@@ -20,7 +19,6 @@ export default function AccountPage() {
     ]).then(([userData, ordersData]) => {
       setUser(userData.user);
       setCustomer(userData.customer || null);
-      setCustomerTiers(userData.customerTiers || []);
       setOrders(Array.isArray(ordersData) ? ordersData : []);
       setLoading(false);
     }).catch(() => { router.push("/login"); setLoading(false) })
@@ -43,11 +41,6 @@ export default function AccountPage() {
   const totalOrders = customer?.totalOrders || orders.length
   const coupons = user.coupons || []
   const availableCoupons = coupons.filter((c: any) => !c.used && new Date(c.expiresAt).getTime() > Date.now())
-  const tierInfo = customerTiers.length > 0
-    ? (customerTiers.find(t => totalOrders >= t.minOrders && totalOrders <= t.maxOrders)
-       || customerTiers.find(t => t.id === customer?.tier)
-       || customerTiers[0])
-    : null
 
   return <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="flex items-center justify-between mb-8">
@@ -57,11 +50,6 @@ export default function AccountPage() {
             <h1 className="font-serif text-2xl md:text-3xl text-otb-ink">Hello, {user.firstName}!</h1>
             <div className="flex items-center gap-2 mt-1">
               <p className="font-sans text-sm text-otb-ink/50">{user.email}</p>
-              {tierInfo && (
-                <span className="text-xs font-sans px-2 py-0.5 rounded-sm" style={{ backgroundColor: tierInfo.bgColor, color: tierInfo.color }}>
-                  {tierInfo.name}
-                </span>
-              )}
             </div>
           </div>
         </div>
