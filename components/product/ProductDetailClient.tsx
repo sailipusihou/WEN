@@ -57,14 +57,8 @@ export default function ProductDetailClient({
   const referralCode = searchParams.get('ref')
   const sourceChannel = searchParams.get('channel') || 'direct'
 
-  // ---- Reviews ----
+  // ---- Reviews (仅展示; 评论由客户在订单完成后于订单页发起, 核验后自动展示) ----
   const [reviews, setReviews] = useState<Review[]>(reviewsProp)
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewContent, setReviewContent] = useState('')
-  const [reviewOrderNo, setReviewOrderNo] = useState('')
-  const [reviewEmail, setReviewEmail] = useState('')
-  const [reviewSubmitting, setReviewSubmitting] = useState(false)
-  const [reviewMsg, setReviewMsg] = useState<{ type: 'success' | 'info' | 'error'; text: string } | null>(null)
 
   const fetchReviews = async () => {
     if (!product) return
@@ -72,48 +66,6 @@ export default function ProductDetailClient({
       const r = await fetch(`/api/reviews?productId=${encodeURIComponent(product.id)}`)
       if (r.ok) setReviews(await r.json())
     } catch {}
-  }
-
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!product || reviewSubmitting) return
-    if (!reviewContent.trim()) {
-      setReviewMsg({ type: 'error', text: 'Please write your review first.' })
-      return
-    }
-    setReviewSubmitting(true)
-    setReviewMsg(null)
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          rating: reviewRating,
-          content: reviewContent,
-          orderId: reviewOrderNo.trim() || undefined,
-          email: reviewEmail.trim() || undefined,
-        }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) {
-        if (data.verified) {
-          setReviewMsg({ type: 'success', text: 'Thanks! Your review is now live below.' })
-          setReviewContent('')
-          setReviewOrderNo('')
-          fetchReviews()
-        } else {
-          setReviewMsg({ type: 'info', text: 'Review submitted. It will appear after approval. For instant publishing, add a completed order number and its email.' })
-          setReviewContent('')
-        }
-      } else {
-        setReviewMsg({ type: 'error', text: data.error || 'Could not submit review. Please try again.' })
-      }
-    } catch {
-      setReviewMsg({ type: 'error', text: 'Connection error. Please try again.' })
-    } finally {
-      setReviewSubmitting(false)
-    }
   }
 
   // Refresh reviews on the client so newly published reviews appear immediately
@@ -431,61 +383,10 @@ export default function ProductDetailClient({
           <div className="divider-premium" />
           <h2 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold mt-10 text-center tracking-tight">Reviews</h2>
 
-          {/* Write a review */}
-          <form onSubmit={handleSubmitReview} className="mt-8 bg-white/70 border border-[#EDE8DC]/50 p-6 md:p-8">
-            <h3 className="font-en text-lg text-[#2C2C2C] font-semibold">Write a Review</h3>
-            <p className="font-sans text-[11px] text-[#6B6B6B]/60 mt-1 leading-relaxed">
-              Finished your order? Enter the order number and email used at checkout to publish your review instantly.
-            </p>
-            <div className="flex items-center gap-1 mt-4">
-              {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} type="button" onClick={() => setReviewRating(n)} aria-label={`${n} star${n > 1 ? 's' : ''}`} className="p-0.5">
-                  <Star size={20} className={n <= reviewRating ? 'fill-[#B8A06C] text-[#B8A06C]' : 'text-[#D8CFC0]'} />
-                </button>
-              ))}
-              <span className="font-sans text-[11px] text-[#6B6B6B]/50 ml-2">{reviewRating}/5</span>
-            </div>
-            <textarea
-              value={reviewContent}
-              onChange={e => setReviewContent(e.target.value)}
-              rows={3}
-              maxLength={2000}
-              placeholder="Share your experience with this piece..."
-              className="mt-3 w-full px-4 py-3 border border-[#EDE8DC] bg-white text-sm font-sans text-[#2C2C2C] placeholder:text-[#6B6B6B]/35 focus:outline-none focus:border-[#B8A06C]/50 transition-colors"
-            />
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                value={reviewOrderNo}
-                onChange={e => setReviewOrderNo(e.target.value)}
-                placeholder="Order number (e.g. OTM-XXXX)"
-                className="px-4 py-2.5 border border-[#EDE8DC] bg-white text-sm font-sans text-[#2C2C2C] placeholder:text-[#6B6B6B]/35 focus:outline-none focus:border-[#B8A06C]/50 transition-colors"
-              />
-              <input
-                value={reviewEmail}
-                onChange={e => setReviewEmail(e.target.value)}
-                type="email"
-                placeholder="Email used at checkout (optional)"
-                className="px-4 py-2.5 border border-[#EDE8DC] bg-white text-sm font-sans text-[#2C2C2C] placeholder:text-[#6B6B6B]/35 focus:outline-none focus:border-[#B8A06C]/50 transition-colors"
-              />
-            </div>
-            {reviewMsg && (
-              <p className={`font-sans text-[11px] mt-3 ${reviewMsg.type === 'error' ? 'text-red-500' : reviewMsg.type === 'success' ? 'text-[#6E8B83]' : 'text-[#6B6B6B]/60'}`}>
-                {reviewMsg.text}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={reviewSubmitting}
-              className="mt-4 px-6 py-3 bg-[#2C2C2C] text-white text-[10px] tracking-[0.12em] uppercase font-sans font-medium hover:bg-[#4A4D52] transition-colors disabled:opacity-50"
-            >
-              {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </form>
-
-          {/* Review list */}
+          {/* 评论展示区 (无写评论入口 — 评论由客户订单完成后在订单页发起) */}
           <div className="mt-8 space-y-4">
             {reviews.length === 0 ? (
-              <p className="text-center font-sans text-sm text-[#6B6B6B]/50 py-8">No reviews yet — be the first to share your experience.</p>
+              <p className="text-center font-sans text-sm text-[#6B6B6B]/50 py-8">No reviews yet. Reviews from customers who completed an order will appear here.</p>
             ) : (
               reviews.map((review, i) => (
                 <motion.div key={review.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}

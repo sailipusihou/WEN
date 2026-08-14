@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { ArrowLeft, Package, MapPin, CheckCircle, Clock, CreditCard, FileText, Truck, User, ExternalLink, Info, X, Plane, Warehouse, Navigation, AlertCircle, Undo } from "lucide-react"
+import { ArrowLeft, Package, MapPin, CheckCircle, Clock, CreditCard, FileText, Truck, User, ExternalLink, Info, X, Plane, Warehouse, Navigation, AlertCircle, Undo, Star } from "lucide-react"
 import { findAvatarMeta } from "@/lib/avatars"
 
 // 物流状态显示配置 (面向海外客户, 英文界面)
@@ -26,6 +26,45 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [avatarInfoOpen, setAvatarInfoOpen] = useState(false)
   const [shipments, setShipments] = useState<any[]>([])
+
+  // ---- 订单完成后评价 (评论仅从订单入口发起, 核验后自动展示在商品页) ----
+  const [userEmail, setUserEmail] = useState("")
+  const [itemReviews, setItemReviews] = useState<Record<string, { rating: number; content: string; submitting: boolean; msg: string; ok: boolean }>>({})
+
+  useEffect(() => {
+    fetch("/api/auth/user").then(r => r.ok ? r.json() : null).then(d => { if (d?.user?.email) setUserEmail(d.user.email) }).catch(() => {})
+  }, [])
+
+  const submitItemReview = async (item: any) => {
+    const rv = itemReviews[item.id] || { rating: 5, content: "", submitting: false, msg: "", ok: false }
+    if (rv.submitting) return
+    if (!rv.content.trim()) {
+      setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, msg: "Please write your review first.", ok: false } }))
+      return
+    }
+    setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, submitting: true, msg: "" } }))
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: item.productId || item.id,
+          rating: rv.rating,
+          content: rv.content,
+          orderId: order.id,
+          email: userEmail,
+        }),
+      })
+      const d = await res.json()
+      if (d.verified) {
+        setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, submitting: false, content: "", msg: "Thanks! Your review is now live on the product page.", ok: true } }))
+      } else {
+        setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, submitting: false, msg: d.error || "Could not submit review. Please try again.", ok: false } }))
+      }
+    } catch {
+      setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, submitting: false, msg: "Connection error. Please try again.", ok: false } }))
+    }
+  }
 
   useEffect(() => {
     if (!params?.id) return
@@ -162,6 +201,50 @@ export default function OrderDetailPage() {
               )}
             </div>
           </div>
+
+          {/* 订单完成后评价 (仅 delivered/completed 可评论) */}
+          {["delivered", "completed"].includes(order.status) && (
+            <div className="bg-white/70 border border-otb-sand/50 rounded-sm p-6">
+              <h2 className="font-serif text-sm text-otb-ink font-medium mb-1">Review Your Order</h2>
+              <p className="font-sans text-xs text-otb-ink/50 mb-4">Share your experience — published reviews appear instantly on each product page.</p>
+              <div className="space-y-5">
+                {items.map((item: any) => {
+                  const rv = itemReviews[item.id] || { rating: 5, content: "", submitting: false, msg: "", ok: false }
+                  return (
+                    <div key={item.id} className="border-t border-otb-sand/30 pt-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-9 h-9 bg-otb-sand/20 rounded-sm overflow-hidden shrink-0">
+                          {item.image ? <img src={item.image} className="w-full h-full object-cover" alt={item.nameEn || item.name} /> : <Package size={14} className="text-otb-ink/20 m-auto mt-2.5" />}
+                        </div>
+                        <p className="font-sans text-sm text-otb-ink font-medium">{item.nameEn || item.name}</p>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map(n => (
+                          <button key={n} type="button" onClick={() => setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, rating: n } }))}
+                            aria-label={`${n} star${n > 1 ? "s" : ""}`} className="p-0.5">
+                            <Star size={16} className={n <= rv.rating ? "fill-[#B8A06C] text-[#B8A06C]" : "text-[#D8CFC0]"} />
+                          </button>
+                        ))}
+                        <span className="font-sans text-[11px] text-otb-ink/50 ml-2">{rv.rating}/5</span>
+                      </div>
+                      <textarea value={rv.content} onChange={e => setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, content: e.target.value } }))}
+                        rows={2} placeholder="How was this piece? Craft, quality, packaging..."
+                        className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+                      <div className="flex items-center gap-3 mt-2">
+                        <button type="button" onClick={() => submitItemReview(item)} disabled={rv.submitting}
+                          className="px-4 py-2 bg-otb-terracotta text-white font-serif text-xs rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors">
+                          {rv.submitting ? "Submitting..." : "Submit Review"}
+                        </button>
+                        {rv.msg && (
+                          <p className={"font-sans text-[11px] " + (rv.ok ? "text-green-600" : "text-red-500")}>{rv.msg}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
