@@ -403,6 +403,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(sanitizeSettingsForAdmin(updated))
   } catch (e: any) {
     console.error('[Settings PUT] error:', e)
-    return NextResponse.json({ error: `Failed: ${e?.message || 'Unknown'}` }, { status: 400 })
+    // 修复 L14: 不回显内部错误消息
+    return NextResponse.json({ error: 'Failed to save settings' }, { status: 400 })
   }
 }

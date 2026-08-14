@@ -38,7 +38,7 @@ async function fetchFromPayoneerAPI(base: string, accessToken: string): Promise<
           orderId: item.order_id || '',
           amount,
           fee,
-          netAmount: amount - fee,
+          netAmount: Math.round((amount - fee) * 100) / 100,
           currency: item.currency || 'USD',
           status: item.status?.toUpperCase() || 'PENDING',
           createdAt: item.created_at || item.date || '',
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
         for (const txn of completedTxns) {
           const amount = txn.amount || 0
           const fee = txn.fee || 0
-          const netAmount = amount - fee
+          const netAmount = Math.round((amount - fee) * 100) / 100
           const txnId = txn.transactionId || txn.id || ''
           const txnDate = txn.createdAt || txn.create_time || ''
           const customField = txn.customField || ''

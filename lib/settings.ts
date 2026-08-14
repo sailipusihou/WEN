@@ -829,20 +829,90 @@ export function normalizeSavedSettings(saved: any): SiteSettings {
   }
 }
 
+function readSettingsFromJson(): SiteSettings | null {
+  try {
+    if (fs.existsSync(FILE)) {
+      const raw = fs.readFileSync(FILE, "utf-8").replace(/^\uFEFF/, "").trim()
+      return normalizeSavedSettings(JSON.parse(raw))
+    }
+  } catch {}
+  return null
+}
+
+function isSqliteBackend(): boolean {
+  return (process.env.DATABASE_BACKEND || 'json') === 'sqlite'
+}
+
+// 修复 H18 (双后端设置分裂): 双源自愈收敛标志, 每个进程只执行一次
+let settingsConverged = false
+
+function convergeSqliteSettings(fromRepo: SiteSettings): SiteSettings {
+  // 以 SQLite 为主, 用 JSON 侧补齐 SQLite 缺失/为空的字段 (一次性, 防丢配置)
+  const jsonSide = readSettingsFromJson()
+  if (!jsonSide) return fromRepo
+  let changed = false
+  const merged: any = { ...fromRepo }
+  for (const key of Object.keys(jsonSide)) {
+    const v = (jsonSide as any)[key]
+    if (v === undefined) continue
+    const cur = (fromRepo as any)[key]
+    const missing = cur === undefined || cur === null || cur === ''
+    if (missing) {
+      merged[key] = v
+      changed = true
+    }
+  }
+  if (changed) {
+    try {
+      const repo = require('@/lib/repository').getRepository()
+      repo?.settings?.update?.(merged)
+    } catch (e) {
+      console.warn('[Settings] Converge write failed:', e)
+    }
+  }
+  return merged as SiteSettings
+}
+
 export function getSettings(): SiteSettings {
   return getCachedData('settings', FILE, () => {
-    try {
-      if (fs.existsSync(FILE)) {
-        const raw = fs.readFileSync(FILE, "utf-8").replace(/^\uFEFF/, "").trim()
-        return normalizeSavedSettings(JSON.parse(raw))
+    // 修复 H18: SQLite 后端时优先从当前后端读取 (原直读 JSON, 后台配置改了不生效)
+    if (isSqliteBackend()) {
+      try {
+        const repo = require('@/lib/repository').getRepository()
+        const fromRepo = repo?.settings?.get?.()
+        if (fromRepo && typeof fromRepo === 'object' && Object.keys(fromRepo).length > 0) {
+          if (!settingsConverged) {
+            settingsConverged = true
+            return convergeSqliteSettings(fromRepo)
+          }
+          return fromRepo
+        }
+      } catch (e) {
+        console.warn('[Settings] SQLite read failed, falling back to JSON:', e)
       }
-    } catch {}
+    }
+    const jsonSide = readSettingsFromJson()
+    if (jsonSide) return jsonSide
     return DEFAULTS
   }, CACHE_TTL.settings)
 }
 
 export function saveSettings(updates: Partial<SiteSettings>): SiteSettings {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+  // 修复 H18: SQLite 后端以 SQLite 为准, JSON 同步为镜像备份 (双源一致)
+  if (isSqliteBackend()) {
+    try {
+      const repo = require('@/lib/repository').getRepository()
+      const saved = repo?.settings?.update?.(updates)
+      if (saved && typeof saved === 'object') {
+        fs.writeFileSync(FILE, JSON.stringify(saved, null, 2), "utf-8")
+        invalidateCache('settings')
+        return saved
+      }
+    } catch (e) {
+      console.warn('[Settings] SQLite save failed, falling back to JSON:', e)
+    }
+  }
   const current = getSettings()
   const updated = {
     ...current,

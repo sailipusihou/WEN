@@ -230,7 +230,7 @@ async function fetchFromTransactionSearchAPI(base: string, accessToken: string, 
             orderId: info.custom_field || info.invoice_id || '',
             amount,
             fee,
-            netAmount: amount - fee,
+            netAmount: Math.round((amount - fee) * 100) / 100,
             currency: info.transaction_amount?.currency_code || 'USD',
             status: info.transaction_status === 'S' ? 'COMPLETED' : info.transaction_status,
             createdAt: info.transaction_initiation_date,
@@ -418,7 +418,7 @@ export async function POST(req: NextRequest) {
         for (const txn of completedTxns) {
           const amount = txn.amount || 0
           const fee = txn.fee || 0
-          const netAmount = amount - fee
+          const netAmount = Math.round((amount - fee) * 100) / 100
           const txnId = txn.transactionId || txn.id || ''
           const txnDate = txn.createdAt || txn.create_time || ''
           const customField = txn.customField || ''
@@ -649,7 +649,11 @@ export async function POST(req: NextRequest) {
       const captureId = order.paypalTransaction?.captureId
       if (!captureId) return NextResponse.json({ error: "No capture ID found for order" }, { status: 400 })
 
-      const refundAmountValue = body.amount || order.total
+      // 修复 L2: 金额强转 Number (原字符串值会抛 toFixed TypeError 被吞成 400)
+      const refundAmountValue = body.amount !== undefined && body.amount !== '' ? Number(body.amount) : order.total
+      if (Number.isNaN(refundAmountValue) || refundAmountValue <= 0) {
+        return NextResponse.json({ error: "Invalid refund amount" }, { status: 400 })
+      }
 
       const response = await fetch(`${getPayPalConfig().base}/v2/payments/captures/${captureId}/refund`, {
         method: "POST",

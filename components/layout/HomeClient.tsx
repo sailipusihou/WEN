@@ -483,30 +483,40 @@ export default function HomeClient({ featuredProducts, heroBgImage = "" }: { fea
             {journal.body && <p className="font-sans text-sm text-ink-soft/60 mt-3 max-w-lg leading-relaxed">{journal.body}</p>}
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {(journal.entries || []).map((entry: any, i: number) => (
-              <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }} className="group cursor-pointer">
-                <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
-                  {entry.image && (
-                    <OptimizedImage
-                      src={entry.image}
-                      alt={entry.title || "Journal entry"}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      objectFit="cover"
-                      placeholder="blur"
-                    />
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-[9px] text-ink-soft/35 font-sans tracking-[0.1em] uppercase mb-2">
-                  <span>{entry.date}</span>
-                  <span className="w-1 h-1 rounded-full bg-coral/30" />
-                  <span>{entry.readTime} min</span>
-                </div>
-                <h3 className="font-en text-base text-ink-deep font-semibold group-hover:text-coral transition-colors leading-snug">{entry.title}</h3>
-                <p className="font-sans text-[11px] text-ink-soft/55 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
-              </motion.div>
-            ))}
+            {(journal.entries || []).map((entry: any, i: number) => {
+              // 修复 M10: 有链接的文章可点击跳转, 无链接不再显示假 cursor-pointer
+              const cardInner = (
+                <>
+                  <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
+                    {entry.image && (
+                      <OptimizedImage
+                        src={entry.image}
+                        alt={entry.title || "Journal entry"}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        objectFit="cover"
+                        placeholder="blur"
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[9px] text-ink-soft/35 font-sans tracking-[0.1em] uppercase mb-2">
+                    <span>{entry.date}</span>
+                    <span className="w-1 h-1 rounded-full bg-coral/30" />
+                    <span>{entry.readTime} min</span>
+                  </div>
+                  <h3 className="font-en text-base text-ink-deep font-semibold group-hover:text-coral transition-colors leading-snug">{entry.title}</h3>
+                  <p className="font-sans text-[11px] text-ink-soft/55 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
+                </>
+              )
+              return (
+                <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }} className={`group ${entry.link ? 'cursor-pointer' : ''}`}>
+                  {entry.link ? (
+                    <Link href={entry.link} className="block">{cardInner}</Link>
+                  ) : cardInner}
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>

@@ -135,7 +135,8 @@ export async function GET(req: NextRequest) {
 
   const rows = orders.map(order => {
     const items = order.items || []
-    const itemsSummary = items.map((i: any) => `${i.nameEn || i.name} x${i.quantity} ($${((i.price || 0) * (i.quantity || 1)).toFixed(2)})`).join('; ')
+    // 修复 L1: 乘积四舍五入 (原浮点乘积可能产生长尾小数)
+    const itemsSummary = items.map((i: any) => `${i.nameEn || i.name} x${i.quantity} ($${(Math.round((i.price || 0) * (i.quantity || 1) * 100) / 100).toFixed(2)})`).join('; ')
     const history = (order.statusHistory || []).map((h: any) => `${h.status}@${h.timestamp}${h.note ? ':' + h.note : ''}`).join('; ')
     const ret = order.returnInfo as ReturnInfo || { reason: '', requestedAt: '', approvedAt: '', carrier: '', trackingNumber: '', deliveredAt: '', refundAmount: 0, refundedAt: '' }
 

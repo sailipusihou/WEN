@@ -33,12 +33,14 @@ export async function POST(req: NextRequest) {
     }
     const { hash, salt } = hashPassword(password)
     const token = generateToken()
+    // 修复 H20: 注册即设置 30 天 token 过期时间
+    const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
     const userData: User = {
       id: 'USR-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
       email: email.toLowerCase().trim(),
       passwordHash: hash, salt,
       firstName: sanitizeString(firstName), lastName: sanitizeString(lastName),
-      phone: '', addresses: [], token,
+      phone: '', addresses: [], token, tokenExpiresAt,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     }
     const user = repo.users.add(userData)
@@ -61,7 +63,13 @@ export async function POST(req: NextRequest) {
       repo.users.update(user.id, { coupons: [welcomeCoupon] })
     }
     const res = NextResponse.json({ user: toPublicUser(user), welcomeCoupon }, { status: 201 })
-    res.cookies.set('user_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' })
+    res.cookies.set('user_token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
     const welcomeEmail = buildWelcomeEmail(firstName)
     sendEmail({ to: email, ...welcomeEmail }).then(result => {
       if (!result.success) console.warn('[Register] Welcome email not sent:', result.error)

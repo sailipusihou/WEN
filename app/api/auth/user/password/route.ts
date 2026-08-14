@@ -22,8 +22,15 @@ export async function PUT(req: NextRequest) {
   const { hash: newHash, salt: newSalt } = hashPassword(newPassword)
   // 修复 L16: 改密后吊销旧 token 并签发新 token (旧会话立即失效)
   const newToken = generateToken()
-  repo.users.update(user.id, { passwordHash: newHash, salt: newSalt, token: newToken })
+  const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+  repo.users.update(user.id, { passwordHash: newHash, salt: newSalt, token: newToken, tokenExpiresAt } as any)
   const res = NextResponse.json({ ok: true })
-  res.cookies.set('user_token', newToken, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' })
+  res.cookies.set('user_token', newToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  })
   return res
 }

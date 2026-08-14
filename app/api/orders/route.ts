@@ -387,7 +387,7 @@ export async function POST(req: NextRequest) {
     const activePromotions = getActivePromotions()
 
     for (const item of rawItems) {
-      if (!item.id || !item.productId && !item.id) {
+      if (!item.id || !item.productId) {
         return NextResponse.json({ error: 'Invalid item: missing product ID' }, { status: 400 })
       }
       const productId = item.productId || item.id
@@ -618,8 +618,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(order, { status: 201 })
   } catch (err) {
     console.error("[/api/orders POST] Error:", err)
+    // 修复 L14: 不回显内部错误详情
     return NextResponse.json(
-      { error: "Failed to create order: " + (err instanceof Error ? err.message : String(err)) },
+      { error: "Failed to create order" },
       { status: 400 }
     )
   }

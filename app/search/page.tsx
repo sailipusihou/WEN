@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, X, Loader2, ArrowUpLeft, Clock, TrendingUp } from "lucide-react"
 import ProductCard from "@/components/product/ProductCard"
@@ -12,6 +12,7 @@ const POPULAR_SEARCHES = ['celadon', 'silk', 'bamboo', 'tea', 'incense', 'cerami
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const initialQuery = searchParams.get('q') || ''
 
   const [query, setQuery] = useState(initialQuery)
@@ -84,10 +85,10 @@ export default function SearchPage() {
         setPage(pageNum)
       }
       setHasSearched(true)
-      // 更新 URL
+      // 修复 M16: 用 router.replace 同步 URL, 支持浏览器前进/后退 (原 history.replaceState 不联动路由)
       const url = new URL(window.location.href)
       url.searchParams.set('q', q.trim())
-      window.history.replaceState({}, '', url)
+      router.replace(url.pathname + url.search, { scroll: false })
     } catch {
       // 忽略错误
     } finally {

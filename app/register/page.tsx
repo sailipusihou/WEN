@@ -22,8 +22,8 @@ export default function RegisterPage() {
         const d = await res.json()
         localStorage.setItem("otm_user", "1")
         localStorage.setItem("otm_chat_email", form.email)
+        // 修复 L8: 去掉重复的 window.location.reload (router.push 已足够)
         router.push("/account?welcome=1")
-        window.location.reload()
       } else {
         const d = await res.json()
         setError(d.error || "Registration failed")

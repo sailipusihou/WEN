@@ -784,6 +784,8 @@ export const userRepo = {
     const db = getDb()
     const row = db.prepare('SELECT * FROM users WHERE token = ?').get(token) as any
     if (!row) return undefined
+    // 修复 H20: token 过期校验 (无过期时间的历史用户视为有效, 兼容旧会话)
+    if (row.tokenExpiresAt && new Date(row.tokenExpiresAt).getTime() < Date.now()) return undefined
     return userRepo.getById(row.id)
   },
 
@@ -828,13 +830,15 @@ export const userRepo = {
     db.prepare(`
       UPDATE users SET firstName = ?, lastName = ?, phone = ?, avatar = ?, dob = ?, gender = ?, bio = ?,
         coupons = ?,
-        preferredCurrency = ?, role = ?, token = ?, updatedAt = datetime('now')
+        preferredCurrency = ?, role = ?, token = ?, tokenExpiresAt = ?, updatedAt = datetime('now')
       WHERE id = ?
     `).run(
       merged.firstName || '', merged.lastName || '', merged.phone || '',
       merged.avatar || null, merged.dob || null, merged.gender || null, merged.bio || null,
       merged.coupons && merged.coupons.length ? JSON.stringify(merged.coupons) : null,
-      merged.preferredCurrency || 'USD', merged.role || 'customer', merged.token || null, id
+      merged.preferredCurrency || 'USD', merged.role || 'customer', merged.token || null,
+      (updates as any).tokenExpiresAt !== undefined ? (updates as any).tokenExpiresAt : merged.tokenExpiresAt || null,
+      id
     )
     // 更新 addresses
     if (updates.addresses) {

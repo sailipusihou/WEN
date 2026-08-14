@@ -30,9 +30,17 @@ export async function POST(req: NextRequest) {
     }
 
     const token = generateToken()
-    repo.users.update(user.id, { token })
+    // 修复 H20: 设置 30 天过期时间 (原 token 永不过期)
+    const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+    repo.users.update(user.id, { token, tokenExpiresAt } as any)
     const res = NextResponse.json({ user: toPublicUser(user) }, { status: 200 })
-    res.cookies.set("user_token", token, { httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/" })
+    res.cookies.set("user_token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    })
     return res
   } catch { return NextResponse.json({ error: "Login failed" }, { status: 500 }) }
 }

@@ -31,6 +31,7 @@ export interface User {
   wishlist?: string[]
   addresses: UserAddress[]
   token?: string
+  tokenExpiresAt?: string
   createdAt: string
   updatedAt: string
 }
@@ -214,7 +215,10 @@ export function generateToken(): string {
 export function findUserByToken(token: string): User | undefined {
   if (!token || token.length < 16) return undefined
   // 常量时间比较 token, 防止时序攻击
-  return readUsers().find(u => u.token && safeEqualStr(u.token, token))
+  const found = readUsers().find(u => u.token && safeEqualStr(u.token, token))
+  // 修复 H20: token 过期校验
+  if (found && found.tokenExpiresAt && new Date(found.tokenExpiresAt).getTime() < Date.now()) return undefined
+  return found
 }
 
 export function setUserToken(userId: string, token: string): void {
