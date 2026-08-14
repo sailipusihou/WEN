@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, Package, PlusCircle, List, ClipboardList, Star, BarChart3, MessageSquare, Wallet, Settings, Eye, LogOut, Menu, X, Store, Sun, Moon, Users, FileText, Shield, ChevronDown, ChevronsLeft, ChevronsRight, User as UserIcon, Factory, Boxes, Truck, Mail, Users as UsersIcon, Send, Check, Inbox, ShoppingBag, ExternalLink, Paperclip, Smile, CheckCheck, Bell, Search, Plus, Info, Layers, Columns, Bot, Clock, Palette, Image as ImageIcon, ToggleLeft, ToggleRight, BookOpen, Megaphone, Percent } from "lucide-react"
+import { LayoutDashboard, Package, PlusCircle, List, ClipboardList, Star, BarChart3, MessageSquare, Wallet, Settings, Eye, LogOut, Menu, X, Store, Sun, Moon, Users, FileText, Shield, ChevronDown, ChevronsLeft, ChevronsRight, User as UserIcon, Factory, Boxes, Truck, Mail, Users as UsersIcon, Send, Check, Inbox, ShoppingBag, ExternalLink, Paperclip, Smile, CheckCheck, Bell, Search, Plus, Info, Layers, Columns, Bot, Clock, Palette, Image as ImageIcon, ToggleLeft, ToggleRight, BookOpen, Megaphone, Percent, Music2 } from "lucide-react"
 import { AdminThemeProvider, useAdminTheme } from "@/context/AdminThemeContext"
 import { canAccessNavItem } from "@/lib/permissions"
 import ScrollProgress from "@/components/ScrollProgress"
@@ -30,6 +30,7 @@ const navItems: Array<{ href: string; icon: any; label: string; match: (p: strin
   { href: "/admin/work-log", icon: FileText, label: "Work Log", match: (p: string) => p.startsWith("/admin/work-log") },
   { href: "/admin/knowledge-base", icon: BookOpen, label: "Knowledge Base", match: (p: string) => p.startsWith("/admin/knowledge-base") },
   { href: "/admin/marketing", icon: Megaphone, label: "Marketing", match: (p: string) => p.startsWith("/admin/marketing") },
+  { href: "/admin/tiktok", icon: Music2, label: "TikTok", match: (p: string) => p.startsWith("/admin/tiktok") },
   { href: "/admin/promotions", icon: Percent, label: "Promotions", match: (p: string) => p.startsWith("/admin/promotions") },
   { href: "/admin/settings", icon: Settings, label: "Settings", match: (p: string) => p.startsWith("/admin/settings") },
 ]

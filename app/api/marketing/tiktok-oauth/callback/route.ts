@@ -18,18 +18,18 @@ export async function GET(req: NextRequest) {
 
     if (error || searchParams.get('error_description')) {
       const errorMsg = error || searchParams.get('error_description') || 'OAuth authorization failed'
-      return NextResponse.redirect(new URL(`/admin/marketing?tiktok_auth=error&msg=${encodeURIComponent(errorMsg)}`, req.nextUrl.origin))
+      return NextResponse.redirect(new URL(`/admin/tiktok?tiktok_auth=error&msg=${encodeURIComponent(errorMsg)}`, req.nextUrl.origin))
     }
 
     if (!code) {
-      return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=error&msg=No authorization code received', req.nextUrl.origin))
+      return NextResponse.redirect(new URL('/admin/tiktok?tiktok_auth=error&msg=No authorization code received', req.nextUrl.origin))
     }
 
     // 修复 S7: state 必须存在且精确匹配, 不再回退 'pending' 固定键
     const pendingKey = state || ''
     const pending = pendingKey ? getPendingSocialOAuth('tiktok', pendingKey) : null
     if (!pending) {
-      return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=expired', req.nextUrl.origin))
+      return NextResponse.redirect(new URL('/admin/tiktok?tiktok_auth=expired', req.nextUrl.origin))
     }
 
     const callbackUrl = settings.tkCallbackUrl || `${req.nextUrl.origin}/api/marketing/tiktok-oauth/callback`
@@ -74,11 +74,11 @@ export async function GET(req: NextRequest) {
 
     removePendingSocialOAuth('tiktok', pendingKey)
 
-    return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=success', req.nextUrl.origin))
+    return NextResponse.redirect(new URL('/admin/tiktok?tiktok_auth=success', req.nextUrl.origin))
   } catch (e: any) {
     console.error('[TikTok OAuth Callback] GET error:', e)
     return NextResponse.redirect(
-      new URL(`/admin/marketing?tiktok_auth=error&msg=${encodeURIComponent(e.message || '')}`, req.nextUrl.origin)
+      new URL(`/admin/tiktok?tiktok_auth=error&msg=${encodeURIComponent(e.message || '')}`, req.nextUrl.origin)
     )
   }
 }

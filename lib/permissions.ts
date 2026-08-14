@@ -58,6 +58,7 @@ export const NAV_PERMISSION_MAP: Record<string, string> = {
   "/admin/users": "users_view",
   "/admin/finance": "finance_view",
   "/admin/messages": "messages_view",
+  "/admin/tiktok": "messages_view",
   "/admin/promotions": "products_manage",
   "/admin/reviews": "reviews_manage",
   "/admin/work-log": "worklog_view",

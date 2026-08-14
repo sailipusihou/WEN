@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { ArrowUpLeft, Star, ShoppingBag, Plus, Minus, Check, ShieldCheck, Truck, RotateCcw, MessageCircle, Heart } from 'lucide-react'
+import { ArrowUpLeft, Star, ShoppingBag, Plus, Minus, Check, ShieldCheck, Truck, RotateCcw, MessageCircle, Heart, Music2 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
@@ -353,6 +353,23 @@ export default function ProductDetailClient({
               <span className="text-[#6B6B6B]">Ask about this piece</span>
               <span className="text-[10px] text-[#8B7D5C]/60">→</span>
             </Link>
+
+            {/* Share to TikTok (Share Kit) */}
+            <button
+              type="button"
+              onClick={() => {
+                const url = window.location.href
+                const text = product.nameEn || product.name || 'Low Flame'
+                window.open(
+                  `https://www.tiktok.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+                  '_blank', 'noopener,noreferrer,width=720,height=640'
+                )
+              }}
+              className="inline-flex items-center gap-2 mt-4 ml-3 px-4 py-2 text-xs border border-[#EDE8DC] rounded-sm hover:border-[#B8A06C]/40 hover:bg-[#8B7D5C]/5 transition-colors font-sans"
+            >
+              <Music2 size={14} strokeWidth={1.5} className="text-[#2C2C2C]" />
+              <span className="text-[#6B6B6B]">Share to TikTok</span>
+            </button>
 
             {/* Trust */}
             <div className="flex flex-wrap gap-5 mt-8 pt-6 border-t border-[#EDE8DC]/60">

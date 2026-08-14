@@ -205,7 +205,7 @@ const PLATFORM_SYSTEM_STATUS: Record<
     insights: 'pending',
     comments: 'pending',
     messages: 'pending',
-    nextAction: '后续要补短视频素材上传、表现数据和广告归因链路。',
+    nextAction: 'TikTok 控制台已上线: 侧边栏进入 TikTok Console, 支持 OAuth 连接、账号资料、视频时间线(Display API)与视频发布(Content Posting API)。',
   },
 }
 
