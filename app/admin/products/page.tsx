@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
@@ -210,10 +210,10 @@ export default function AdminProductsPage() {
                   <p className="font-sans text-xs adm-text-secondary mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
                 </div>
 
-                {/* Price */}
+                {/* Price (定价基线 USD) */}
                 <div className="hidden sm:block text-right">
-                  <p className="font-serif text-sm font-bold text-otb-gold dark:text-gold">¥{product.price.toFixed(0)}</p>
-                  <p className="font-en text-[10px] adm-text-secondary">{product.price} CNY</p>
+                  <p className="font-serif text-sm font-bold text-otb-gold dark:text-gold">${product.price.toFixed(2)}</p>
+                  <p className="font-en text-[10px] adm-text-secondary">{product.price} USD</p>
                 </div>
 
                 {/* Status */}

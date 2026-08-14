@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { Plus, Edit3, Trash2, Save, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { CategoryIcon, IconSelector } from '@/components/admin/CategoryIcon'
@@ -271,7 +271,7 @@ export default function AdminCategoriesPage() {
                                   )}
                                   <p className="text-sm font-medium truncate" style={{ color: 'var(--adm-text)' }}>{product.name}</p>
                                 </div>
-                                <p className="text-xs" style={{ color: 'var(--adm-text-secondary)' }}>¥{product.price}</p>
+                                <p className="text-xs" style={{ color: 'var(--adm-text-secondary)' }}>${product.price.toFixed(2)} USD</p>
                               </div>
                             </div>
                           ))}
