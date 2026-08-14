@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, Package, MapPin, Heart, LogOut, Star, Ticket, Copy, Check } from "lucide-react"
+import { User, Package, MapPin, Heart, LogOut, Ticket, Copy, Check } from "lucide-react"
 
 export default function AccountPage() {
   const router = useRouter()
@@ -58,16 +58,9 @@ export default function AccountPage() {
             <div className="flex items-center gap-2 mt-1">
               <p className="font-sans text-sm text-otb-ink/50">{user.email}</p>
               {tierInfo && (
-                <>
-                  <div className="flex items-center gap-0.5" style={{ color: tierInfo.color }}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} fill={i < tierInfo.stars ? 'currentColor' : 'none'} strokeWidth={2} />
-                    ))}
-                  </div>
-                  <span className="text-xs font-sans px-2 py-0.5 rounded-sm" style={{ backgroundColor: tierInfo.bgColor, color: tierInfo.color }}>
-                    {tierInfo.name}
-                  </span>
-                </>
+                <span className="text-xs font-sans px-2 py-0.5 rounded-sm" style={{ backgroundColor: tierInfo.bgColor, color: tierInfo.color }}>
+                  {tierInfo.name}
+                </span>
               )}
             </div>
           </div>
