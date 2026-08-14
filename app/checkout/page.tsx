@@ -45,7 +45,10 @@ export default function CheckoutPage() {
   const [couponAppliedCode, setCouponAppliedCode] = useState('')
 
   useEffect(() => {
-    fetch('/api/auth/user').then(r => r.ok ? r.json() : null).then(d => { if (d?.user?.email) setUserEmail(d.user.email) }).catch(() => {})
+    // 无登录 cookie 时跳过请求, 消除 401 控制台噪音
+    if (document.cookie.includes('user_token=')) {
+      fetch('/api/auth/user').then(r => r.ok ? r.json() : null).then(d => { if (d?.user?.email) setUserEmail(d.user.email) }).catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
