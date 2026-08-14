@@ -190,12 +190,20 @@ export default function AdminPromotionsPage() {
   // ---- 优惠券图生成 (复用后台已配置的 AI 生图, 可选厂商/模型, 固定 1024x1024) ----
   const [couponImgGenerating, setCouponImgGenerating] = useState(false)
   const [couponImgError, setCouponImgError] = useState('')
+  // 对话框模式: 自然语言描述想要的券效果; 按商品生成: 选择商品后券图带商品图案
+  const [promptDesc, setPromptDesc] = useState('')
+  const [selProductId, setSelProductId] = useState('')
   const generateCouponImage = async () => {
     const code = cForm.code.trim() || 'COUPON'
     const name = cForm.name.trim() || code
     const value = Number(cForm.value) || 0
     const discountLabel = value > 0 ? (cForm.discountType === 'percent' ? `${value}% OFF` : `$${value} OFF`) : 'SPECIAL OFFER'
-    const prompt = `Elegant e-commerce discount coupon design for "${name}" (code ${code}), large "${discountLabel}" in the center, luxurious oriental aesthetic with warm gold and deep red tones, subtle traditional Chinese pattern background, clean premium layout, high detail, vector style, square format`
+    const selProduct = selProductId ? products.find((p: any) => p.id === selProductId) : null
+    // 对话框模式: 用户描述优先, 再叠加券基础信息
+    const userDesc = promptDesc.trim()
+    const descPart = userDesc ? `${userDesc}. ` : ''
+    const productPart = selProduct ? ` featuring product "${selProduct.nameEn || selProduct.name}". ` : ''
+    const prompt = `${descPart}Elegant e-commerce discount coupon design for "${name}" (code ${code}), large "${discountLabel}" in the center${productPart}luxurious oriental aesthetic with warm gold and deep red tones, subtle traditional Chinese pattern background, clean premium layout, high detail, vector style, square format`
     setCouponImgGenerating(true)
     setCouponImgError('')
     try {
@@ -203,13 +211,15 @@ export default function AdminPromotionsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode: 'text',
+          // 选了商品: 用商品主图作参考图生成 (需模型支持 reference); 否则纯文字生成
+          mode: selProduct ? 'reference' : 'text',
           prompt,
           size: '1024x1024', // 固定尺寸
           count: 1,
           platform: 'general',
           provider: selProvider || undefined,
           model: selModel || undefined,
+          referenceUrl: selProduct?.image || undefined,
         }),
       })
       const d = await res.json()
@@ -659,11 +669,39 @@ export default function AdminPromotionsPage() {
             <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: 'var(--adm-border)' }}>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image (1024×1024)</p>
-                <button onClick={generateCouponImage} disabled={couponImgGenerating}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--adm-accent-bg)', color: 'var(--adm-accent)' }}>
-                  <ImageIcon size={13} /> {couponImgGenerating ? 'Generating...' : 'Generate with AI'}
-                </button>
+              </div>
+
+              {/* 对话框模式: 自然语言描述想要的效果 */}
+              <div>
+                <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>
+                  Describe the coupon style (optional) — e.g. "red & gold festive, big SALE banner, elegant"
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls}
+                    style={inputStyle}
+                    value={promptDesc}
+                    onChange={e => setPromptDesc(e.target.value)}
+                    placeholder="用一句话形容想要的优惠券效果…"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); generateCouponImage() } }}
+                  />
+                  <button onClick={generateCouponImage} disabled={couponImgGenerating}
+                    className="shrink-0 px-3 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--adm-accent)', color: 'var(--adm-accent-text)' }}>
+                    <ImageIcon size={13} /> {couponImgGenerating ? '...' : 'Generate'}
+                  </button>
+                </div>
+              </div>
+
+              {/* 按商品生成: 选择商品后券图带该商品图案 */}
+              <div>
+                <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Generate from product (optional)</p>
+                <select className={inputCls} style={inputStyle} value={selProductId} onChange={e => setSelProductId(e.target.value)}>
+                  <option value="">-- No product (text only) --</option>
+                  {products.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.nameEn || p.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* 厂商与模型选择 */}
