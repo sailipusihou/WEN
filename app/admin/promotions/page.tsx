@@ -7,6 +7,7 @@ import {
   Copy, Check, Sparkles, Pencil, X, Clock, TrendingUp, Gift, Tag, CalendarClock, Wand2, ImageIcon,
 } from 'lucide-react'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
+import ImageCropper from '@/components/admin/ImageCropper'
 
 const inputCls = 'w-full px-3 py-2 rounded-lg text-sm'
 const inputStyle = { backgroundColor: 'var(--adm-input)', border: '1px solid var(--adm-input-border)', color: 'var(--adm-text)' } as React.CSSProperties
@@ -60,6 +61,33 @@ export default function AdminPromotionsPage() {
   const [cForm, setCForm] = useState({ ...emptyCoupon })
   const [editingCouponId, setEditingCouponId] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  // ---- 优惠券图生成: 厂商/模型/裁剪/模板 ----
+  const [imageProviders, setImageProviders] = useState<Record<string, any>>({})
+  const [selProvider, setSelProvider] = useState('')
+  const [selModel, setSelModel] = useState('')
+  const [cropSrc, setCropSrc] = useState('')
+  const [savingCrop, setSavingCrop] = useState(false)
+  const [templates, setTemplates] = useState<any[]>([])
+
+  // 加载 AI 生图厂商配置与券图模板
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
+      const providers = d?.aiImageProviders || {}
+      const keys = Object.keys(providers)
+      if (keys.length > 0) {
+        setImageProviders(providers)
+        setSelProvider(keys[0])
+        const firstModels = providers[keys[0]]?.models || []
+        setSelModel(firstModels[0]?.id || '')
+      }
+    }).catch(() => {})
+    fetch('/api/coupon-templates').then(r => r.ok ? r.json() : { templates: [] }).then(d => {
+      setTemplates(Array.isArray(d.templates) ? d.templates : [])
+    }).catch(() => {})
+  }, [])
+
+  const providerModels = (imageProviders[selProvider]?.models as any[]) || []
 
   const loadAll = async () => {
     try {
@@ -159,7 +187,7 @@ export default function AdminPromotionsPage() {
   }
   const resetCouponForm = () => { setCForm({ ...emptyCoupon }); setEditingCouponId(null) }
 
-  // ---- 优惠券图生成 (复用后台已配置的 AI 生图) ----
+  // ---- 优惠券图生成 (复用后台已配置的 AI 生图, 可选厂商/模型, 固定 1024x1024) ----
   const [couponImgGenerating, setCouponImgGenerating] = useState(false)
   const [couponImgError, setCouponImgError] = useState('')
   const generateCouponImage = async () => {
@@ -174,11 +202,19 @@ export default function AdminPromotionsPage() {
       const res = await fetch('/api/marketing/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'text', prompt, size: '1024x1024', count: 1, platform: 'general' }),
+        body: JSON.stringify({
+          mode: 'text',
+          prompt,
+          size: '1024x1024', // 固定尺寸
+          count: 1,
+          platform: 'general',
+          provider: selProvider || undefined,
+          model: selModel || undefined,
+        }),
       })
       const d = await res.json()
       if (res.ok && d.images && d.images.length > 0) {
-        setCForm(s => ({ ...s, imageUrl: d.images[0] }))
+        setCropSrc(d.images[0]) // 生成后进入裁剪确认
       } else {
         setCouponImgError(d.error || 'Image generation failed')
       }
@@ -187,6 +223,58 @@ export default function AdminPromotionsPage() {
     } finally {
       setCouponImgGenerating(false)
     }
+  }
+
+  // 裁剪确认: 上传裁剪结果作为券图
+  const confirmCrop = async (blob: Blob) => {
+    setSavingCrop(true)
+    setCouponImgError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', blob, 'coupon.png')
+      fd.append('type', 'image')
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const d = await res.json()
+      if (res.ok && d.url) {
+        setCForm(s => ({ ...s, imageUrl: d.url }))
+        setCropSrc('')
+      } else {
+        setCouponImgError(d.error || 'Upload failed')
+      }
+    } catch {
+      setCouponImgError('Upload failed')
+    } finally {
+      setSavingCrop(false)
+    }
+  }
+
+  // 保存为常用模板 (以后所有券可复用)
+  const saveAsTemplate = async () => {
+    if (!cForm.imageUrl) return
+    try {
+      const res = await fetch('/api/coupon-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: cForm.name || cForm.code, imageUrl: cForm.imageUrl }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setTemplates(prev => [d.template, ...prev].slice(0, 30))
+        setCouponImgError('')
+      } else {
+        const d = await res.json()
+        setCouponImgError(d.error || 'Failed to save template')
+      }
+    } catch {
+      setCouponImgError('Failed to save template')
+    }
+  }
+
+  const removeTemplate = async (id: string) => {
+    try {
+      await fetch(`/api/coupon-templates?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      setTemplates(prev => prev.filter(t => t.id !== id))
+    } catch { /* ignore */ }
   }
 
   const generateCode = () => {
@@ -570,25 +658,92 @@ export default function AdminPromotionsPage() {
             {/* 优惠券图生成 (复用后台 AI 生图) */}
             <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: 'var(--adm-border)' }}>
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image (1024×1024)</p>
                 <button onClick={generateCouponImage} disabled={couponImgGenerating}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
                   style={{ backgroundColor: 'var(--adm-accent-bg)', color: 'var(--adm-accent)' }}>
                   <ImageIcon size={13} /> {couponImgGenerating ? 'Generating...' : 'Generate with AI'}
                 </button>
               </div>
-              {cForm.imageUrl ? (
+
+              {/* 厂商与模型选择 */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Provider</p>
+                  <select className={inputCls} style={inputStyle} value={selProvider}
+                    onChange={e => {
+                      setSelProvider(e.target.value)
+                      const models = imageProviders[e.target.value]?.models || []
+                      setSelModel(models[0]?.id || '')
+                    }}>
+                    {Object.keys(imageProviders).map(k => (
+                      <option key={k} value={k}>{imageProviders[k]?.label || k}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Model</p>
+                  <select className={inputCls} style={inputStyle} value={selModel} onChange={e => setSelModel(e.target.value)}>
+                    {providerModels.map((m: any) => (
+                      <option key={m.id} value={m.id}>{m.label || m.id}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 生成后裁剪确认 */}
+              {cropSrc && (
+                <ImageCropper
+                  src={cropSrc}
+                  aspectRatio={1}
+                  onConfirm={async blob => { await confirmCrop(blob) }}
+                  onCancel={() => setCropSrc('')}
+                />
+              )}
+              {savingCrop && <p className="text-[11px]" style={{ color: 'var(--adm-text-secondary)' }}>Saving cropped image...</p>}
+
+              {/* 已确认的券图 */}
+              {cForm.imageUrl && !cropSrc ? (
                 <div className="relative">
                   <img src={cForm.imageUrl} alt="Coupon preview" className="w-full max-h-48 object-cover rounded-md" />
-                  <button onClick={() => setCForm(s => ({ ...s, imageUrl: '' }))}
-                    className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/50 text-white hover:bg-black/70" title="Remove image">
-                    <X size={12} />
-                  </button>
+                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                    <button onClick={saveAsTemplate} title="Save as reusable template"
+                      className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70">
+                      <Sparkles size={12} />
+                    </button>
+                    <button onClick={() => setCForm(s => ({ ...s, imageUrl: '' }))}
+                      className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70" title="Remove image">
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--adm-text-secondary)' }}>点击 ✦ 保存为常用模板，之后所有优惠券可复用</p>
                 </div>
-              ) : (
-                <p className="text-[11px]" style={{ color: 'var(--adm-text-secondary)' }}>根据券名/折扣自动生成优惠券效果图，保存后关联到该券并可在前端展示</p>
-              )}
+              ) : !cropSrc ? (
+                <p className="text-[11px]" style={{ color: 'var(--adm-text-secondary)' }}>选择厂商/模型后生成，可裁剪确认；保存后关联到该券并在前端展示</p>
+              ) : null}
               {couponImgError && <p className="text-[11px] text-red-500">{couponImgError}</p>}
+
+              {/* 常用模板 */}
+              {templates.length > 0 && (
+                <div className="pt-1">
+                  <p className="text-[10px] mb-1.5" style={{ color: 'var(--adm-text-secondary)' }}>Templates (click to use)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {templates.map(t => (
+                      <div key={t.id} className="relative group">
+                        <button onClick={() => { setCForm(s => ({ ...s, imageUrl: t.imageUrl })); setCropSrc('') }}
+                          className={"w-14 h-14 rounded-md overflow-hidden border-2 transition-all hover:scale-105 " + (cForm.imageUrl === t.imageUrl ? "border-otb-terracotta" : "border-transparent")}
+                          title={t.name}>
+                          <img src={t.imageUrl} alt={t.name} className="w-full h-full object-cover" />
+                        </button>
+                        <button onClick={() => removeTemplate(t.id)}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white hidden group-hover:flex items-center justify-center" title="Delete template">
+                          <X size={9} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
