@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getRepository } from "@/lib/repository"
-import { requirePermission } from "@/lib/auth"
+import { requirePermission, requireUser } from "@/lib/auth"
 import { OrderStatus } from "@/lib/orders"
 
 export async function POST(req: NextRequest) {
@@ -16,11 +16,16 @@ export async function POST(req: NextRequest) {
 
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
 
-    if (email) {
-      const orderEmail = order.customerEmail || order.userEmail || order.shipping?.email
-      if (orderEmail !== email) {
-        return NextResponse.json({ error: "Email does not match order" }, { status: 403 })
-      }
+    // 修复 S3: 退货申请必须由登录用户发起, 且邮箱必须与订单匹配 (禁止匿名提交/篡改他人订单)
+    const userAuth = requireUser(req)
+    if ('error' in userAuth) {
+      return NextResponse.json({ error: "Please sign in to request a return" }, { status: 401 })
+    }
+    const orderEmail = (order.customerEmail || order.userEmail || order.shipping?.email || '').toLowerCase()
+    const loggedInEmail = (userAuth.user.email || '').toLowerCase()
+    const bodyEmail = String(email || '').trim().toLowerCase()
+    if (!orderEmail || (loggedInEmail !== orderEmail && bodyEmail !== orderEmail)) {
+      return NextResponse.json({ error: "Email does not match order" }, { status: 403 })
     }
 
     if (["cancelled", "return_requested", "return_approved", "return_shipped", "return_delivered", "refunded"].includes(order.status)) {

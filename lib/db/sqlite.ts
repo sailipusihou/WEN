@@ -216,6 +216,10 @@ export function initDatabase() {
       attributionLookbackDays INTEGER,
       attributionMatchedBy TEXT,
       attributionFallbackUsed INTEGER DEFAULT 0,
+      paymentStatus TEXT DEFAULT 'unpaid',
+      paypalTransaction TEXT,
+      payoneerTransaction TEXT,
+      returnInfo TEXT,
       notes TEXT,
       createdAt TEXT DEFAULT (datetime('now')),
       updatedAt TEXT DEFAULT (datetime('now'))
@@ -457,6 +461,11 @@ export function initDatabase() {
   addOrderCol('attributionLookbackDays', 'INTEGER')
   addOrderCol('attributionMatchedBy', 'TEXT')
   addOrderCol('attributionFallbackUsed', 'INTEGER DEFAULT 0')
+  // 迁移 (修复 C3): 支付交易/退换货/支付状态字段 — 原先 SQLite 后端会静默丢弃这些数据
+  addOrderCol('paymentStatus', "TEXT DEFAULT 'unpaid'")
+  addOrderCol('paypalTransaction', 'TEXT')
+  addOrderCol('payoneerTransaction', 'TEXT')
+  addOrderCol('returnInfo', 'TEXT')
 
   // 迁移: 给 messages 表添加缺失的列 (兼容旧数据库)
   const msgColumns = db.prepare("PRAGMA table_info(messages)").all() as any[]

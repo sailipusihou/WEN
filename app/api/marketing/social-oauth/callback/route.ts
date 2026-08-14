@@ -120,7 +120,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/admin/marketing?oauth=error&msg=No+authorization+code', req.nextUrl.origin))
     }
 
-    const pending = getPendingSocialOAuth(platform, state || '') || getPendingSocialOAuth(platform, 'pending')
+    // 修复 S7: state 必须存在且精确匹配, 不再回退 'pending' 固定键
+    const pending = state ? getPendingSocialOAuth(platform, state) : null
     if (!pending) {
       return NextResponse.redirect(new URL('/admin/marketing?oauth=expired', req.nextUrl.origin))
     }

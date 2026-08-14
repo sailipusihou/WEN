@@ -56,7 +56,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     addItem({
       id: product.id, name: product.name,
       nameEn: product.nameEn || product.name,
-      image: product.image, price: eff.price,
+      image: product.image, price: product.price,
       category: product.category,
     })
     addToast('Added to cart', 'success')

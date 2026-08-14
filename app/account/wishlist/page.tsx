@@ -6,6 +6,8 @@ import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useToast } from '@/context/ToastContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
+import { useActivePromotions } from '@/lib/promotion-client'
+import { computePromotionForProduct } from '@/lib/promotion-shared'
 
 export default function WishlistPage() {
   const [items, setItems] = useState<any[]>([])
@@ -13,6 +15,8 @@ export default function WishlistPage() {
   const { addItem } = useCart()
   const { currency } = useCurrency()
   const { addToast } = useToast()
+  // 促销价与全站一致 (修复: 原先收藏夹只显示原价)
+  const promotions = useActivePromotions()
 
   const loadWishlist = () => {
     setLoading(true)
@@ -67,7 +71,7 @@ export default function WishlistPage() {
                 <div className="p-3">
                   <p className="font-sans text-xs text-otb-ink/40 tracking-wider uppercase">{item.category === 'cultural-gifts' ? 'Cultural Gifts' : item.category === 'home-decor' ? 'Home Decor' : 'Creative Gifts'}</p>
                   <p className="font-sans text-sm text-otb-ink truncate mt-0.5">{item.nameEn || item.name}</p>
-                  <p className="font-en text-sm font-bold text-otb-terracotta mt-1">{formatPrice(convertPrice(item.price, currency), currency)}</p>
+                  <p className="font-en text-sm font-bold text-otb-terracotta mt-1">{formatPrice(convertPrice(computePromotionForProduct({ id: item.id, category: item.category || '', price: item.price }, promotions).price, currency), currency)}</p>
                 </div>
               </Link>
               <div className="px-3 pb-3">

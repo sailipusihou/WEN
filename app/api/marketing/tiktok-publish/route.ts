@@ -54,9 +54,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const resolvedPath = path.isAbsolute(videoPath)
-      ? videoPath
-      : path.join(process.cwd(), videoPath)
+    const resolvedPath = path.resolve(
+      path.isAbsolute(videoPath) ? videoPath : path.join(process.cwd(), videoPath)
+    )
+
+    // 安全修复: 仅允许读取站点上传目录内的文件, 防止任意文件读取并外传
+    const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads')
+    if (!resolvedPath.startsWith(uploadsDir + path.sep)) {
+      return NextResponse.json({ error: 'Invalid video path: file must be inside the uploads directory' }, { status: 400 })
+    }
 
     if (!fs.existsSync(resolvedPath)) {
       return NextResponse.json({ error: `Video file not found: ${videoPath}` }, { status: 400 })

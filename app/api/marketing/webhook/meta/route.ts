@@ -37,19 +37,21 @@ export async function GET(req: NextRequest) {
 // ===== POST: 接收 Webhook 事件 =====
 export async function POST(req: NextRequest) {
   try {
-    // 验证签名（安全性）
+    // 验证签名（修复 S6: 密钥未配置时拒绝事件而非放行, 签名缺失/不符一律 403）
     const settings = getSettings()
     const body = await req.text()
     const signature = req.headers.get('x-hub-signature-256') || ''
 
     // 优先使用 Meta App Secret，回退到 OAuth Client Secret
     const appSecret = settings.metaAppSecret || settings.igClientSecret || settings.fbClientSecret
-    if (appSecret) {
-      const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(body).digest('hex')
-      if (signature !== expectedSig) {
-        console.warn('[Meta Webhook] Invalid signature', { received: signature ? 'present' : 'missing', expected: 'sha256=...' })
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
-      }
+    if (!appSecret) {
+      console.warn('[Meta Webhook] No app secret configured — rejecting event (secure default)')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 403 })
+    }
+    const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(body).digest('hex')
+    if (signature !== expectedSig) {
+      console.warn('[Meta Webhook] Invalid signature', { received: signature ? 'present' : 'missing', expected: 'sha256=...' })
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
     }
 
     const payload = JSON.parse(body)

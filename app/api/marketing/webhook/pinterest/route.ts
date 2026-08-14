@@ -37,14 +37,20 @@ export async function POST(req: NextRequest) {
     const settings = getSettings()
     const body = await req.text()
 
-    // 验证签名（如果配置了 Pinterest Webhook Secret）
-    const signature = req.headers.get('x-pinterest-signature') || ''
-    if (settings.ptClientSecret && signature) {
+    // 验证签名: 配置了 Webhook Secret 时, 签名必须存在且匹配 (修复: 原先缺 header 即跳过校验)
+    if (settings.ptClientSecret) {
+      const signature = req.headers.get('x-pinterest-signature') || ''
+      if (!signature) {
+        console.warn('[Pinterest Webhook] Missing signature header')
+        return NextResponse.json({ error: 'Missing signature' }, { status: 403 })
+      }
       const expectedSig = crypto.createHmac('sha256', settings.ptClientSecret).update(body).digest('hex')
       if (signature !== expectedSig) {
         console.warn('[Pinterest Webhook] Invalid signature')
         return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
       }
+    } else {
+      console.warn('[Pinterest Webhook] No webhook secret configured — signature verification disabled')
     }
 
     const payload = JSON.parse(body)

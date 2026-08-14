@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7: webhook 配置属系统设置, 用 settings_view
+    const auth = requirePermission(req, 'settings_view')
     if ('error' in auth) return auth.error
 
     const settings = getSettings()
@@ -42,7 +43,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7: 改写签名密钥/verify token 需要 settings_manage (原 messages_view 可被低权限角色利用)
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const body = await req.json()
@@ -63,7 +65,8 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7: 订阅操作同样需要 settings_manage
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const body = await req.json()

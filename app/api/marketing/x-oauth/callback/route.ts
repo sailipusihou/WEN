@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL('/admin/marketing?x_auth=error&msg=No authorization code received', req.nextUrl.origin))
       }
 
-      const pendingKey = state || 'pending'
-      const pending = getPendingXAuth(pendingKey) || getPendingXAuth('pending')
+      // 修复 S7: state 必须存在且精确匹配, 不再回退 'pending' 固定键
+      const pendingKey = state || ''
+      const pending = pendingKey ? getPendingXAuth(pendingKey) : null
       if (!pending) {
         return NextResponse.redirect(new URL('/admin/marketing?x_auth=expired', req.nextUrl.origin))
       }
@@ -71,9 +72,6 @@ export async function GET(req: NextRequest) {
       }
 
       removePendingXAuth(pendingKey)
-      if (pendingKey !== 'pending') {
-        removePendingXAuth('pending')
-      }
 
       return NextResponse.redirect(new URL('/admin/marketing?x_auth=success', req.nextUrl.origin))
     } else {

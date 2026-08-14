@@ -157,8 +157,9 @@ export async function POST(req: NextRequest) {
       const config = getPayoneerConfig()
       
       try {
+        // 修复 M1: 定时器回调内 throw 会变成 uncaughtException 崩溃进程, 改为仅告警
         const totalTimeout = setTimeout(() => {
-          throw new Error('Pull from Payoneer timed out after 60 seconds')
+          console.warn('[Payoneer Pull] exceeded 60s budget, letting current request finish')
         }, 60000)
         
         const allOrders = repo.orders.list()
@@ -263,6 +264,7 @@ export async function POST(req: NextRequest) {
                 ...(matchedOrder.payoneerTransaction || {}),
                 ...txData,
               },
+              paymentStatus: isCompleted ? 'paid' : 'unpaid',
               ...attributionUpdates,
             })
             updatedOrders.push(matchedOrder.id)

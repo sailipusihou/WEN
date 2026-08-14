@@ -42,8 +42,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/admin/marketing?instagram_auth=error&msg=No authorization code received', appOrigin))
     }
 
-    const pendingKey = state || 'pending'
-    const pending = getPendingSocialOAuth('instagram', pendingKey) || getPendingSocialOAuth('instagram', 'pending')
+    // 修复 S7: state 必须存在且精确匹配, 不再回退 'pending' 固定键
+    const pendingKey = state || ''
+    const pending = pendingKey ? getPendingSocialOAuth('instagram', pendingKey) : null
     if (!pending) {
       return NextResponse.redirect(new URL('/admin/marketing?instagram_auth=expired', appOrigin))
     }
@@ -103,9 +104,6 @@ export async function GET(req: NextRequest) {
     }
 
     removePendingSocialOAuth('instagram', pendingKey)
-    if (pendingKey !== 'pending') {
-      removePendingSocialOAuth('instagram', 'pending')
-    }
 
     return NextResponse.redirect(new URL('/admin/marketing?instagram_auth=success', appOrigin))
   } catch (e: any) {

@@ -80,6 +80,8 @@ export interface PayPalTransactionInfo {
   settlementDate?: string
   refundId?: string
   refundAmount?: number
+  // 服务端向 PayPal 验证过该 capture (防伪造)
+  verified?: boolean
 }
 
 export interface Order {
@@ -109,6 +111,7 @@ export interface Order {
   userEmail?: string
   estimatedDeliveryDays?: number
   returnInfo?: ReturnInfo
+  paymentStatus?: "paid" | "unpaid" | "pending_verification" | "refunded"
   paypalTransaction?: PayPalTransactionInfo
   payoneerTransaction?: PayoneerTransaction
   paymentMethod?: "paypal" | "stripe" | "bank_transfer" | "other"

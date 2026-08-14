@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepository } from '@/lib/repository'
+import { validateAdminToken } from '@/lib/auth'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -14,11 +15,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
     
+    const orderEmail = ((order as any).userEmail || (order as any).customerEmail || (order as any).shipping?.email || '').toLowerCase()
+    const isAdmin = !!validateAdminToken(req.cookies.get('admin_token')?.value)
+
     if (email) {
-      const orderEmail = ((order as any).userEmail || (order as any).customerEmail || (order as any).shipping?.email || '').toLowerCase()
-      if (orderEmail && orderEmail !== email) {
+      if (orderEmail && orderEmail !== email && !isAdmin) {
         return NextResponse.json({ error: 'Email does not match this order' }, { status: 403 })
       }
+    } else if (!isAdmin) {
+      // 未提供邮箱且非管理员 → 拒绝 (修复 IDOR)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
     const orderCopy = JSON.parse(JSON.stringify(order))

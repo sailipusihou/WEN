@@ -68,12 +68,42 @@ export async function GET(req: NextRequest) {
           // ReadableStream polyfill: Node stream 转 Web ReadableStream
           const webStream = new ReadableStream({
             start(controller) {
+              // 修复: 客户端中断/取消请求后 controller 已关闭, 再 enqueue 会抛
+              // ERR_INVALID_STATE 并成为 uncaughtException (生产模式会崩进程)
+              let closed = false
+              const safeEnqueue = (chunk: Uint8Array) => {
+                if (closed) return
+                try {
+                  controller.enqueue(chunk)
+                } catch {
+                  closed = true
+                }
+              }
+              const safeClose = () => {
+                if (closed) return
+                closed = true
+                try {
+                  controller.close()
+                } catch {
+                  /* 已关闭, 忽略 */
+                }
+              }
+              const safeError = (e: unknown) => {
+                if (closed) return
+                closed = true
+                try {
+                  controller.error(e)
+                } catch {
+                  /* 已关闭, 忽略 */
+                }
+              }
               stream.on("data", (chunk) => {
                 const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk
-                controller.enqueue(new Uint8Array(buf))
+                safeEnqueue(new Uint8Array(buf))
               })
-              stream.on("end", () => controller.close())
-              stream.on("error", (e) => controller.error(e))
+              stream.on("end", safeClose)
+              stream.on("error", safeError)
+              stream.on("close", () => { closed = true })
             },
           })
           return new NextResponse(webStream as any, {

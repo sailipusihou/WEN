@@ -53,6 +53,11 @@ export async function GET(req: NextRequest) {
         const convId = getConversationId(m.fromStaffId, m.toStaffId)
         return convId === conversationId
       })
+      // 修复 H5: 校验当前用户是会话参与者之一, 防止员工枚举读取任意两人私聊
+      const sample = internalMsgs[0]
+      if (sample && sample.fromStaffId !== currentUserId && sample.toStaffId !== currentUserId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
       const sorted = [...internalMsgs].sort((a: any, b: any) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       )

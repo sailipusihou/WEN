@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 
 const DATA_DIR = path.join(process.cwd(), 'data')
 const OAUTH_DIR = path.join(DATA_DIR, 'social-oauth')
@@ -73,19 +74,16 @@ export function removePendingSocialOAuth(platform: string, oauthToken: string): 
 }
 
 export function generateOAuthState(): string {
-  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)
+  // 安全修复: 原实现用 Math.random (可预测), 改为加密安全随机
+  return crypto.randomBytes(24).toString('hex')
 }
 
 export function generateCodeVerifier(): string {
-  const buffer = Buffer.alloc(32)
-  for (let i = 0; i < 32; i++) {
-    buffer[i] = Math.floor(Math.random() * 256)
-  }
-  return buffer.toString('base64url')
+  // 安全修复: 原实现用 Math.random 填充, 改为加密安全随机
+  return crypto.randomBytes(32).toString('base64url')
 }
 
 export function generateCodeChallenge(verifier: string): string {
-  const crypto = require('crypto')
   const hash = crypto.createHash('sha256').update(verifier).digest()
   return hash.toString('base64url')
 }

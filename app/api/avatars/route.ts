@@ -8,7 +8,7 @@ const AVATAR_DIR = path.join(process.cwd(), "public", "avatars")
 export async function GET() {
   try {
     if (!fs.existsSync(AVATAR_DIR)) fs.mkdirSync(AVATAR_DIR, { recursive: true })
-    const files = fs.readdirSync(AVATAR_DIR).filter(f => /\.(svg|png|jpg|jpeg|webp)$/i.test(f))
+    const files = fs.readdirSync(AVATAR_DIR).filter(f => /\.(png|jpg|jpeg|webp)$/i.test(f))
     return NextResponse.json(files.map(f => ({ name: f.replace(/\.\w+$/, ""), url: "/avatars/" + f })))
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }) }
 }
@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 })
     const ext = file.name.split(".").pop()?.toLowerCase() || "png"
-    if (!["png","jpg","jpeg","svg","webp"].includes(ext)) return NextResponse.json({ error: "Invalid format" }, { status: 400 })
+    // 修复 H6: 移除 svg (同源静态路径下的存储型 XSS 载体), 仅允许光栅图片
+    if (!["png","jpg","jpeg","webp"].includes(ext)) return NextResponse.json({ error: "Invalid format" }, { status: 400 })
     const buffer = Buffer.from(await file.arrayBuffer())
     const filename = "avatar-" + Date.now().toString(36) + "." + ext
     fs.writeFileSync(path.join(AVATAR_DIR, filename), buffer)

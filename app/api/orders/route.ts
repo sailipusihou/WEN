@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
 import {
   type Order,
   type OrderStatus,
@@ -11,6 +12,48 @@ import { getRepository } from "@/lib/repository"
 import { getReferralLinkByCode, markTouchpointsAsConverted, findAttributableReferralClick, getReferralClickByOrderId } from "@/lib/referral-tracking"
 import { type Shipment } from "@/lib/shipping"
 import { getActivePromotions, computePromotionForProduct, getCouponByCode, validateCouponForSubtotal, incrementCouponUsed } from "@/lib/promotions"
+
+// 服务端向 PayPal 验证 capture 真实性 (修复 C1/C2: 订单创建不再信任客户端声明的支付状态)
+async function verifyPayPalCapture(captureId: string): Promise<{ verified: boolean; status?: string; amount?: number }> {
+  const repo = getRepository()
+  const settings = repo.settings.get()
+  const clientId = settings.paypalClientId || process.env.PAYPAL_CLIENT_ID || ''
+  const secret = settings.paypalClientSecret || process.env.PAYPAL_CLIENT_SECRET || ''
+  const env = settings.paypalEnv || process.env.PAYPAL_ENV || 'sandbox'
+  const base = env === 'production' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'
+  if (!clientId || !secret) return { verified: false }
+
+  try {
+    const authRes = await fetch(`${base}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(clientId + ':' + secret).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!authRes.ok) return { verified: false }
+    const auth = await authRes.json()
+    if (!auth.access_token) return { verified: false }
+
+    const capRes = await fetch(`${base}/v2/payments/captures/${encodeURIComponent(captureId)}`, {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + auth.access_token, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(20000),
+    })
+    if (!capRes.ok) return { verified: false }
+    const cap = await capRes.json()
+    return {
+      verified: cap.status === 'COMPLETED',
+      status: cap.status,
+      amount: parseFloat(cap.amount?.value || '0'),
+    }
+  } catch {
+    // 网络不可达/超时等: 视为无法验证, 订单标记为待人工核验而不是已支付
+    return { verified: false }
+  }
+}
 
 function enrichOrdersWithStaffAvatar(orders: any[]) {
   const repo = getRepository()
@@ -330,7 +373,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many orders, please try again later' }, { status: 429 })
     }
     const body = await req.json()
-    const id = "OTM-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase()
+    // 修复 M5: 原订单 ID 随机段仅 4 位 base36 (约 160 万组合, 可枚举), 改为加密安全随机
+    const id = "OTM-" + Date.now().toString(36).toUpperCase() + "-" + crypto.randomBytes(6).toString("hex").toUpperCase()
 
     const repo = getRepository()
     const rawItems = body.items || []
@@ -430,13 +474,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const shouldMarkConversion = body.paypalTransaction?.status === "COMPLETED"
-    if (shouldMarkConversion && order.referralCode) {
+    // --- 支付真实性校验 (C1/C2/H4) ---
+    const claimedTxn = body.paypalTransaction as any
+    let paymentVerified = false
+    let paymentStatus: "paid" | "unpaid" | "pending_verification" = 'unpaid'
+
+    if (claimedTxn && claimedTxn.status === 'COMPLETED') {
+      const claimedAmount = Number(claimedTxn.amount)
+      if (!claimedTxn.captureId || Number.isNaN(claimedAmount)) {
+        return NextResponse.json({ error: 'Invalid payment transaction data' }, { status: 400 })
+      }
+      // 金额一致性: 声称的扣款金额必须与服务端重算的订单总额一致 (防止 0.01 美元买全单)
+      if (Math.abs(claimedAmount - total) > 0.01) {
+        return NextResponse.json({ error: 'Payment amount does not match order total' }, { status: 400 })
+      }
+      // 服务端向 PayPal 验证 capture 真实性; 失败/网络不可达 → 标记待人工核验, 不视为已支付
+      const verification = await verifyPayPalCapture(claimedTxn.captureId)
+      paymentVerified = verification.verified
+      paymentStatus = paymentVerified ? 'paid' : 'pending_verification'
+      order.paypalTransaction = { ...claimedTxn, verified: paymentVerified }
+    } else if (claimedTxn) {
+      order.paypalTransaction = claimedTxn
+    }
+    order.paymentStatus = paymentStatus
+
+    // 仅服务端验证通过的支付才触发归因转化 (修复 H4: 伪造/放弃支付的订单不再转化)
+    const shouldMarkConversion = paymentVerified && !!order.referralCode
+    if (shouldMarkConversion) {
       maybeMarkOrderReferralConversion(order, order.referralVisitorId, settings)
     }
 
     repo.orders.add(order)
-    if (couponCode) incrementCouponUsed(couponCode)
+    // 优惠券核销同样只在支付真实 (或未声称已支付) 时执行, 防止伪造 COMPLETED 刷券
+    const couponEligible = !claimedTxn || claimedTxn.status !== 'COMPLETED' || paymentVerified
+    if (couponCode && couponEligible) incrementCouponUsed(couponCode)
 
     const customerEmail = order.customerEmail
     if (customerEmail) {

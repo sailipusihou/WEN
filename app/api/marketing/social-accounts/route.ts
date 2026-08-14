@@ -44,7 +44,13 @@ export async function GET(req: NextRequest) {
       accounts = accounts.filter(a => a.staffId === auth.user.id)
     }
 
-    return NextResponse.json({ accounts, total: accounts.length })
+    // 修复 H7: 返回账号列表时脱敏 token, 防止前端/日志泄露平台访问凭证
+    const safeAccounts = accounts.map(({ accessToken, refreshToken, ...safe }: any) => ({
+      ...safe,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+    }))
+    return NextResponse.json({ accounts: safeAccounts, total: safeAccounts.length })
   } catch (e) {
     console.error('[Social Accounts API] GET error:', e)
     return NextResponse.json({ error: 'Failed to fetch social accounts' }, { status: 500 })
@@ -53,7 +59,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7: 社媒账号管理 (连接/断开/验证/同步) 需 settings_manage
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const body = await req.json()

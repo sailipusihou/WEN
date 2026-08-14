@@ -50,6 +50,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Admin: all non-deleted reviews, merged with product + order info
+    // 修复 S4: 全量分支必须管理权限, 防止匿名泄露客户 PII 与未审核评论
+    const auth = requirePermission(req, 'reviews_manage')
+    if ('error' in auth) return auth.error
     const all = repo.reviews.list().filter(r => !r.deleted)
     return NextResponse.json(enrichReviews(all))
   } catch {

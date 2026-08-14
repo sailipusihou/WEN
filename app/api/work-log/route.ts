@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = requirePermission(req, 'worklog_view')
+  // 修复 H7: 写入操作日志需要 settings_manage (原 worklog_view 只读权限可伪造审计日志)
+  const auth = requirePermission(req, 'settings_manage')
   if ('error' in auth) return auth.error
 
   try {

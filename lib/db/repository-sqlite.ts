@@ -156,6 +156,19 @@ function rowToOrder(row: any, items: OrderItem[]): Order {
       url: row.trackingUrl || '',
     } as TrackingInfo : undefined,
     statusHistory: statusHistory.length > 0 ? statusHistory : undefined,
+    // 修复 C3: 读回支付交易/退换货/支付状态 (原先 SQLite 后端静默丢失)
+    paymentStatus: row.paymentStatus || undefined,
+    paypalTransaction: row.paypalTransaction ? safeJsonParse(row.paypalTransaction) : undefined,
+    payoneerTransaction: row.payoneerTransaction ? safeJsonParse(row.payoneerTransaction) : undefined,
+    returnInfo: row.returnInfo ? safeJsonParse(row.returnInfo) : undefined,
+  }
+}
+
+function safeJsonParse(raw: string): any {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return undefined
   }
 }
 
@@ -537,12 +550,14 @@ export const orderRepo = {
           shippingName, shippingAddress, shippingCity, shippingState, shippingZip, shippingCountry, paymentMethod, notes, createdAt,
           userEmail, assignedTo, assignedToName, estimatedDeliveryDays, referralCode, referralId, referralVisitorId,
           referredByStaffId, referredByStaffName, attributionClickId, attributionModel, attributionTouchpoints,
-          attributionLookbackDays, attributionMatchedBy, attributionFallbackUsed)
+          attributionLookbackDays, attributionMatchedBy, attributionFallbackUsed,
+          paymentStatus, paypalTransaction, payoneerTransaction, returnInfo)
         VALUES (@id, @orderNo, @status, @totalAmount, @currency, @subtotal, @discount, @couponCode, @shipping, @customerName, @customerEmail, @customerPhone,
           @shippingName, @shippingAddress, @shippingCity, @shippingState, @shippingZip, @shippingCountry, @paymentMethod, @notes, @createdAt,
           @userEmail, @assignedTo, @assignedToName, @estimatedDeliveryDays, @referralCode, @referralId, @referralVisitorId,
           @referredByStaffId, @referredByStaffName, @attributionClickId, @attributionModel, @attributionTouchpoints,
-          @attributionLookbackDays, @attributionMatchedBy, @attributionFallbackUsed)
+          @attributionLookbackDays, @attributionMatchedBy, @attributionFallbackUsed,
+          @paymentStatus, @paypalTransaction, @payoneerTransaction, @returnInfo)
       `).run({
         id: order.id,
         orderNo: order.id,
@@ -580,6 +595,10 @@ export const orderRepo = {
         attributionLookbackDays: order.attributionLookbackDays || null,
         attributionMatchedBy: order.attributionMatchedBy || null,
         attributionFallbackUsed: order.attributionFallbackUsed ? 1 : 0,
+        paymentStatus: order.paymentStatus || 'unpaid',
+        paypalTransaction: order.paypalTransaction ? JSON.stringify(order.paypalTransaction) : null,
+        payoneerTransaction: order.payoneerTransaction ? JSON.stringify(order.payoneerTransaction) : null,
+        returnInfo: order.returnInfo ? JSON.stringify(order.returnInfo) : null,
       })
       const itemStmt = db.prepare(`
         INSERT INTO order_items (id, orderId, productId, name, nameEn, image, price, quantity, subtotal, category)
@@ -657,6 +676,10 @@ export const orderRepo = {
       if (updates.attributionMatchedBy !== undefined) { fields.push('attributionMatchedBy = ?'); values.push(updates.attributionMatchedBy || null) }
       if (updates.attributionFallbackUsed !== undefined) { fields.push('attributionFallbackUsed = ?'); values.push(updates.attributionFallbackUsed ? 1 : 0) }
       if ((updates as any).paymentStatus !== undefined) { fields.push('paymentStatus = ?'); values.push((updates as any).paymentStatus || 'unpaid') }
+      // 修复 C3: 支付交易/退换货数据可更新 (JSON 列)
+      if ((updates as any).paypalTransaction !== undefined) { fields.push('paypalTransaction = ?'); values.push((updates as any).paypalTransaction ? JSON.stringify((updates as any).paypalTransaction) : null) }
+      if ((updates as any).payoneerTransaction !== undefined) { fields.push('payoneerTransaction = ?'); values.push((updates as any).payoneerTransaction ? JSON.stringify((updates as any).payoneerTransaction) : null) }
+      if ((updates as any).returnInfo !== undefined) { fields.push('returnInfo = ?'); values.push((updates as any).returnInfo ? JSON.stringify((updates as any).returnInfo) : null) }
       if ((updates as any).paymentMethod !== undefined) { fields.push('paymentMethod = ?'); values.push((updates as any).paymentMethod || null) }
       if ((updates as any).shippingMethod !== undefined) { fields.push('shippingMethod = ?'); values.push((updates as any).shippingMethod || null) }
       if ((updates as any).couponCode !== undefined) { fields.push('couponCode = ?'); values.push((updates as any).couponCode || null) }

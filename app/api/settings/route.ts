@@ -10,9 +10,22 @@ function maskSecret(s: string | undefined): string {
 }
 
 function sanitizeSettingsForAdmin(s: SiteSettings) {
-  const { adminPassword, smtpPass, paypalClientSecret, payoneerClientSecret, aiApiKey, aiCopyApiKey, aiImageApiKey, aiImageRefApiKey, aiVideoApiKey, ...rest } = s
+  // 安全修复 H2: 全部支付/社媒/Webhook/AI 密钥与员工密码哈希一律不返回, 仅返回 has* 标志与掩码预览
+  const {
+    adminPassword, smtpPass, paypalClientSecret, payoneerClientSecret,
+    aiApiKey, aiCopyApiKey, aiImageApiKey, aiImageRefApiKey, aiVideoApiKey, aiAudioApiKey,
+    xApiSecret, xAccessToken, xAccessTokenSecret,
+    fbClientSecret, fbPageAccessToken,
+    igClientSecret, igAccessToken,
+    liClientSecret, liAccessToken,
+    ytClientSecret, ytAccessToken, ytApiKey,
+    ptClientSecret, ptAccessToken,
+    tkClientSecret, tkAccessToken,
+    metaAppSecret, webhookVerifyToken, aiAudioProviders,
+    ...rest
+  } = s
   const staff = (rest.staffMembers || []).map(m => {
-    const { password, ...safe } = m as any
+    const { password, passwordHash, salt, ...safe } = m as any
     return safe
   })
   return {
@@ -27,9 +40,33 @@ function sanitizeSettingsForAdmin(s: SiteSettings) {
     hasAiImageApiKey: !!aiImageApiKey,
     hasAiImageRefApiKey: !!aiImageRefApiKey,
     hasAiVideoApiKey: !!aiVideoApiKey,
+    hasAiAudioApiKey: !!aiAudioApiKey,
+    hasXApiSecret: !!xApiSecret,
+    hasXAccessToken: !!xAccessToken,
+    hasFbClientSecret: !!fbClientSecret,
+    hasFbPageAccessToken: !!fbPageAccessToken,
+    hasIgClientSecret: !!igClientSecret,
+    hasIgAccessToken: !!igAccessToken,
+    hasLiClientSecret: !!liClientSecret,
+    hasLiAccessToken: !!liAccessToken,
+    hasYtClientSecret: !!ytClientSecret,
+    hasYtAccessToken: !!ytAccessToken,
+    hasPtClientSecret: !!ptClientSecret,
+    hasPtAccessToken: !!ptAccessToken,
+    hasTkClientSecret: !!tkClientSecret,
+    hasTkAccessToken: !!tkAccessToken,
+    hasMetaAppSecret: !!metaAppSecret,
+    hasWebhookVerifyToken: !!webhookVerifyToken,
+    hasWebhookBaseUrl: !!(rest as any).webhookBaseUrl,
     aiImageKeyPreview: maskSecret(aiImageApiKey),
     aiImageRefKeyPreview: maskSecret(aiImageRefApiKey),
     aiVideoKeyPreview: maskSecret(aiVideoApiKey),
+    paypalSecretPreview: maskSecret(paypalClientSecret),
+    payoneerSecretPreview: maskSecret(payoneerClientSecret),
+    xApiSecretPreview: maskSecret(xApiSecret),
+    fbClientSecretPreview: maskSecret(fbClientSecret),
+    igClientSecretPreview: maskSecret(igClientSecret),
+    metaAppSecretPreview: maskSecret(metaAppSecret),
     aiLLMProviders: Object.fromEntries(
       Object.entries(rest.aiLLMProviders || {}).map(([k, v]) => [
         k,

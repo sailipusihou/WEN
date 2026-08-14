@@ -48,7 +48,10 @@ function readSessions(): AdminSession[] {
 
 function writeSessions(sessions: AdminSession[]): void {
   ensureSessionsFile()
-  fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2), 'utf-8')
+  // 修复 S1: 原始 token 只存在于 Cookie 与内存, 磁盘仅持久化 tokenHash,
+  // 防止 data/admin-sessions.json 泄露导致会话被直接劫持
+  const safeSessions = sessions.map(({ token: _token, ...rest }) => rest)
+  fs.writeFileSync(SESSIONS_FILE, JSON.stringify(safeSessions, null, 2), 'utf-8')
 }
 
 // 常量时间比较, 防止时序攻击

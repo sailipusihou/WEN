@@ -25,8 +25,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=error&msg=No authorization code received', req.nextUrl.origin))
     }
 
-    const pendingKey = state || 'pending'
-    const pending = getPendingSocialOAuth('tiktok', pendingKey) || getPendingSocialOAuth('tiktok', 'pending')
+    // 修复 S7: state 必须存在且精确匹配, 不再回退 'pending' 固定键
+    const pendingKey = state || ''
+    const pending = pendingKey ? getPendingSocialOAuth('tiktok', pendingKey) : null
     if (!pending) {
       return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=expired', req.nextUrl.origin))
     }
@@ -72,9 +73,6 @@ export async function GET(req: NextRequest) {
     }
 
     removePendingSocialOAuth('tiktok', pendingKey)
-    if (pendingKey !== 'pending') {
-      removePendingSocialOAuth('tiktok', 'pending')
-    }
 
     return NextResponse.redirect(new URL('/admin/marketing?tiktok_auth=success', req.nextUrl.origin))
   } catch (e: any) {

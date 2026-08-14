@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
@@ -94,6 +94,10 @@ export default function CheckoutPage() {
 
   const totalPrice = Math.round((discountedSubtotal - couponDiscount + shippingCost) * 100) / 100
 
+  // 修复 H5: PayPal 按钮回调闭包只捕获首次渲染的值, 用 ref 始终读取最新金额
+  const totalPriceRef = useRef(totalPrice)
+  totalPriceRef.current = totalPrice
+
   const applyCoupon = async () => {
     const code = couponCode.trim()
     if (!code) return
@@ -168,7 +172,7 @@ export default function CheckoutPage() {
         fetch('/api/create-paypal-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: convertPrice(totalPrice, 'USD') }),
+          body: JSON.stringify({ amount: convertPrice(totalPriceRef.current, 'USD') }),
         }).then(r => r.json()).then(d => { if (d.error) throw new Error(d.error); return d.id }),
       onApprove: async (data: any) => {
         setProcessing(true)

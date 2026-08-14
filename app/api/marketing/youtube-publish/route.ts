@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7: 发布操作应使用 social_publish (原 messages_view 语义无关)
+    const auth = requirePermission(req, 'social_publish')
     if ('error' in auth) return auth.error
 
     const body = await req.json()

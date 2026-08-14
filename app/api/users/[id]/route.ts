@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const auth = requirePermission(req, 'users_view')
+  // 修复 H7: 写操作改用 users_edit (原 users_view 是只读权限)
+  const auth = requirePermission(req, 'users_edit')
   if ('error' in auth) return auth.error
   const id = req.nextUrl.pathname.split('/').pop() || ''
   if (!validateId(id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })

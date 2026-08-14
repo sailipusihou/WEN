@@ -185,12 +185,10 @@ export async function GET(req: NextRequest) {
         body: bodyData,
         bodyLength: bodyStr.length,
       },
+      // 安全修复 H9: 不再返回签名构造过程 (signString 含完整 appSecret, computedSign 可被离线爆破复用)
       signDebug: {
         sortedParamKeys: keys,
-        signStringStart: signStr.slice(0, 200),
-        signStringEnd: signStr.slice(-100),
         signStringLength: signStr.length,
-        computedSign: sign,
       },
       response: {
         rawText: rawResponseText,

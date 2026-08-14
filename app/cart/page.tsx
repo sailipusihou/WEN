@@ -7,10 +7,20 @@ import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import OptimizedImage from '@/components/ui/OptimizedImage'
+import { useActivePromotions } from '@/lib/promotion-client'
+import { computePromotionForProduct } from '@/lib/promotion-shared'
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, subtotal } = useCart()
+  const { items, removeItem, updateQuantity, clearCart } = useCart()
   const { currency } = useCurrency()
+
+  // 修复 C5: 购物车存基础价, 此处按当前促销统一计算一次 (与结算页/服务端一致, 避免双重折扣)
+  const promotions = useActivePromotions()
+  const discountedItems = items.map(item => {
+    const eff = computePromotionForProduct({ id: item.id, category: item.category || '', price: item.price }, promotions)
+    return { ...item, price: eff.price }
+  })
+  const subtotal = Math.round(discountedItems.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100
 
   const shipping = subtotal >= 3000 ? 0 : 250
   const shippingConverted = convertPrice(shipping, currency)
@@ -49,7 +59,7 @@ export default function CartPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-3">
-            {items.map((item, i) => (
+            {discountedItems.map((item, i) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className="bg-white/80 border border-[#EDE8DC]/50 p-4 md:p-6 flex gap-4 md:gap-6">
                 <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#EDE8DC]/30 overflow-hidden relative">
