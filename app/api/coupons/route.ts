@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
       value: Number(body.value),
       minSpend: Number(body.minSpend) || 0,
       maxDiscount: body.maxDiscount ? Number(body.maxDiscount) : undefined,
+      // 修复 H2: 支持设置全局使用上限 (不设则无限)
+      maxUsage: body.maxUsage !== undefined && body.maxUsage !== '' ? Math.max(1, Math.floor(Number(body.maxUsage))) : undefined,
       validDays: Math.max(1, Number(body.validDays) || 30),
       active: body.active !== false,
     })
@@ -85,6 +87,7 @@ export async function PUT(req: NextRequest) {
     if (body.minSpend !== undefined) updates.minSpend = Number(body.minSpend) || 0
     if (body.maxDiscount !== undefined) updates.maxDiscount = body.maxDiscount ? Number(body.maxDiscount) : undefined
     if (body.validDays !== undefined) updates.validDays = Math.max(1, Number(body.validDays) || 30)
+    if (body.maxUsage !== undefined) updates.maxUsage = body.maxUsage === '' || body.maxUsage === null ? undefined : Math.max(1, Math.floor(Number(body.maxUsage)))
     if (body.active !== undefined) updates.active = Boolean(body.active)
     const updated = updateCoupon(body.id, updates)
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })

@@ -116,5 +116,8 @@ export function deleteCoupon(id: string): boolean {
 
 export function incrementCouponUsed(code: string): void {
   const c = getCouponByCode(code)
-  if (c) updateCoupon(c.id, { usedCount: c.usedCount + 1 })
+  // 修复 H2: 不超过全局上限
+  if (c && (c.maxUsage === undefined || c.usedCount < c.maxUsage)) {
+    updateCoupon(c.id, { usedCount: c.usedCount + 1 })
+  }
 }

@@ -32,6 +32,34 @@ function cleanKey(k?: string): string {
   return s && !/•|configured|masked/i.test(s) ? s : ''
 }
 
+// 修复 H17 (SSRF): 仅允许公网 HTTP(S) 主机 — 拒绝 localhost/内网/链路本地/云元数据地址
+export function isSafeHttpUrl(raw: string): boolean {
+  if (!raw || typeof raw !== 'string') return false
+  let u: URL
+  try {
+    u = new URL(raw)
+  } catch {
+    return false
+  }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return false
+  const host = u.hostname.toLowerCase()
+  if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) return false
+  if (host === '::1' || host === '[::1]') return false
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    const parts = host.split('.').map(Number)
+    const [a, b] = parts
+    if (a === 0 || a === 127 || a === 10) return false
+    if (a === 169 && b === 254) return false // 云元数据 169.254.169.254
+    if (a === 172 && b >= 16 && b <= 31) return false
+    if (a === 192 && b === 168) return false
+  }
+  return true
+}
+
+function safeBaseUrl(raw: string, fallback: string): string {
+  return isSafeHttpUrl(raw) ? raw.replace(/\/$/, '') : fallback
+}
+
 export interface LLMOverride {
   provider?: string
   model?: string
@@ -44,7 +72,11 @@ export function resolveLLMConfig(settings: SiteSettings, overrides: LLMOverride 
   const lib = settings.aiLLMProviders?.[provider] || { apiKey: '', baseUrl: '', models: [] }
   const def = LLM_DEFAULTS[provider] || { baseUrl: '', model: '' }
   const apiKey = cleanKey(overrides.apiKey) || cleanKey(lib.apiKey) || cleanKey(settings.aiApiKey) || cleanKey(settings.aiCopyApiKey)
-  const baseUrl = (overrides.baseUrl || lib.baseUrl || settings.aiBaseUrl || settings.aiCopyBaseUrl || def.baseUrl || 'https://api.deepseek.com/v1').replace(/\/$/, '')
+  // 修复 H17: baseUrl 必须为公网主机, 非法时回退默认 (防止 SSRF + 已存 key 外发)
+  const baseUrl = safeBaseUrl(
+    overrides.baseUrl || lib.baseUrl || settings.aiBaseUrl || settings.aiCopyBaseUrl || def.baseUrl || 'https://api.deepseek.com/v1',
+    def.baseUrl || 'https://api.deepseek.com/v1'
+  )
   const settingsModel = settings.aiModel && settings.aiModel !== '__custom__' ? settings.aiModel : ''
   const settingsCopyModel = settings.aiCopyModel && settings.aiCopyModel !== '__custom__' ? settings.aiCopyModel : ''
   const model = (overrides.model && overrides.model !== '__custom__')
@@ -70,10 +102,14 @@ export function resolveImageConfig(settings: SiteSettings, mode: 'text' | 'refer
     || cleanKey(lib.apiKey)
     || (isRef ? cleanKey(settings.aiImageRefApiKey) : '')
     || cleanKey(settings.aiImageApiKey)
-  const baseUrl = (overrides.baseUrl || lib.baseUrl
-    || (isRef ? settings.aiImageRefBaseUrl : '')
-    || settings.aiImageBaseUrl
-    || def.baseUrl || 'https://api.siliconflow.cn/v1').replace(/\/$/, '')
+  // 修复 H17: baseUrl 必须为公网主机
+  const baseUrl = safeBaseUrl(
+    overrides.baseUrl || lib.baseUrl
+      || (isRef ? settings.aiImageRefBaseUrl : '')
+      || settings.aiImageBaseUrl
+      || def.baseUrl || 'https://api.siliconflow.cn/v1',
+    def.baseUrl || 'https://api.siliconflow.cn/v1'
+  )
   const savedModel = isRef ? settings.aiImageRefModel : settings.aiImageModel
   const model = (overrides.model && overrides.model !== '__custom__')
     ? overrides.model
@@ -103,7 +139,11 @@ export function resolveVideoConfig(settings: SiteSettings, overrides: VideoOverr
   const apiKey = cleanKey(overrides.apiKey)
     || cleanKey(lib.apiKey)
     || cleanKey(settings.aiVideoApiKey)
-  const baseUrl = (overrides.baseUrl || lib.baseUrl || settings.aiVideoBaseUrl || def.baseUrl || 'https://ark.cn-beijing.volces.com/api/v3').replace(/\/$/, '')
+  // 修复 H17: baseUrl 必须为公网主机
+  const baseUrl = safeBaseUrl(
+    overrides.baseUrl || lib.baseUrl || settings.aiVideoBaseUrl || def.baseUrl || 'https://ark.cn-beijing.volces.com/api/v3',
+    def.baseUrl || 'https://ark.cn-beijing.volces.com/api/v3'
+  )
   const savedModel = settings.aiVideoModel && settings.aiVideoModel !== '__custom__' ? settings.aiVideoModel : ''
   const libModel = lib.models?.[0]?.id || ''
   const model = (overrides.model && overrides.model !== '__custom__')
@@ -135,9 +175,11 @@ export function resolveAudioConfig(settings: SiteSettings, overrides: AudioOverr
     || cleanKey(settings.aiVideoProviders?.minimax?.apiKey)
     || cleanKey(settings.aiLLMProviders?.minimax?.apiKey)
     || cleanKey(settings.aiImageProviders?.minimax?.apiKey)
-  const baseUrl = (overrides.baseUrl || lib.baseUrl || settings.aiAudioBaseUrl || def.baseUrl || 'https://api.minimaxi.com')
-    .replace(/\/$/, '')
-    .replace(/\/v1$/, '')
+  // 修复 H17: baseUrl 必须为公网主机
+  const baseUrl = safeBaseUrl(
+    overrides.baseUrl || lib.baseUrl || settings.aiAudioBaseUrl || def.baseUrl || 'https://api.minimaxi.com',
+    def.baseUrl || 'https://api.minimaxi.com'
+  ).replace(/\/v1$/, '')
   const savedModel = settings.aiAudioModel && settings.aiAudioModel !== '__custom__' ? settings.aiAudioModel : ''
   const libModel = lib.models?.[0]?.id || ''
   const model = (overrides.model && overrides.model !== '__custom__')

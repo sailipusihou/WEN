@@ -7,9 +7,9 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { ProxyAgent } from 'undici'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, rateLimit, getClientIp } from '@/lib/auth'
 import { getRepository } from '@/lib/repository'
-import { resolveVideoConfig } from '@/lib/ai-config'
+import { resolveVideoConfig, isSafeHttpUrl } from '@/lib/ai-config'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -58,7 +58,12 @@ function detectImageMime(buf: Buffer): string {
 }
 
 async function fetchImageBuffer(url: string, origin: string): Promise<Buffer> {
-  const abs = url.startsWith('/') ? `${origin}${url}` : url
+  const isRelative = url.startsWith('/')
+  const abs = isRelative ? `${origin}${url}` : url
+  // 修复 H17 (SSRF): 远程参考图仅允许公网主机
+  if (!isRelative && !isSafeHttpUrl(abs)) {
+    throw new Error('参考图 URL 不被允许 (仅支持公网图片地址)')
+  }
   const res = await fetch(abs)
   if (!res.ok) throw new Error(`参考图下载失败 (${res.status})`)
   return Buffer.from(await res.arrayBuffer())
@@ -123,6 +128,11 @@ export async function POST(req: NextRequest) {
   try {
     const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
+    // 修复 H17: 生成接口限频
+    const ip = getClientIp(req)
+    if (!rateLimit('ai_generate_video:' + ip, 10, 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
 
     const body = await req.json()
     const {

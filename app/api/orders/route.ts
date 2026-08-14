@@ -422,10 +422,31 @@ export async function POST(req: NextRequest) {
     // Apply coupon
     let couponDiscount = 0
     let couponCode: string | undefined
+    // welcome 券核销需要用户持有 (登录用户 + 未使用 + 未过期)
+    let welcomeCouponUserId: string | undefined
+    let welcomeCouponCode: string | undefined
     if (body.couponCode) {
       const coupon = getCouponByCode(String(body.couponCode))
       if (!coupon) {
         return NextResponse.json({ error: "Invalid coupon code" }, { status: 400 })
+      }
+      // 修复 H2: welcome 券必须由注册时发放的持有者本人使用 (防止共享码无限刷)
+      if (coupon.kind === 'welcome') {
+        const userAuth = requireUser(req)
+        if ('error' in userAuth) {
+          return NextResponse.json({ error: "Welcome coupon requires signing in" }, { status: 401 })
+        }
+        const holder = (userAuth.user as any).coupons?.find(
+          (uc: any) => String(uc.code).toLowerCase() === coupon!.code.toLowerCase()
+        )
+        if (!holder || holder.used) {
+          return NextResponse.json({ error: "This welcome coupon is not available for your account" }, { status: 400 })
+        }
+        if (new Date(holder.expiresAt).getTime() < Date.now()) {
+          return NextResponse.json({ error: "This welcome coupon has expired" }, { status: 400 })
+        }
+        welcomeCouponUserId = userAuth.user.id
+        welcomeCouponCode = coupon.code
       }
       const result = validateCouponForSubtotal(coupon, calculatedSubtotal)
       if (!result.ok) {
@@ -507,7 +528,23 @@ export async function POST(req: NextRequest) {
     repo.orders.add(order)
     // 优惠券核销同样只在支付真实 (或未声称已支付) 时执行, 防止伪造 COMPLETED 刷券
     const couponEligible = !claimedTxn || claimedTxn.status !== 'COMPLETED' || paymentVerified
-    if (couponCode && couponEligible) incrementCouponUsed(couponCode)
+    if (couponCode && couponEligible) {
+      incrementCouponUsed(couponCode)
+      // 修复 H2: welcome 券同步核销持有者实例 (used=true), 防止重复使用
+      if (welcomeCouponUserId && welcomeCouponCode) {
+        try {
+          const holder = repo.users.getById(welcomeCouponUserId)
+          if (holder) {
+            const coupons = (holder.coupons || []).map((uc: any) =>
+              String(uc.code).toLowerCase() === welcomeCouponCode!.toLowerCase() ? { ...uc, used: true } : uc
+            )
+            repo.users.update(welcomeCouponUserId, { coupons })
+          }
+        } catch {
+          console.warn('[Orders] Failed to mark welcome coupon used:', welcomeCouponCode)
+        }
+      }
+    }
 
     const customerEmail = order.customerEmail
     if (customerEmail) {

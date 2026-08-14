@@ -26,6 +26,8 @@ export interface Coupon {
   minSpend: number
   maxDiscount?: number
   validDays: number
+  // 全局使用上限 (修复 H2: 原优惠券无上限, welcome 券可被无限刷)
+  maxUsage?: number
   active: boolean
   usedCount: number
   createdAt: string
@@ -80,9 +82,19 @@ export function computePromotionForProduct(
 
 export function validateCouponForSubtotal(
   coupon: Coupon,
-  subtotal: number
+  subtotal: number,
+  now = Date.now()
 ): { ok: boolean; discount: number; error?: string } {
   if (!coupon.active) return { ok: false, discount: 0, error: 'Coupon is not active' }
+  // 修复 H2: 全局使用上限校验
+  if (coupon.maxUsage !== undefined && coupon.usedCount >= coupon.maxUsage) {
+    return { ok: false, discount: 0, error: 'Coupon usage limit reached' }
+  }
+  // 修复 H2: 有效期校验 (validDays 自创建日起)
+  const expiresAt = new Date(coupon.createdAt).getTime() + coupon.validDays * 24 * 3600 * 1000
+  if (now > expiresAt) {
+    return { ok: false, discount: 0, error: 'Coupon has expired' }
+  }
   if (subtotal < coupon.minSpend) {
     return { ok: false, discount: 0, error: `Minimum spend is $${coupon.minSpend.toFixed(2)}` }
   }
