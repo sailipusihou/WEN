@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { getSocialAccountById, updateSocialAccount } from '@/lib/social-accounts'
 import { getXUserInfoOAuth2, refreshOAuth2Token } from '@/lib/x-twitter'
+import { isNetworkError } from '@/lib/net-error'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,6 +58,13 @@ export async function GET(req: NextRequest) {
       userInfo = await getXUserInfoOAuth2(accessToken)
     } catch (err: any) {
       console.error('[X Insights] Token validation failed:', err?.message)
+      // 修复: 网络错误 ≠ token 过期 — 不误报 401, 提示检查网络/代理
+      if (isNetworkError(err)) {
+        return NextResponse.json({
+          error: 'X API 网络不可达，请检查网络/代理后重试',
+          status: 'network_error',
+        }, { status: 503 })
+      }
       if (account.refreshToken && !tokenRefreshed) {
         try {
           const newTokens = await refreshOAuth2Token(account.refreshToken)
