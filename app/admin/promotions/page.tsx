@@ -44,7 +44,7 @@ function Badge({ status }: { status: { label: string; bg: string; text: string }
 }
 
 export default function AdminPromotionsPage() {
-  const [tab, setTab] = useState<'promos' | 'coupons'>('promos')
+  const [tab, setTab] = useState<'promos' | 'coupons' | 'history'>('promos')
   const [promos, setPromos] = useState<any[]>([])
   const [coupons, setCoupons] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
@@ -218,6 +218,7 @@ export default function AdminPromotionsPage() {
   const currentRatio = (SIZE_OPTIONS.find(s => s.id === selSize) || SIZE_OPTIONS[0]).ratio
   // 历史图片 (生成/裁剪确认后自动记录, 可加入模板)
   const [history, setHistory] = useState<any[]>([])
+  const [historyPreview, setHistoryPreview] = useState<any>(null)
   const generateCouponImage = async () => {
     const code = cForm.code.trim() || 'COUPON'
     const name = cForm.name.trim() || code
@@ -454,7 +455,7 @@ export default function AdminPromotionsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         <button onClick={() => setTab('promos')} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
           style={{ backgroundColor: tab === 'promos' ? 'var(--adm-accent)' : 'var(--adm-input)', color: tab === 'promos' ? 'var(--adm-accent-text)' : 'var(--adm-text-secondary)' }}>
           <Percent size={15} /> Product Promotions
@@ -463,9 +464,129 @@ export default function AdminPromotionsPage() {
           style={{ backgroundColor: tab === 'coupons' ? 'var(--adm-accent)' : 'var(--adm-input)', color: tab === 'coupons' ? 'var(--adm-accent-text)' : 'var(--adm-text-secondary)' }}>
           <Ticket size={15} /> Coupons
         </button>
+        <button onClick={() => setTab('history')} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+          style={{ backgroundColor: tab === 'history' ? 'var(--adm-accent)' : 'var(--adm-input)', color: tab === 'history' ? 'var(--adm-accent-text)' : 'var(--adm-text-secondary)' }}>
+          <ImageIcon size={15} /> Image History
+        </button>
       </div>
 
-      {tab === 'promos' ? (
+      {tab === 'history' ? (
+        /* ===== 历史图库: 每次生成的图片自动保存, 可查看/删除/加入模板 ===== */
+        <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--adm-card)', borderColor: 'var(--adm-border)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--adm-text)' }}>
+                <ImageIcon size={15} style={{ color: 'var(--adm-accent)' }} /> Coupon Image History
+              </h3>
+              <p className="text-xs mt-1" style={{ color: 'var(--adm-text-secondary)' }}>
+                每次生成的券图自动保存在此 · 点击图片查看大图 · 可加入模板或删除
+              </p>
+            </div>
+            {history.length > 0 && (
+              <button onClick={() => setHistory([])} className="text-xs px-3 py-1.5 rounded-lg hover:bg-red-500/10"
+                style={{ color: 'var(--adm-text-secondary)' }} title="Clear local view (server history remains)">
+                Refresh
+              </button>
+            )}
+          </div>
+          {history.length === 0 ? (
+            <div className="p-10 text-center">
+              <ImageIcon size={28} style={{ color: 'var(--adm-text-secondary)', opacity: 0.4 }} className="mx-auto mb-3" />
+              <p className="text-sm" style={{ color: 'var(--adm-text-secondary)' }}>暂无历史图片 — 在优惠券 Tab 生成图片后会自动出现在这里</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+              {history.map(h => (
+                <div key={h.id} className="group relative aspect-square rounded-lg overflow-hidden border cursor-pointer"
+                  style={{ borderColor: 'var(--adm-border)' }} onClick={() => setHistoryPreview(h)}>
+                  <img src={h.url} alt="coupon history" className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-1.5 py-1 bg-black/50 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={async (e) => {
+                      e.stopPropagation()
+                      try {
+                        const res = await fetch('/api/coupon-templates', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: 'History ' + h.id, imageUrl: h.url }),
+                        })
+                        if (res.ok) {
+                          const d = await res.json()
+                          setTemplates(prev => [d.template, ...prev].slice(0, 30))
+                        }
+                      } catch { /* ignore */ }
+                    }} title="Add to templates"
+                      className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:scale-110 transition-transform">
+                      <Plus size={11} />
+                    </button>
+                    <button onClick={async (e) => {
+                      e.stopPropagation()
+                      try {
+                        await fetch(`/api/coupon-image-history?id=${encodeURIComponent(h.id)}`, { method: 'DELETE' })
+                        setHistory(prev => prev.filter(x => x.id !== h.id))
+                        if (historyPreview?.id === h.id) setHistoryPreview(null)
+                      } catch { /* ignore */ }
+                    }} title="Delete"
+                      className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center hover:scale-110 transition-transform">
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                  {h.size && (
+                    <span className="absolute top-1 left-1 text-[9px] px-1 py-0.5 rounded bg-black/50 text-white/80">{h.size}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 大图预览 */}
+          {historyPreview && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6" onClick={() => setHistoryPreview(null)}>
+              <div className="max-w-2xl w-full bg-white rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                <img src={historyPreview.url} alt="preview" className="w-full max-h-[70vh] object-contain bg-black/5" />
+                <div className="p-4 flex items-center justify-between gap-3">
+                  <p className="text-xs font-sans" style={{ color: 'var(--adm-text-secondary)' }}>
+                    {historyPreview.size ? `Size: ${historyPreview.size} · ` : ''}{new Date(historyPreview.createdAt).toLocaleString()}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch('/api/coupon-templates', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: 'History ' + historyPreview.id, imageUrl: historyPreview.url }),
+                        })
+                        if (res.ok) {
+                          const d = await res.json()
+                          setTemplates(prev => [d.template, ...prev].slice(0, 30))
+                          setHistoryPreview(null)
+                        }
+                      } catch { /* ignore */ }
+                    }}
+                      className="px-4 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'var(--adm-accent)', color: 'var(--adm-accent-text)' }}>
+                      <Plus size={13} /> Add to Templates
+                    </button>
+                    <button onClick={async () => {
+                      try {
+                        await fetch(`/api/coupon-image-history?id=${encodeURIComponent(historyPreview.id)}`, { method: 'DELETE' })
+                        setHistory(prev => prev.filter(x => x.id !== historyPreview.id))
+                        setHistoryPreview(null)
+                      } catch { /* ignore */ }
+                    }}
+                      className="px-4 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 bg-red-500 text-white">
+                      <Trash2 size={13} /> Delete
+                    </button>
+                    <button onClick={() => setHistoryPreview(null)}
+                      className="px-4 py-2 rounded-lg text-xs font-medium" style={{ backgroundColor: 'var(--adm-input)', color: 'var(--adm-text-secondary)' }}>
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : tab === 'promos' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Promotion list */}
           <div className="lg:col-span-2 space-y-3">
@@ -864,46 +985,7 @@ export default function AdminPromotionsPage() {
                 </div>
               )}
 
-              {/* 生成历史: 每次生成/裁剪的图片, 可加入模板或删除 */}
-              {history.length > 0 && (
-                <div className="pt-1 border-t" style={{ borderColor: 'var(--adm-border)' }}>
-                  <p className="text-[10px] mb-1.5 mt-1" style={{ color: 'var(--adm-text-secondary)' }}>History (generated images · click + to add as template)</p>
-                  <div className="flex flex-wrap gap-2">
-                    {history.map(h => (
-                      <div key={h.id} className="relative group w-14 h-14 rounded-md overflow-hidden border border-[var(--adm-border)]">
-                        <img src={h.url} alt="history" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={async () => {
-                            try {
-                              const res = await fetch('/api/coupon-templates', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ name: cForm.name || cForm.code || 'Coupon', imageUrl: h.url }),
-                              })
-                              if (res.ok) {
-                                const d = await res.json()
-                                setTemplates(prev => [d.template, ...prev].slice(0, 30))
-                              }
-                            } catch { /* ignore */ }
-                          }} title="Add to templates"
-                            className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
-                            <Plus size={11} />
-                          </button>
-                          <button onClick={async () => {
-                            try {
-                              await fetch(`/api/coupon-image-history?id=${encodeURIComponent(h.id)}`, { method: 'DELETE' })
-                              setHistory(prev => prev.filter(x => x.id !== h.id))
-                            } catch { /* ignore */ }
-                          }} title="Delete history"
-                            className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center">
-                            <Trash2 size={10} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* 生成历史已移至独立的 "Image History" Tab (每次生成/裁剪自动记录) */}
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
