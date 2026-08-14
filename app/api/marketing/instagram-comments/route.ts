@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or disconnected account' }, { status: 400 })
     }
 
-    // 校验账号归属：非管理员只能查看自己的账号
+    // 鏍￠獙璐﹀彿褰掑睘锛氶潪绠＄悊鍛樺彧鑳芥煡鐪嬭嚜宸辩殑璐﹀彿
     const canViewAll = ['super_admin', 'admin'].includes(auth.user.role)
     if (!canViewAll && account.staffId !== auth.user.id) {
       return NextResponse.json({ error: 'Forbidden: you can only view your own accounts' }, { status: 403 })
@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken, // IG 长令牌刷新后滚动更新 (原缺陷: 60天窗口后永久失效)
           lastSync: new Date().toISOString(),
         })
       } catch {
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (mode === 'all') {
-      // 获取该账号所有帖子的评论
+      // 鑾峰彇璇ヨ处鍙锋墍鏈夊笘瀛愮殑璇勮
       const timeline = await getInstagramTimeline(accessToken, 50)
       const allComments: any[] = []
       for (const media of timeline) {
@@ -65,12 +66,12 @@ export async function GET(req: NextRequest) {
           // skip media with no comments or errors
         }
       }
-      // 按时间倒序
+      // 鎸夋椂闂村€掑簭
       allComments.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       return NextResponse.json({ success: true, comments: allComments, total: allComments.length })
     }
 
-    // 单条帖子评论
+    // 鍗曟潯甯栧瓙璇勮
     if (!mediaId) {
       return NextResponse.json({ error: 'Missing mediaId (required when mode is not "all")' }, { status: 400 })
     }
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or disconnected account' }, { status: 400 })
     }
 
-    // 校验账号归属：非管理员只能回复自己账号下的评论
+    // 鏍￠獙璐﹀彿褰掑睘锛氶潪绠＄悊鍛樺彧鑳藉洖澶嶈嚜宸辫处鍙蜂笅鐨勮瘎璁?
     const canViewAll = ['super_admin', 'admin'].includes(auth.user.role)
     if (!canViewAll && account.staffId !== auth.user.id) {
       return NextResponse.json({ error: 'Forbidden: you can only reply on your own accounts' }, { status: 403 })
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken, // IG 长令牌刷新后滚动更新 (原缺陷: 60天窗口后永久失效)
           lastSync: new Date().toISOString(),
         })
       } catch {
@@ -146,7 +148,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or disconnected account' }, { status: 400 })
     }
 
-    // 校验账号归属：非管理员只能删除自己账号下的评论
+    // 鏍￠獙璐﹀彿褰掑睘锛氶潪绠＄悊鍛樺彧鑳藉垹闄よ嚜宸辫处鍙蜂笅鐨勮瘎璁?
     const canViewAll = ['super_admin', 'admin'].includes(auth.user.role)
     if (!canViewAll && account.staffId !== auth.user.id) {
       return NextResponse.json({ error: 'Forbidden: you can only delete on your own accounts' }, { status: 403 })
@@ -159,6 +161,7 @@ export async function DELETE(req: NextRequest) {
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken, // IG 长令牌刷新后滚动更新 (原缺陷: 60天窗口后永久失效)
           lastSync: new Date().toISOString(),
         })
       } catch {

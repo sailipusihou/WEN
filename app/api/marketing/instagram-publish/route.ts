@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
-import { getSocialAccountById, canUserManageAccount } from '@/lib/social-accounts'
+import { getSocialAccountById, updateSocialAccount, canUserManageAccount } from '@/lib/social-accounts'
 import { publishInstagramMedia, publishInstagramContainer, refreshInstagramToken } from '@/lib/instagram'
 
 export const runtime = 'nodejs'
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This API only supports Instagram' }, { status: 400 })
     }
 
-    // 修复: 非管理员不能使用他人的社交账号发布
+    // 淇: 闈炵鐞嗗憳涓嶈兘浣跨敤浠栦汉鐨勭ぞ浜よ处鍙峰彂甯?
     if (!canUserManageAccount(auth.user, account)) {
       return NextResponse.json({ error: 'Forbidden: not your account' }, { status: 403 })
     }
@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
       try {
         const newTokens = await refreshInstagramToken(account.refreshToken)
         accessToken = newTokens.accessToken
+        // 修复: 刷新后滚动更新 refreshToken (IG 长令牌刷新后新 token 即新的长期令牌, 60天窗口持续滚动)
+        updateSocialAccount(accountId, {
+          accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken,
+          lastSync: new Date().toISOString(),
+        })
       } catch {
         console.log('[Instagram Publish] Token refresh failed, using existing token')
       }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { getSocialAccountById, updateSocialAccount } from '@/lib/social-accounts'
 import { getInstagramConversations, sendInstagramDM, refreshInstagramToken } from '@/lib/instagram'
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken, // IG 长令牌刷新后滚动更新 (原缺陷: 60天窗口后永久失效)
           lastSync: new Date().toISOString(),
         })
       } catch {
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
+          refreshToken: newTokens.accessToken, // IG 长令牌刷新后滚动更新 (原缺陷: 60天窗口后永久失效)
           lastSync: new Date().toISOString(),
         })
       } catch {
