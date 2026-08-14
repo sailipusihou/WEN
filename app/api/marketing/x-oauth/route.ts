@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { staffId, staffName, staffAvatar } = body
+    // 修复 C5: 非管理员只能用自己身份发起 OAuth (管理员可代员工发起)
+    const isAdmin = ['super_admin', 'admin'].includes(auth.user.role)
+    const staffId = isAdmin ? (body.staffId || auth.user.id) : auth.user.id
+    const staffName = isAdmin ? (body.staffName || auth.user.name || '') : (auth.user.name || '')
+    const staffAvatar = isAdmin ? body.staffAvatar : auth.user.avatar
 
     if (!staffId || !staffName) {
       return NextResponse.json({ error: 'Missing staff info' }, { status: 400 })

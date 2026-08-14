@@ -29,9 +29,11 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = req.nextUrl
-    const staffId = searchParams.get('staffId')
-    const staffName = searchParams.get('staffName')
-    const staffAvatar = searchParams.get('staffAvatar') || undefined
+    // 修复 C5: 非管理员只能用自己身份发起 OAuth (管理员可代员工发起)
+    const isAdmin = ['super_admin', 'admin'].includes(auth.user.role)
+    const staffId = isAdmin ? (searchParams.get('staffId') || auth.user.id) : auth.user.id
+    const staffName = isAdmin ? (searchParams.get('staffName') || auth.user.name || '') : (auth.user.name || '')
+    const staffAvatar = isAdmin ? (searchParams.get('staffAvatar') || undefined) : auth.user.avatar
     const mode = searchParams.get('mode') || undefined
 
     if (!staffId || !staffName) {

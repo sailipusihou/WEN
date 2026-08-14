@@ -19,6 +19,20 @@ import { refreshTikTokToken, getTikTokUserInfo } from '@/lib/tiktok'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+// 修复 C5: 非管理员只能管理自己的账号 (super_admin/admin 可管理全部)
+function canManageAccount(auth: any, account: any): boolean {
+  if (!account) return false
+  if (['super_admin', 'admin'].includes(auth.user.role)) return true
+  return account.staffId === auth.user.id
+}
+
+function assertCanManage(auth: any, account: any): NextResponse | null {
+  if (!canManageAccount(auth, account)) {
+    return NextResponse.json({ error: 'Forbidden: not your account' }, { status: 403 })
+  }
+  return null
+}
+
 export async function GET(req: NextRequest) {
   try {
     const auth = requirePermission(req, 'messages_view')
@@ -73,8 +87,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
       }
 
+      // 修复 C5: 非管理员只能为自己连接账号, 不能指定任意 staffId
+      const targetStaffId = ['super_admin', 'admin'].includes(auth.user.role) ? staffId : auth.user.id
+
       const account = addSocialAccount({
-        staffId,
+        staffId: targetStaffId,
         staffName,
         staffAvatar,
         platform,
@@ -93,6 +110,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'ID is required' }, { status: 400 })
       }
 
+      // 修复 C5: 归属校验
+      const target = getSocialAccountById(id)
+      const denied = assertCanManage(auth, target)
+      if (denied) return denied
+
       const updated = disconnectSocialAccount(id)
       if (!updated) {
         return NextResponse.json({ error: 'Account not found' }, { status: 404 })
@@ -102,7 +124,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'check-status') {
-      const accounts = getAllSocialAccounts()
+      // 修复 C5: 非管理员只能检查自己的账号
+      const accounts = getAllSocialAccounts().filter(a => canManageAccount(auth, a))
       const now = new Date().toISOString()
       const nowMs = Date.now()
       const results: { id: string; username: string; platform: string; online: boolean }[] = []
@@ -191,6 +214,9 @@ export async function POST(req: NextRequest) {
       if (!account) {
         return NextResponse.json({ error: 'Account not found' }, { status: 404 })
       }
+      // 修复 C5: 归属校验
+      const denied = assertCanManage(auth, account)
+      if (denied) return denied
 
       if (account.status !== 'connected' || !account.accessToken) {
         updateSocialAccount(account.id, { isOnline: false, lastOnlineCheck: new Date().toISOString() })
@@ -324,7 +350,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'sync-avatars') {
-      const accounts = getAllSocialAccounts()
+      // 修复 C5: 非管理员只能同步自己的账号
+      const accounts = getAllSocialAccounts().filter(a => canManageAccount(auth, a))
       const results: { id: string; username: string; platform: string; synced: boolean; error?: string }[] = []
 
       for (const account of accounts) {
@@ -385,6 +412,9 @@ export async function POST(req: NextRequest) {
       if (!account) {
         return NextResponse.json({ error: 'Account not found' }, { status: 404 })
       }
+      // 修复 C5: 归属校验
+      const denied = assertCanManage(auth, account)
+      if (denied) return denied
 
       if (account.status !== 'connected' || !account.accessToken) {
         return NextResponse.json({
@@ -486,6 +516,9 @@ export async function POST(req: NextRequest) {
       if (!account) {
         return NextResponse.json({ error: 'Account not found' }, { status: 404 })
       }
+      // 修复 C5: 归属校验
+      const denied = assertCanManage(auth, account)
+      if (denied) return denied
 
       const now = new Date().toISOString()
       updateSocialAccount(account.id, { isOnline: true, lastOnlineCheck: now, updatedAt: now })
@@ -511,13 +544,18 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7/C5: 账号编辑需 settings_manage + 归属校验
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const body = await req.json()
     if (!body.id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
+
+    const existing = getSocialAccountById(body.id)
+    const denied = assertCanManage(auth, existing)
+    if (denied) return denied
 
     const updates: any = {}
     if (body.username !== undefined) updates.username = body.username
@@ -539,7 +577,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const auth = requirePermission(req, 'messages_view')
+    // 修复 H7/C5: 删除账号需 settings_manage + 归属校验
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const { searchParams } = req.nextUrl
@@ -547,6 +586,10 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
+
+    const existing = getSocialAccountById(id)
+    const denied = assertCanManage(auth, existing)
+    if (denied) return denied
 
     const success = deleteSocialAccount(id)
     if (!success) {

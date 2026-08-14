@@ -130,6 +130,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
+    // 修复 C5: 非管理员只能更新自己的发帖记录
+    const existing = getSocialContentById(body.id)
+    if (!existing) {
+      return NextResponse.json({ error: 'Record not found' }, { status: 404 })
+    }
+    if (!['super_admin', 'admin'].includes(auth.user.role) && existing.staffId !== auth.user.id) {
+      return NextResponse.json({ error: 'Forbidden: not your record' }, { status: 403 })
+    }
+
     const updated = updateSocialContentRecord(body.id, body)
     if (!updated) {
       return NextResponse.json({ error: 'Record not found' }, { status: 404 })

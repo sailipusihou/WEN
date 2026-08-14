@@ -24,6 +24,18 @@ export async function GET(req: NextRequest) {
   const encoder = new TextEncoder()
   let closed = false
   let unsubscribe: (() => void) | null = null
+  let heartbeat: ReturnType<typeof setInterval> | null = null
+  let guard: ReturnType<typeof setTimeout> | null = null
+
+  // 修复: 集中清理 — cancel/abort/超时都会执行, 防止定时器与订阅泄漏
+  const cleanup = () => {
+    if (heartbeat) { clearInterval(heartbeat); heartbeat = null }
+    if (guard) { clearTimeout(guard); guard = null }
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+  }
 
   const stream = new ReadableStream({
     start(controller) {
@@ -40,10 +52,7 @@ export async function GET(req: NextRequest) {
       const close = () => {
         if (closed) return
         closed = true
-        if (unsubscribe) {
-          unsubscribe()
-          unsubscribe = null
-        }
+        cleanup()
         try { controller.close() } catch { /* ignore */ }
         console.log('[SSE Stream] Connection closed and cleaned up')
       }
@@ -75,32 +84,24 @@ export async function GET(req: NextRequest) {
       console.log('[SSE Stream] Client connected, listeners:', socialEventBus.getListenerCount())
 
       // 心跳包
-      const heartbeat = setInterval(() => {
+      heartbeat = setInterval(() => {
         send(':heartbeat\n\n')
       }, 15000)
 
       // 请求取消时清理
-      // Note: ReadableStream 的 cancel 会在客户端断开时触发
-      const originalClose = close
-
-      // 监听 abort 信号
       ;(req as any).signal?.addEventListener('abort', () => {
-        clearInterval(heartbeat)
-        originalClose()
+        close()
       })
 
       // 超时保护
-      setTimeout(() => {
-        clearInterval(heartbeat)
-        originalClose()
+      guard = setTimeout(() => {
+        close()
       }, 3600000)
     },
     cancel() {
+      // 修复: 客户端断开时清理定时器与订阅
       closed = true
-      if (unsubscribe) {
-        unsubscribe()
-        unsubscribe = null
-      }
+      cleanup()
       console.log('[SSE Stream] Client disconnected (stream cancelled)')
     }
   })
