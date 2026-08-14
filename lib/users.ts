@@ -103,8 +103,8 @@ function writeUsers(users: User[]): void {
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
   const s = salt || crypto.randomBytes(16).toString('hex')
-  // 从 1000 提升至 100000 次迭代 (OWASP 2023 推荐)
-  const hash = crypto.pbkdf2Sync(password, s, 100000, 64, 'sha512').toString('hex')
+  // 修复 L16: 新哈希使用 210000 次迭代 (OWASP 2023 建议 ≥210k)
+  const hash = crypto.pbkdf2Sync(password, s, 210000, 64, 'sha512').toString('hex')
   return { hash, salt: s }
 }
 
@@ -191,11 +191,14 @@ export function toPublicUser(user: User): PublicUser {
 }
 
 export function verifyPassword(password: string, hash: string, salt: string): boolean {
-  // 优先尝试新版本 (100000 次迭代)
+  // 优先尝试新版本 (210000 次迭代)
   if (safeEqualStr(hashPassword(password, salt).hash, hash)) return true
-  // 兼容旧版本 (1000 次迭代)
-  const legacyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
-  return safeEqualStr(legacyHash, hash)
+  // 兼容旧版本 (100000 次迭代)
+  const legacyHash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex')
+  if (safeEqualStr(legacyHash, hash)) return true
+  // 兼容更旧版本 (1000 次迭代)
+  const legacyHash2 = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
+  return safeEqualStr(legacyHash2, hash)
 }
 
 // 检测并升级旧密码 hash (1000 -> 100000 次迭代)

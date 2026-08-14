@@ -1,6 +1,6 @@
 // 营销图片设计建议 API - 由文案 LLM 生成图上文案与画风建议（供图片编辑器使用）
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, rateLimit, getClientIp } from '@/lib/auth'
 import { getRepository } from '@/lib/repository'
 import { resolveLLMConfig } from '@/lib/ai-config'
 
@@ -11,6 +11,11 @@ export async function POST(req: NextRequest) {
   try {
     const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
+    // 修复 H17: 设计建议生成限频
+    const ip = getClientIp(req)
+    if (!rateLimit('ai_design_assist:' + ip, 30, 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
 
     const body = await req.json()
     const { productName, productDesc, caption, imagePrompt, style, extraNotes, tone } = body as {

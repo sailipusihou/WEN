@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       }
       repo.users.update(user.id, { coupons: [welcomeCoupon] })
     }
-    const res = NextResponse.json({ user: toPublicUser(user), token, welcomeCoupon }, { status: 201 })
+    const res = NextResponse.json({ user: toPublicUser(user), welcomeCoupon }, { status: 201 })
     res.cookies.set('user_token', token, { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 7, path: '/' })
     const welcomeEmail = buildWelcomeEmail(firstName)
     sendEmail({ to: email, ...welcomeEmail }).then(result => {

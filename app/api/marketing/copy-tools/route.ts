@@ -1,6 +1,6 @@
 // 文案微调工具 API - 基于已生成文案做扩写/精简/改写/翻译/换语气，不重新走完整生成流程
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, rateLimit, getClientIp } from '@/lib/auth'
 import { getRepository } from '@/lib/repository'
 import { resolveLLMConfig } from '@/lib/ai-config'
 
@@ -23,6 +23,11 @@ export async function POST(req: NextRequest) {
   try {
     const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
+    // 修复 H17: 文案生成限频
+    const ip = getClientIp(req)
+    if (!rateLimit('ai_copy_tools:' + ip, 30, 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
 
     const body = await req.json()
     const { text, action, platform } = body as {

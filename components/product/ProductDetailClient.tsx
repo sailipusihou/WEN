@@ -256,7 +256,7 @@ export default function ProductDetailClient({
                   Social Attribution Active
                 </p>
                 <p className="mt-1 font-sans text-sm text-[#2C2C2C]">
-                  当前商品详情页已承接来自社交流量的追踪参数，后续下单可继续归因。
+                  This page is carrying social tracking parameters — your next order can be attributed back to the campaign.
                 </p>
               </div>
               <Link

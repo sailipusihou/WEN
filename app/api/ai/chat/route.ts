@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepository } from '@/lib/repository'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, rateLimit, getClientIp } from '@/lib/auth'
 import { AI_TOOLS, AI_WRITE_TOOLS, executeTool } from '@/lib/ai-tools'
 import { resolveLLMConfig } from '@/lib/ai-config'
 import { runMarketingWorkflow } from '@/lib/ai-marketing-workflow'
@@ -57,6 +57,12 @@ export async function POST(req: NextRequest) {
   const auth = requirePermission(req, 'ai_assistant')
   if ('error' in auth) return auth.error
   const user = auth.user
+
+  // 修复 H17: AI 对话限频, 防止刷爆第三方 LLM 配额
+  const ip = getClientIp(req)
+  if (!rateLimit('ai_chat:' + ip, 30, 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
   try {
     const body = await req.json()

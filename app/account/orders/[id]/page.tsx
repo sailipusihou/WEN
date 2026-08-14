@@ -276,7 +276,14 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-2">
               <CreditCard size={16} className="text-blue-500" />
               <span className="font-sans text-sm text-otb-ink">{order.paymentMethod === 'payoneer' ? 'Payoneer' : 'PayPal'}</span>
-              {order.status !== "cancelled" && <span className="text-xs text-green-600 font-sans ml-auto">Paid</span>}
+              {/* 修复 M12: 仅实际已支付 (或服务端验证过) 的订单显示 Paid, 未支付订单不再误导 */}
+              {order.status === "cancelled" ? (
+                <span className="text-xs text-red-500 font-sans ml-auto">Cancelled</span>
+              ) : (order.paymentStatus === 'paid' || order.paypalTransaction?.verified === true || order.payoneerTransaction?.status === 'COMPLETED') ? (
+                <span className="text-xs text-green-600 font-sans ml-auto">Paid</span>
+              ) : (
+                <span className="text-xs text-amber-600 font-sans ml-auto">Payment pending</span>
+              )}
             </div>
             {order.notes && <p className="font-sans text-xs text-otb-ink/40 mt-2">{order.notes}</p>}
           </div>

@@ -96,6 +96,15 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // 修复 L16: 修改密码后吊销该账号除当前会话外的全部会话
+    let revokedSessions = 0
+    if (passwordUpdated) {
+      try {
+        const { revokeAllSessionsExcept } = await import('@/lib/auth')
+        revokedSessions = revokeAllSessionsExcept(userId, req.cookies.get('admin_token')?.value)
+      } catch { /* ignore */ }
+    }
+
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 })
     }

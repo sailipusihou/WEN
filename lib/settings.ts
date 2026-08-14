@@ -863,8 +863,8 @@ export function getShippingZoneForCountry(country: string): ShippingZone | undef
 
 export function hashStaffPassword(password: string, salt?: string): { hash: string; salt: string } {
   const s = salt || crypto.randomBytes(16).toString("hex")
-  // 从 1000 提升至 100000 次迭代, 防止暴力破解 (OWASP 2023 推荐)
-  const hash = crypto.pbkdf2Sync(password, s, 100000, 64, "sha512").toString("hex")
+  // 修复 L16: 新哈希 210000 次迭代 (OWASP 2023 推荐 ≥210k)
+  const hash = crypto.pbkdf2Sync(password, s, 210000, 64, "sha512").toString("hex")
   return { hash, salt: s }
 }
 
@@ -879,11 +879,14 @@ function safeEqualStr(a: string, b: string): boolean {
 export function verifyStaffPassword(password: string, member: StaffMember): boolean {
   // 推荐: 使用哈希凭证
   if (member.passwordHash && member.salt) {
-    // 优先尝试新版本 (100000 次迭代)
+    // 优先尝试新版本 (210000 次迭代)
     if (safeEqualStr(hashStaffPassword(password, member.salt).hash, member.passwordHash)) return true
-    // 兼容旧版本 (1000 次迭代)
-    const legacyHash = crypto.pbkdf2Sync(password, member.salt, 1000, 64, "sha512").toString("hex")
-    return safeEqualStr(legacyHash, member.passwordHash)
+    // 兼容旧版本 (100000 次迭代)
+    const legacyHash = crypto.pbkdf2Sync(password, member.salt, 100000, 64, "sha512").toString("hex")
+    if (safeEqualStr(legacyHash, member.passwordHash)) return true
+    // 兼容更旧版本 (1000 次迭代)
+    const legacyHash2 = crypto.pbkdf2Sync(password, member.salt, 1000, 64, "sha512").toString("hex")
+    return safeEqualStr(legacyHash2, member.passwordHash)
   }
   // 向后兼容: 明文校验 (常量时间比较), 新代码不应再走此分支
   if (member.password) {

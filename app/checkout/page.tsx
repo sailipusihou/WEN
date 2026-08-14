@@ -25,6 +25,18 @@ export default function CheckoutPage() {
   })
   const [paypalReady, setPaypalReady] = useState(false)
   const [orderId, setOrderId] = useState('')
+
+  // 修复 M13: 刷新后恢复订单确认页 (sessionStorage 持久化订单号)
+  useEffect(() => {
+    if (!submitted && items.length === 0) {
+      const stored = sessionStorage.getItem('otm_last_order')
+      if (stored) {
+        setOrderId(stored)
+        setSubmitted(true)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted, items.length])
   const [processing, setProcessing] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const [paypalError, setPaypalError] = useState('')
@@ -163,6 +175,8 @@ export default function CheckoutPage() {
     if (!res.ok) throw new Error('Order creation failed')
     const d = await res.json()
     setOrderId(d.id)
+    // 修复 M13: 订单号写入 sessionStorage, 刷新后仍显示确认页
+    try { sessionStorage.setItem('otm_last_order', d.id) } catch { /* ignore */ }
     return d
   }
 
@@ -320,8 +334,8 @@ export default function CheckoutPage() {
               <div className="rounded-[24px] border border-[#B8A06C]/20 bg-white/80 p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8B7D5C]">Marketing Attribution Recorded</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#2C2C2C]">
-                  本次订单已保留来自 {referralInfo.platform} {referralInfo.platformUsername ? `@${referralInfo.platformUsername}` : ''} 的营销链路，
-                  后台会继续把订单和社交内容、staff、tracking 统计关联起来。
+                  This order is linked to your {referralInfo.platform} {referralInfo.platformUsername ? `@${referralInfo.platformUsername}` : ''} campaign.
+                  Our team will connect it with the related social content, staff, and tracking metrics.
                 </p>
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-[#F8F5F0] px-4 py-3">
@@ -342,7 +356,8 @@ export default function CheckoutPage() {
               <div className="rounded-[24px] border border-[#EDE8DC] bg-white/80 p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8B7D5C]">Organic Checkout</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#2C2C2C]">
-                  本次订单未带营销 referral，系统会按自然流量订单处理。后续如果从社交入口进入再下单，订单页会自动显示归因信息。
+                  This order carries no marketing referral and will be treated as organic traffic.
+                  Attribution info will appear automatically if you later enter through a social link.
                 </p>
               </div>
             )}
@@ -418,7 +433,7 @@ export default function CheckoutPage() {
                 <p className="font-sans text-[10px] text-[#B8A06C] tracking-[0.15em] uppercase font-medium mb-3">Attribution Active</p>
                 <div className="space-y-2">
                   <p className="font-sans text-sm text-[#2C2C2C]">
-                    本次结账已绑定营销归因，订单会关联到对应社交内容与 staff。
+                    This checkout is tied to a marketing campaign — the order will be linked to the related social content and staff member.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="rounded-xl bg-[#F8F5F0] px-4 py-3">

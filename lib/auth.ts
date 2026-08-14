@@ -102,6 +102,16 @@ export function revokeAdminSession(token: string): void {
   writeSessions(remaining)
 }
 
+// 吊销某用户除指定 token 外的全部会话 (改密时调用)
+export function revokeAllSessionsExcept(userId: string, keepToken?: string): number {
+  const all = readSessions()
+  const keepHash = keepToken ? hashToken(keepToken) : ''
+  const before = all.length
+  const remaining = all.filter(s => s.userId !== userId || (keepHash && safeEqual(s.tokenHash, keepHash)))
+  if (remaining.length !== before) writeSessions(remaining)
+  return before - remaining.length
+}
+
 // ---- 校验会话 ----
 
 export interface AdminUser {
@@ -252,7 +262,9 @@ export function requireUser(req: NextRequest): { user: PublicUser } | { error: i
 
 // ---- 管理员密码哈希 (替代明文存储) ----
 
-const ADMIN_ITERATIONS = 100000
+const ADMIN_ITERATIONS = 210000
+// 兼容旧哈希 (100000 次迭代)
+const ADMIN_LEGACY_ITERATIONS = 100000
 
 export function hashAdminPassword(password: string, salt?: string): { hash: string; salt: string } {
   const s = salt || crypto.randomBytes(16).toString('hex')
@@ -261,8 +273,13 @@ export function hashAdminPassword(password: string, salt?: string): { hash: stri
 }
 
 export function verifyAdminPassword(password: string, stored: string, salt: string): boolean {
+  // 优先 210k, 兼容旧 100k 与更旧 1000 次迭代
   const { hash } = hashAdminPassword(password, salt)
-  return safeEqual(hash, stored)
+  if (safeEqual(hash, stored)) return true
+  const legacyHash = crypto.pbkdf2Sync(password, salt, ADMIN_LEGACY_ITERATIONS, 64, 'sha512').toString('hex')
+  if (safeEqual(legacyHash, stored)) return true
+  const legacyHash2 = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
+  return safeEqual(legacyHash2, stored)
 }
 
 // ---- 安全 cookie 选项 ----

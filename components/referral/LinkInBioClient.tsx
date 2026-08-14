@@ -61,8 +61,8 @@ export default function LinkInBioClient({
               </p>
               <p className="mt-1 font-sans text-sm text-[#6B6B6B]">
                 {referralLink
-                  ? `追踪已开启：${referralLink.platform}${referralLink.platformUsername ? ` · @${referralLink.platformUsername}` : ''}`
-                  : '未识别到有效 referral，当前展示默认精选内容。'}
+                  ? `Tracking active: ${referralLink.platform}${referralLink.platformUsername ? ` · @${referralLink.platformUsername}` : ''}`
+                  : 'No valid referral detected — showing default featured content.'}
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#D8CEBD] bg-white px-4 py-2 text-xs text-[#6B6B6B]">

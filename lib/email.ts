@@ -8,6 +8,16 @@ export interface EmailOptions {
   text?: string
 }
 
+// 修复 L12: 邮件模板变量转义, 防止用户名/订单号注入 HTML
+export function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
   const repo = getRepository()
   const settings = repo.settings.get()
@@ -42,7 +52,7 @@ export function buildWelcomeEmail(name: string): { subject: string; html: string
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:30px 20px">
         <div style="text-align:center;margin-bottom:30px">
           <span style="font-size:36px">🏮</span>
-          <h1 style="font-size:24px;color:#1a1a2e;margin:10px 0 5px">Welcome, ${name}!</h1>
+          <h1 style="font-size:24px;color:#1a1a2e;margin:10px 0 5px">Welcome, ${escapeHtml(name)}!</h1>
           <p style="color:#666;font-size:14px">Thank you for joining Low Flame</p>
         </div>
         <div style="background:#f9f5f0;border-radius:8px;padding:25px;margin-bottom:25px">
@@ -68,10 +78,10 @@ export function buildOrderConfirmationEmail(name: string, orderId: string, total
         <div style="text-align:center;margin-bottom:30px">
           <span style="font-size:48px">✅</span>
           <h1 style="font-size:24px;color:#1a1a2e;margin:10px 0 5px">Order Confirmed!</h1>
-          <p style="color:#666;font-size:14px">Thank you, ${name}!</p>
+          <p style="color:#666;font-size:14px">Thank you, ${escapeHtml(name)}!</p>
         </div>
         <div style="background:#f0f9f0;border-radius:8px;padding:25px;margin-bottom:25px">
-          <p style="margin:0 0 15px;color:#333"><strong>Order #${orderId}</strong></p>
+          <p style="margin:0 0 15px;color:#333"><strong>Order #${escapeHtml(orderId)}</strong></p>
           <p style="margin:0 0 5px;color:#666;font-size:14px">Items: ${items}</p>
           <p style="margin:0 0 5px;color:#666;font-size:14px">Total: $${total.toFixed(2)}</p>
           <p style="margin:0;color:#666;font-size:14px">Status: <strong style="color:#B8452E">Processing</strong></p>

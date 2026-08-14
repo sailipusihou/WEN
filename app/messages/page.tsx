@@ -85,6 +85,9 @@ function MessagesPage() {
   useEffect(() => {
     const productId = searchParams?.get('product')
     if (!productId || productSent || !user?.email || productList.length === 0) return
+    // 修复 M16: sessionStorage 去重 — 同一用户同一商品只自动发送一次 (刷新/重进不再重复打扰)
+    const dedupKey = `otm_product_msg_${user.email}_${productId}`
+    if (sessionStorage.getItem(dedupKey)) return
     const product = productList.find((p: any) => p.id === productId)
     if (product) {
       const productAtt = {
@@ -108,6 +111,7 @@ function MessagesPage() {
         }),
       }).then(() => {
         setProductSent(true)
+        try { sessionStorage.setItem(dedupKey, '1') } catch { /* ignore */ }
         const load = () => fetch("/api/messages?email=" + encodeURIComponent(user.email)).then(r => r.ok ? r.json() : []).then(d => { 
           const sorted = Array.isArray(d) ? [...d].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) : []
           setMsgs(sorted)
