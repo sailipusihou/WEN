@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getRepository } from "@/lib/repository"
 import { requireAdmin } from "@/lib/auth"
 
-export async function GET(req: NextRequest) {
+// 修复 M19: GET 触发批量写改为 POST (无 UI 调用方, 防止 CSRF 式触发)
+export async function POST(req: NextRequest) {
   const auth = requireAdmin(req)
   if ('error' in auth) return auth.error
 

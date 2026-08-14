@@ -154,7 +154,8 @@ export default function ProfilePage() {
             className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Preferred Currency</label>
           <select value={form.preferredCurrency} onChange={e => update("preferredCurrency", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-otb-terracotta/50">
-            <option value="USD">USD ($)</option><option value="CNY">CNY (&yen;)</option><option value="EUR">EUR (&euro;)</option><option value="GBP">GBP (&pound;)</option>
+            {/* 修复 L10: 站点仅支持 USD/CNY 展示, 移除不生效的 EUR/GBP 选项 */}
+            <option value="USD">USD ($)</option><option value="CNY">CNY (&yen;)</option>
           </select></div>
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-otb-terracotta text-white font-serif text-sm rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors">
           <Save size={14} /> {saving ? "Saving..." : "Save Changes"}

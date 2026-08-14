@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
@@ -22,7 +23,18 @@ export default function CartPage() {
   })
   const subtotal = Math.round(discountedItems.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100
 
-  const shipping = subtotal >= 3000 ? 0 : 250
+  // 修复 L11: 运费与结算页一致, 走 /api/shipping 分区计费 (原硬编码 3000/250 与结算页口径不同)
+  const [shippingCost, setShippingCost] = useState(250)
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/shipping?country=United%20States&subtotal=${subtotal}`)
+      .then(r => r.ok ? r.json() : { cost: 250 })
+      .then(d => { if (!cancelled) setShippingCost(Number(d.cost) || 250) })
+      .catch(() => { if (!cancelled) setShippingCost(250) })
+    return () => { cancelled = true }
+  }, [subtotal])
+
+  const shipping = shippingCost
   const shippingConverted = convertPrice(shipping, currency)
   const subtotalConverted = convertPrice(subtotal, currency)
   const totalConverted = subtotalConverted + shippingConverted

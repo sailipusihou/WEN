@@ -10,7 +10,7 @@ import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email"
 import { calculateShipping } from "@/lib/settings"
 import { requireAdmin, requirePermission, requireUser, rateLimit, getClientIp } from "@/lib/auth"
 import { getRepository } from "@/lib/repository"
-import { getReferralLinkByCode, markTouchpointsAsConverted, findAttributableReferralClick, getReferralClickByOrderId } from "@/lib/referral-tracking"
+import { getReferralLinkByCode, markTouchpointsAsConverted, findAttributableReferralClick, getReferralClickByOrderId, getAllReferralClicks } from "@/lib/referral-tracking"
 import { type Shipment } from "@/lib/shipping"
 import { getActivePromotions, computePromotionForProduct, getCouponByCode, validateCouponForSubtotal, incrementCouponUsed } from "@/lib/promotions"
 
@@ -86,6 +86,42 @@ function enrichOrderWithReferralConversion(order: any) {
       fallbackUsed: order.attributionFallbackUsed,
     },
   }
+}
+
+// 修复 L5: 一次拉取全部 referral clicks 建索引, 避免每个订单各做一次全表扫描 (O(n²))
+let referralClickIndex: Map<string, any> | null = null
+function getReferralClickIndex(): Map<string, any> {
+  if (!referralClickIndex) {
+    referralClickIndex = new Map()
+    for (const click of getAllReferralClicks()) {
+      if (click.orderId && !referralClickIndex.has(click.orderId)) {
+        referralClickIndex.set(click.orderId, click)
+      }
+    }
+  }
+  return referralClickIndex
+}
+
+function enrichOrdersWithReferralConversion(orders: any[]): any[] {
+  const idx = getReferralClickIndex()
+  return orders.map(order => {
+    const click = idx.get(order.id)
+    if (!click) return order
+    return {
+      ...order,
+      _referralConversion: {
+        clickId: click.id,
+        referralCode: click.referralCode,
+        converted: click.converted,
+        orderId: click.orderId,
+        attributionModel: order.attributionModel,
+        matchedBy: order.attributionMatchedBy,
+        touchpoints: order.attributionTouchpoints,
+        lookbackDays: order.attributionLookbackDays,
+        fallbackUsed: order.attributionFallbackUsed,
+      },
+    }
+  })
 }
 
 function resolveOrderReferralAttribution(order: Order, visitorId: string | undefined, settings: any) {
@@ -191,15 +227,20 @@ export async function GET(req: NextRequest) {
 
   // stats / revenue / staffId / 全量列表: 必须管理员
   if (stats === "true" || revenue === "daily" || staffId || (!email)) {
+    // 修复 L6: 财务统计需要 finance_view (原 requireAdmin 忽略角色权限模型)
+    if (stats === "true" || revenue === "daily") {
+      const finAuth = requirePermission(req, 'finance_view')
+      if ('error' in finAuth) return finAuth.error
+      if (stats === "true") return NextResponse.json(getOrderStatsFromRepo())
+      return NextResponse.json(getRevenueDailyFromRepo(7))
+    }
     const auth = requireAdmin(req)
     if ('error' in auth) return auth.error
-    if (stats === "true") return NextResponse.json(getOrderStatsFromRepo())
-    if (revenue === "daily") return NextResponse.json(getRevenueDailyFromRepo(7))
     if (staffId) return NextResponse.json(enrichOrdersWithStaffAvatar(getOrdersByStaffIdFromRepo(staffId)))
 
     // 分页 / 搜索 / 状态筛选（管理员全量列表）
     const repo = getRepository()
-    let orders = enrichOrdersWithStaffAvatar(repo.orders.list()).map(enrichOrderWithReferralConversion)
+    let orders = enrichOrdersWithReferralConversion(enrichOrdersWithStaffAvatar(repo.orders.list()))
 
     // 数据一致性修复：有活跃物流单但状态未同步为 shipped 的订单自动修正
     orders = orders.map(order => {
@@ -313,7 +354,7 @@ export async function GET(req: NextRequest) {
       const start = (page - 1) * pageSize
       const paginated = orders.slice(start, start + pageSize)
       // 附带发货单摘要信息
-      const itemsWithShipment = paginated.map(order => {
+      const itemsWithShipment = enrichOrdersWithReferralConversion(paginated.map(order => {
         const shipments = repo.shipments.getByOrderId(order.id)
         const activeShipment = shipments.find((s: Shipment) => !['cancelled', 'delivered', 'returned'].includes(s.status))
         return {
@@ -324,7 +365,7 @@ export async function GET(req: NextRequest) {
             status: activeShipment.status,
           } : null
         }
-      }).map(enrichOrderWithReferralConversion)
+      }))
       return NextResponse.json({
         items: itemsWithShipment,
         pagination: { page, pageSize, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
@@ -332,7 +373,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 无分页时也附带发货单摘要
-    const ordersWithShipment = orders.map(order => {
+    const ordersWithShipment = enrichOrdersWithReferralConversion(orders.map(order => {
       const shipments = repo.shipments.getByOrderId(order.id)
       const activeShipment = shipments.find((s: Shipment) => !['cancelled', 'delivered', 'returned'].includes(s.status))
       return {
@@ -343,7 +384,7 @@ export async function GET(req: NextRequest) {
           status: activeShipment.status,
         } : null
       }
-    }).map(enrichOrderWithReferralConversion)
+    }))
     return NextResponse.json(ordersWithShipment)
   }
 

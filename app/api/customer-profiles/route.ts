@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
   const sync = req.nextUrl.searchParams.get('sync')
 
   try {
-    repo.customers.syncFromOrders()
+    // 修复 M19: 读取操作不再隐式写库 — 仅当显式传 sync=true 时同步订单数据
+    if (sync === 'true') {
+      repo.customers.syncFromOrders()
+    }
   } catch (e) {
     console.error('syncFromOrders error:', e)
   }

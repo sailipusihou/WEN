@@ -104,11 +104,10 @@ export function addOrUpdatePayPalTransaction(transaction: Omit<PayPalTransaction
   return newTransaction
 }
 
-export function syncPayPalTransactions(transactions: Omit<PayPalTransaction, 'id'>[]): { added: number; updated: number; skipped: number } {
+export function syncPayPalTransactions(transactions: Omit<PayPalTransaction, 'id'>[]): { added: number; updated: number } {
   const existing = readTransactions()
   let added = 0
   let updated = 0
-  let skipped = 0
   
   for (const txn of transactions) {
     const existingIndex = existing.findIndex(t => t.transactionId === txn.transactionId)
@@ -125,7 +124,8 @@ export function syncPayPalTransactions(transactions: Omit<PayPalTransaction, 'id
   }
   
   writeTransactions(existing)
-  return { added, updated, skipped }
+  // 修复 L3: 移除恒为 0 的 skipped 字段
+  return { added, updated }
 }
 
 export function deletePayPalTransaction(id: string): boolean {
