@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { Currency } from '@/lib/cart-types'
 
 interface CurrencyContextType {
@@ -9,38 +9,14 @@ interface CurrencyContextType {
   toggleCurrency: () => void
 }
 
-const STORAGE_KEY = 'otm_currency'
-
+// 定价基线已统一为 USD: 前台固定美元显示。
+// 移除 localStorage 偏好读取 (残留的 CNY 偏好会导致前台错误显示人民币)。
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined)
 
-function isValidCurrency(v: string): v is Currency {
-  return v === 'USD' || v === 'CNY'
-}
-
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>('USD')
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored && isValidCurrency(stored)) {
-        setCurrencyState(stored)
-      }
-    } catch {}
-  }, [])
-
-  const setCurrency = useCallback((c: Currency) => {
-    setCurrencyState(c)
-    try { localStorage.setItem(STORAGE_KEY, c) } catch {}
-  }, [])
-
-  const toggleCurrency = useCallback(() => {
-    setCurrencyState(prev => {
-      const next = prev === 'USD' ? 'CNY' : 'USD'
-      try { localStorage.setItem(STORAGE_KEY, next) } catch {}
-      return next
-    })
-  }, [])
+  const currency: Currency = 'USD'
+  const setCurrency = () => {}
+  const toggleCurrency = () => {}
 
   const value = useMemo(() => ({
     currency, setCurrency, toggleCurrency
