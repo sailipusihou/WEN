@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getAllProducts } from '@/lib/db'
+import { getRepository } from '@/lib/repository'
 import { getAllCategories } from '@/lib/categories'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
@@ -19,7 +19,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   let categoryPages: MetadataRoute.Sitemap = []
 
   try {
-    const products = getAllProducts().filter(p => p.active)
+    // 统一从当前后端 (SQLite) 读取, 与商品管理同源
+    const repo = getRepository()
+    const products = repo.products.list().filter(p => p.active)
     productPages = products.map(p => ({
       url: `${baseUrl}/products/${p.id}`,
       lastModified: now,
