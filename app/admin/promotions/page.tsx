@@ -206,6 +206,9 @@ export default function AdminPromotionsPage() {
   ]
   const [selSize, setSelSize] = useState('1024x1024')
   const [selCategory, setSelCategory] = useState('')
+  // 商品搜索: 按名称/编码/ID 过滤
+  const [productSearch, setProductSearch] = useState('')
+  const [showProductList, setShowProductList] = useState(false)
   const productCategories = useMemo(() => {
     const set = new Set<string>()
     products.forEach((p: any) => { if (p.category) set.add(p.category) })
@@ -214,6 +217,22 @@ export default function AdminPromotionsPage() {
   const categoryProducts = useMemo(
     () => (selCategory ? products.filter((p: any) => p.category === selCategory) : []),
     [selCategory, products]
+  )
+  // 搜索范围: 选了分类则限定该分类, 否则全商品
+  const productFiltered = useMemo(() => {
+    const base = selCategory ? categoryProducts : products
+    const q = productSearch.trim().toLowerCase()
+    if (!q) return base.slice(0, 30)
+    return base.filter((p: any) =>
+      (p.nameEn || '').toLowerCase().includes(q) ||
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.code || '').toLowerCase().includes(q) ||
+      String(p.id).toLowerCase().includes(q)
+    ).slice(0, 30)
+  }, [products, categoryProducts, selCategory, productSearch])
+  const selProductInfo = useMemo(
+    () => products.find((p: any) => p.id === selProductId) || null,
+    [products, selProductId]
   )
   const currentRatio = (SIZE_OPTIONS.find(s => s.id === selSize) || SIZE_OPTIONS[0]).ratio
   // 历史图片 (生成/裁剪确认后自动记录, 可加入模板)
@@ -872,12 +891,16 @@ export default function AdminPromotionsPage() {
                 </div>
               </div>
 
-              {/* 按商品生成: 全部 / 品类 / 单品 (品类与前端商品分类一致) */}
+              {/* 按商品生成: 全部 / 品类 / 单品 (品类与前端商品分类一致; 商品可按名称/编码搜索) */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Product range</p>
                   <select className={inputCls} style={inputStyle} value={selCategory}
-                    onChange={e => { setSelCategory(e.target.value); setSelProductId('') }}>
+                    onChange={e => {
+                      setSelCategory(e.target.value)
+                      setSelProductId('') // 切换分类后重新选择商品; 留空 = 只针对分类
+                      setProductSearch('')
+                    }}>
                     <option value="">All products (text only)</option>
                     {productCategories.map(cat => (
                       <option key={cat} value={cat}>Category: {cat}</option>
@@ -885,14 +908,49 @@ export default function AdminPromotionsPage() {
                   </select>
                 </div>
                 <div>
-                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Product</p>
-                  <select className={inputCls} style={inputStyle} value={selProductId}
-                    onChange={e => setSelProductId(e.target.value)} disabled={!selCategory}>
-                    <option value="">{selCategory ? 'Use category image' : 'Pick a category first'}</option>
-                    {categoryProducts.map((p: any) => (
-                      <option key={p.id} value={p.id}>{p.nameEn || p.name}</option>
-                    ))}
-                  </select>
+                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Product (search by name / code)</p>
+                  <div className="relative">
+                    <input
+                      className={inputCls}
+                      style={inputStyle}
+                      value={productSearch}
+                      onChange={e => { setProductSearch(e.target.value); setShowProductList(true) }}
+                      onFocus={() => setShowProductList(true)}
+                      onBlur={() => setTimeout(() => setShowProductList(false), 150)}
+                      placeholder={selCategory ? '搜索该分类商品…' : '先选分类, 或直接搜索商品…'}
+                    />
+                    {showProductList && productFiltered.length > 0 && (
+                      <div className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-lg border shadow-lg"
+                        style={{ backgroundColor: 'var(--adm-card)', borderColor: 'var(--adm-border)' }}>
+                        {productFiltered.map((p: any) => (
+                          <button key={p.id} type="button"
+                            onMouseDown={() => {
+                              setSelProductId(p.id)
+                              setProductSearch(p.nameEn || p.name)
+                              setShowProductList(false)
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:opacity-80 transition-opacity"
+                            style={{ color: 'var(--adm-text)', borderBottom: '1px solid var(--adm-border)' }}>
+                            <img src={p.image} alt="" className="w-6 h-6 rounded object-cover" />
+                            <span className="truncate flex-1">{p.nameEn || p.name}</span>
+                            {p.code && <span className="font-mono text-[10px] shrink-0" style={{ color: 'var(--adm-accent)' }}>{p.code}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {selProductInfo && (
+                      <div className="mt-1.5 flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs"
+                        style={{ backgroundColor: 'var(--adm-accent-bg)', color: 'var(--adm-text)' }}>
+                        <img src={selProductInfo.image} alt="" className="w-6 h-6 rounded object-cover" />
+                        <span className="truncate flex-1">{selProductInfo.nameEn || selProductInfo.name}</span>
+                        {selProductInfo.code && <span className="font-mono text-[10px]" style={{ color: 'var(--adm-accent)' }}>{selProductInfo.code}</span>}
+                        <button type="button" onClick={() => { setSelProductId(''); setProductSearch('') }}
+                          className="p-0.5 hover:text-red-500" title="Clear product">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
