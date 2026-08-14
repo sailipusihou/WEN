@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/auth'
 import { getPayoneerConfig, getPayoneerAccessToken } from '@/lib/payoneer-config'
 import { getAllPayoneerTransactions, syncPayoneerTransactions } from '@/lib/payoneer-transactions'
 import { findAttributableReferralClick, markTouchpointsAsConverted } from '@/lib/referral-tracking'
+import { deductStockForOrder } from '@/lib/stock'
 
 async function fetchFromPayoneerAPI(base: string, accessToken: string): Promise<any[]> {
   const transactions: any[] = []
@@ -267,6 +268,17 @@ export async function POST(req: NextRequest) {
               paymentStatus: isCompleted ? 'paid' : 'unpaid',
               ...attributionUpdates,
             })
+            // 修复 M4: 首次确认支付时扣减库存
+            if (isCompleted && matchedOrder.paymentStatus !== 'paid') {
+              try {
+                const stockResult = deductStockForOrder(matchedOrder)
+                if (stockResult.shortfall.length > 0) {
+                  console.warn(`[Payoneer Pull] 库存不足: ${stockResult.shortfall.join('; ')} (order ${matchedOrder.id})`)
+                }
+              } catch (e) {
+                console.warn('[Payoneer Pull] Stock deduction failed:', e)
+              }
+            }
             updatedOrders.push(matchedOrder.id)
             newMatches.push({ orderId: matchedOrder.id, transactionId: txnId, amount })
           } else {

@@ -3,6 +3,7 @@ import { getRepository } from "@/lib/repository"
 import { requirePermission } from "@/lib/auth"
 import { getAllPayPalTransactions, syncPayPalTransactions } from "@/lib/paypal-transactions"
 import { findAttributableReferralClick, markTouchpointsAsConverted } from "@/lib/referral-tracking"
+import { deductStockForOrder } from "@/lib/stock"
 
 function getPayPalConfig() {
   try {
@@ -503,6 +504,17 @@ export async function POST(req: NextRequest) {
               paymentStatus: isCompleted ? 'paid' : 'unpaid',
               ...attributionUpdates,
             })
+            // 修复 M4: 首次确认支付时扣减库存
+            if (isCompleted && matchedOrder.paymentStatus !== 'paid') {
+              try {
+                const stockResult = deductStockForOrder(matchedOrder)
+                if (stockResult.shortfall.length > 0) {
+                  console.warn(`[PayPal Pull] 库存不足: ${stockResult.shortfall.join('; ')} (order ${matchedOrder.id})`)
+                }
+              } catch (e) {
+                console.warn('[PayPal Pull] Stock deduction failed:', e)
+              }
+            }
             updatedOrders.push(matchedOrder.id)
             newMatches.push({ orderId: matchedOrder.id, transactionId: txnId, amount })
           } else {

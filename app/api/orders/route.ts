@@ -11,6 +11,7 @@ import { calculateShipping } from "@/lib/settings"
 import { requireAdmin, requirePermission, requireUser, rateLimit, getClientIp } from "@/lib/auth"
 import { getRepository } from "@/lib/repository"
 import { getReferralLinkByCode, markTouchpointsAsConverted, findAttributableReferralClick, getReferralClickByOrderId, getAllReferralClicks } from "@/lib/referral-tracking"
+import { deductStockForOrder } from "@/lib/stock"
 import { type Shipment } from "@/lib/shipping"
 import { getActivePromotions, computePromotionForProduct, getCouponByCode, validateCouponForSubtotal, incrementCouponUsed } from "@/lib/promotions"
 
@@ -576,6 +577,19 @@ export async function POST(req: NextRequest) {
     }
 
     repo.orders.add(order)
+    // 修复 M4: 支付确认时扣减库存 (防超卖); 库存不足不阻断交易, 在订单上记录提示
+    if (paymentVerified) {
+      try {
+        const stockResult = deductStockForOrder(order)
+        if (stockResult.shortfall.length > 0) {
+          const note = `⚠ 库存不足: ${stockResult.shortfall.join('; ')}`
+          repo.orders.update(id, { notes: ((order.notes || '') + '\n' + note).trim() })
+          console.warn(`[Orders] ${note} (order ${id})`)
+        }
+      } catch (e) {
+        console.warn('[Orders] Stock deduction failed:', e)
+      }
+    }
     // 优惠券核销同样只在支付真实 (或未声称已支付) 时执行, 防止伪造 COMPLETED 刷券
     const couponEligible = !claimedTxn || claimedTxn.status !== 'COMPLETED' || paymentVerified
     if (couponCode && couponEligible) {
