@@ -85,6 +85,9 @@ export default function AdminPromotionsPage() {
     fetch('/api/coupon-templates').then(r => r.ok ? r.json() : { templates: [] }).then(d => {
       setTemplates(Array.isArray(d.templates) ? d.templates : [])
     }).catch(() => {})
+    fetch('/api/coupon-image-history').then(r => r.ok ? r.json() : { history: [] }).then(d => {
+      setHistory(Array.isArray(d.history) ? d.history : [])
+    }).catch(() => {})
   }, [])
 
   const providerModels = (imageProviders[selProvider]?.models as any[]) || []
@@ -193,17 +196,48 @@ export default function AdminPromotionsPage() {
   // 对话框模式: 自然语言描述想要的券效果; 按商品生成: 选择商品后券图带商品图案
   const [promptDesc, setPromptDesc] = useState('')
   const [selProductId, setSelProductId] = useState('')
+  // 尺寸选项 (含细长/小尺寸); 商品范围: 全部 / 品类 / 单品 (品类与前端商品分类一致)
+  const SIZE_OPTIONS = [
+    { id: '1024x1024', label: '1024×1024 方形', ratio: 1 },
+    { id: '768x1024', label: '768×1024 竖版 3:4', ratio: 0.75 },
+    { id: '512x1024', label: '512×1024 细长 1:2', ratio: 0.5 },
+    { id: '512x512', label: '512×512 小方', ratio: 1 },
+    { id: '384x512', label: '384×512 小竖版 3:4', ratio: 0.75 },
+  ]
+  const [selSize, setSelSize] = useState('1024x1024')
+  const [selCategory, setSelCategory] = useState('')
+  const productCategories = useMemo(() => {
+    const set = new Set<string>()
+    products.forEach((p: any) => { if (p.category) set.add(p.category) })
+    return Array.from(set)
+  }, [products])
+  const categoryProducts = useMemo(
+    () => (selCategory ? products.filter((p: any) => p.category === selCategory) : []),
+    [selCategory, products]
+  )
+  const currentRatio = (SIZE_OPTIONS.find(s => s.id === selSize) || SIZE_OPTIONS[0]).ratio
+  // 历史图片 (生成/裁剪确认后自动记录, 可加入模板)
+  const [history, setHistory] = useState<any[]>([])
   const generateCouponImage = async () => {
     const code = cForm.code.trim() || 'COUPON'
     const name = cForm.name.trim() || code
     const value = Number(cForm.value) || 0
     const discountLabel = value > 0 ? (cForm.discountType === 'percent' ? `${value}% OFF` : `$${value} OFF`) : 'SPECIAL OFFER'
-    const selProduct = selProductId ? products.find((p: any) => p.id === selProductId) : null
+    // 商品范围: 全部(无图案) / 品类代表图 / 具体商品
+    let refUrl: string | undefined
+    let productName = ''
+    if (selCategory && !selProductId) {
+      const rep = categoryProducts[0]
+      if (rep) { refUrl = rep.image; productName = selCategory }
+    } else if (selProductId) {
+      const p = products.find((x: any) => x.id === selProductId)
+      if (p) { refUrl = p.image; productName = p.nameEn || p.name }
+    }
     // 对话框模式: 用户描述优先, 再叠加券基础信息
     const userDesc = promptDesc.trim()
     const descPart = userDesc ? `${userDesc}. ` : ''
-    const productPart = selProduct ? ` featuring product "${selProduct.nameEn || selProduct.name}". ` : ''
-    const prompt = `${descPart}Elegant e-commerce discount coupon design for "${name}" (code ${code}), large "${discountLabel}" in the center${productPart}luxurious oriental aesthetic with warm gold and deep red tones, subtle traditional Chinese pattern background, clean premium layout, high detail, vector style, square format`
+    const productPart = productName ? ` featuring product/category "${productName}". ` : ''
+    const prompt = `${descPart}Elegant e-commerce discount coupon design for "${name}" (code ${code}), large "${discountLabel}" in the center${productPart}luxurious oriental aesthetic with warm gold and deep red tones, subtle traditional Chinese pattern background, clean premium layout, high detail, vector style`
     setCouponImgGenerating(true)
     setCouponImgError('')
     try {
@@ -211,20 +245,28 @@ export default function AdminPromotionsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // 选了商品: 用商品主图作参考图生成 (需模型支持 reference); 否则纯文字生成
-          mode: selProduct ? 'reference' : 'text',
+          // 选了商品/品类: 用其主图作参考图生成 (需模型支持 reference); 否则纯文字生成
+          mode: refUrl ? 'reference' : 'text',
           prompt,
-          size: '1024x1024', // 固定尺寸
+          size: selSize, // 尺寸可调 (含细长/小尺寸)
           count: 1,
           platform: 'general',
           provider: selProvider || undefined,
           model: selModel || undefined,
-          referenceUrl: selProduct?.image || undefined,
+          referenceUrl: refUrl || undefined,
         }),
       })
       const d = await res.json()
       if (res.ok && d.images && d.images.length > 0) {
         setCropSrc(d.images[0]) // 生成后进入裁剪确认
+        // 记录生成历史
+        try {
+          await fetch('/api/coupon-image-history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: d.images[0], size: selSize, mode: refUrl ? 'reference' : 'text' }),
+          })
+        } catch { /* ignore */ }
       } else {
         setCouponImgError(d.error || 'Image generation failed')
       }
@@ -233,6 +275,21 @@ export default function AdminPromotionsPage() {
     } finally {
       setCouponImgGenerating(false)
     }
+  }
+
+  // 记录生成/裁剪历史
+  const recordHistory = async (url: string, size?: string, mode?: string) => {
+    try {
+      const res = await fetch('/api/coupon-image-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, size, mode }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setHistory(prev => [d.entry, ...prev].slice(0, 100))
+      }
+    } catch { /* ignore */ }
   }
 
   // 裁剪确认: 上传裁剪结果作为券图
@@ -248,6 +305,7 @@ export default function AdminPromotionsPage() {
       if (res.ok && d.url) {
         setCForm(s => ({ ...s, imageUrl: d.url }))
         setCropSrc('')
+        recordHistory(d.url, selSize, 'crop')
       } else {
         setCouponImgError(d.error || 'Upload failed')
       }
@@ -668,7 +726,7 @@ export default function AdminPromotionsPage() {
             {/* 优惠券图生成 (复用后台 AI 生图) */}
             <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: 'var(--adm-border)' }}>
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image (1024×1024)</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>Coupon Image ({selSize})</p>
               </div>
 
               {/* 对话框模式: 自然语言描述想要的效果 */}
@@ -693,13 +751,36 @@ export default function AdminPromotionsPage() {
                 </div>
               </div>
 
-              {/* 按商品生成: 选择商品后券图带该商品图案 */}
+              {/* 按商品生成: 全部 / 品类 / 单品 (品类与前端商品分类一致) */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Product range</p>
+                  <select className={inputCls} style={inputStyle} value={selCategory}
+                    onChange={e => { setSelCategory(e.target.value); setSelProductId('') }}>
+                    <option value="">All products (text only)</option>
+                    {productCategories.map(cat => (
+                      <option key={cat} value={cat}>Category: {cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Product</p>
+                  <select className={inputCls} style={inputStyle} value={selProductId}
+                    onChange={e => setSelProductId(e.target.value)} disabled={!selCategory}>
+                    <option value="">{selCategory ? 'Use category image' : 'Pick a category first'}</option>
+                    {categoryProducts.map((p: any) => (
+                      <option key={p.id} value={p.id}>{p.nameEn || p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 尺寸选项 (含细长/小尺寸) */}
               <div>
-                <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Generate from product (optional)</p>
-                <select className={inputCls} style={inputStyle} value={selProductId} onChange={e => setSelProductId(e.target.value)}>
-                  <option value="">-- No product (text only) --</option>
-                  {products.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.nameEn || p.name}</option>
+                <p className="text-[10px] mb-1" style={{ color: 'var(--adm-text-secondary)' }}>Image size</p>
+                <select className={inputCls} style={inputStyle} value={selSize} onChange={e => setSelSize(e.target.value)}>
+                  {SIZE_OPTIONS.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
                   ))}
                 </select>
               </div>
@@ -733,7 +814,7 @@ export default function AdminPromotionsPage() {
               {cropSrc && (
                 <ImageCropper
                   src={cropSrc}
-                  aspectRatio={1}
+                  aspectRatio={currentRatio}
                   onConfirm={async blob => { await confirmCrop(blob) }}
                   onCancel={() => setCropSrc('')}
                 />
@@ -764,7 +845,7 @@ export default function AdminPromotionsPage() {
               {/* 常用模板 */}
               {templates.length > 0 && (
                 <div className="pt-1">
-                  <p className="text-[10px] mb-1.5" style={{ color: 'var(--adm-text-secondary)' }}>Templates (click to use)</p>
+                  <p className="text-[10px] mb-1.5" style={{ color: 'var(--adm-text-secondary)' }}>Templates (click to use · hover to delete)</p>
                   <div className="flex flex-wrap gap-2">
                     {templates.map(t => (
                       <div key={t.id} className="relative group">
@@ -777,6 +858,47 @@ export default function AdminPromotionsPage() {
                           className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white hidden group-hover:flex items-center justify-center" title="Delete template">
                           <X size={9} />
                         </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 生成历史: 每次生成/裁剪的图片, 可加入模板或删除 */}
+              {history.length > 0 && (
+                <div className="pt-1 border-t" style={{ borderColor: 'var(--adm-border)' }}>
+                  <p className="text-[10px] mb-1.5 mt-1" style={{ color: 'var(--adm-text-secondary)' }}>History (generated images · click + to add as template)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {history.map(h => (
+                      <div key={h.id} className="relative group w-14 h-14 rounded-md overflow-hidden border border-[var(--adm-border)]">
+                        <img src={h.url} alt="history" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch('/api/coupon-templates', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name: cForm.name || cForm.code || 'Coupon', imageUrl: h.url }),
+                              })
+                              if (res.ok) {
+                                const d = await res.json()
+                                setTemplates(prev => [d.template, ...prev].slice(0, 30))
+                              }
+                            } catch { /* ignore */ }
+                          }} title="Add to templates"
+                            className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                            <Plus size={11} />
+                          </button>
+                          <button onClick={async () => {
+                            try {
+                              await fetch(`/api/coupon-image-history?id=${encodeURIComponent(h.id)}`, { method: 'DELETE' })
+                              setHistory(prev => prev.filter(x => x.id !== h.id))
+                            } catch { /* ignore */ }
+                          }} title="Delete history"
+                            className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center">
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
