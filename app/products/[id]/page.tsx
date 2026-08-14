@@ -1,7 +1,8 @@
 import { getRepository } from '@/lib/repository'
 import ProductDetailClient from '@/components/product/ProductDetailClient'
 import type { Metadata } from 'next'
-import { formatPrice } from '@/lib/cart-types'
+import { notFound } from 'next/navigation'
+import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
 // 商品详情页禁用静态缓存 / 客户端 router cache — 改价后立刻反映最新数据
@@ -23,9 +24,10 @@ export async function generateMetadata(
   }
 
   const title = `${product.nameEn || product.name} | Low Flame`
-  const description = product.subtitleEn || product.subtitle || product.descriptionEn || product.description || 'Handcrafted handcrafted artwork'
+  const description = product.subtitleEn || product.subtitle || product.descriptionEn || product.description || 'Handcrafted artwork'
   const image = product.image
-  const price = product.price ? `$${product.price.toFixed(2)}` : ''
+  // 修复 M7: 价格换算为 USD 展示口径 (数据库为 CNY 原值)
+  const price = product.price ? formatPrice(convertPrice(product.price, 'USD'), 'USD') : ''
 
   return {
     title,
@@ -56,7 +58,7 @@ export async function generateMetadata(
       canonical: `/products/${id}`,
     },
     other: {
-      'product:price:amount': String(product.price || ''),
+      'product:price:amount': product.price ? String(convertPrice(product.price, 'USD')) : '',
       'product:price:currency': 'USD',
       'product:availability': product.active !== false ? 'instock' : 'outofstock',
       'product:brand': 'Low Flame',
@@ -80,6 +82,10 @@ export default async function ProductPage({
   const { id } = await params
   const repo = getRepository()
   const product = repo.products.getById(id) || null
+
+  // 修复: 商品不存在返回 404 (原先返回 200 + 客户端 "Piece not found")
+  if (!product) notFound()
+
   const reviews = repo.reviews.getByProduct(id).filter(r => r.approved && !r.hidden && !r.deleted)
 
   return <ProductDetailClient product={product} reviews={reviews} />

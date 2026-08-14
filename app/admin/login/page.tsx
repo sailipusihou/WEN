@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,7 +8,8 @@ import { Store, Lock, ArrowRight, Eye, EyeOff, Mail, User } from 'lucide-react'
 export default function AdminLoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState('password')
-  const [username, setUsername] = useState('admin')
+  // 修复 M17: 不再预填 admin 用户名 (弱安全习惯)
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
   const [staffPassword, setStaffPassword] = useState('')

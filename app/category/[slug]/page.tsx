@@ -3,6 +3,9 @@ import CategoryClient from '@/components/product/CategoryClient'
 import type { Metadata } from 'next'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
+// 修复 M11: 与 /products 一致强制动态渲染, 促销/价格变更后分类页即时刷新
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {

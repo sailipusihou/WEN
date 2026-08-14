@@ -19,7 +19,13 @@ export default function LoginPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       })
-      if (res.ok) { localStorage.setItem("otm_user", "1"); window.location.href = "/account" }
+      if (res.ok) {
+        localStorage.setItem("otm_user", "1")
+        // 修复 M8: 登录后跳回 middleware 传来的目标页 (如 /account/orders)
+        const params = new URLSearchParams(window.location.search)
+        const redirect = params.get('redirect')
+        window.location.href = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/account'
+      }
       else { const d = await res.json(); setError(d.error || "Login failed") }
     } catch { setError("Connection error. Please try again.") }
     finally { setLoading(false) }

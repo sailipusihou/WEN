@@ -8,6 +8,8 @@ import ProductCard from "@/components/product/ProductCard"
 import { useCurrency } from "@/context/CurrencyContext"
 import { convertPrice, formatPrice } from "@/lib/cart-types"
 import type { Product } from "@/lib/products"
+import { useActivePromotions } from "@/lib/promotion-client"
+import { computePromotionForProduct } from "@/lib/promotion-shared"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
 
@@ -30,6 +32,8 @@ const PRICE_RANGES = [
 
 export default function AllProductsClient({ products: initialProducts }: { products: Product[] }) {
   const { currency } = useCurrency()
+  // 修复 H16: 列表视图也展示促销价 (与网格 ProductCard 一致)
+  const promotions = useActivePromotions()
   const [search, setSearch] = useState("")
   const [view, setView] = useState<"grid" | "list">("grid")
   const [sort, setSort] = useState<SortOption>('default')
@@ -311,7 +315,8 @@ export default function AllProductsClient({ products: initialProducts }: { produ
         ) : (
           <div className="space-y-2">
             {products.map((product, i) => {
-              const isRemote = product.image && product.image.startsWith('http')
+              const isRemote = !!product.image && product.image.startsWith('http')
+              const eff = computePromotionForProduct({ id: product.id, category: product.category || '', price: product.price }, promotions)
               return (
                 <motion.div
                   key={product.id}
@@ -327,7 +332,8 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                       fill
                       sizes="64px"
                       className="object-cover"
-                      unoptimized={!isRemote}
+                      // 修复 M15: 远程图 (非 next.config 白名单域名) 走 unoptimized 原生加载, 本地图才走优化
+                      unoptimized={isRemote}
                     />
                   </Link>
                   <div className="flex-1 min-w-0">
@@ -338,11 +344,11 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-en text-base font-medium text-[#2C2C2C]">
-                      {formatPrice(convertPrice(product.price, currency), currency)}
+                      {formatPrice(convertPrice(eff.price, currency), currency)}
                     </p>
-                    {product.originalPrice && (
+                    {(eff.originalPrice || product.originalPrice) && (
                       <p className="font-sans text-xs text-[#6B6B6B]/40 line-through">
-                        {formatPrice(convertPrice(product.originalPrice, currency), currency)}
+                        {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                       </p>
                     )}
                   </div>
