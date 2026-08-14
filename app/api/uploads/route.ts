@@ -8,6 +8,8 @@ import fs from "fs"
 
 const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"])
 const VIDEO_EXTS = new Set([".mp4", ".webm", ".mov", ".ogg", ".ogv"])
+// 修复 L15: 补充音频扩展名 (AI 生成音频此前上传后无法回读)
+const AUDIO_EXTS = new Set([".mp3", ".wav", ".m4a", ".aac", ".flac"])
 
 const MIME: Record<string, string> = {
   ".png": "image/png",
@@ -20,6 +22,11 @@ const MIME: Record<string, string> = {
   ".mov": "video/quicktime",
   ".ogg": "video/ogg",
   ".ogv": "video/ogg",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".m4a": "audio/mp4",
+  ".aac": "audio/aac",
+  ".flac": "audio/flac",
 }
 
 export async function GET(req: NextRequest) {
@@ -31,7 +38,8 @@ export async function GET(req: NextRequest) {
     const ext = path.extname(safeName).toLowerCase()
     const isImage = IMAGE_EXTS.has(ext)
     const isVideo = VIDEO_EXTS.has(ext)
-    if (!isImage && !isVideo) {
+    const isAudio = AUDIO_EXTS.has(ext)
+    if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json({ error: "Unsupported file type" }, { status: 400 })
     }
 

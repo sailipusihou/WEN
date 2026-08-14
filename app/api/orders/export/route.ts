@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepository } from '@/lib/repository'
-import { requireAdmin } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { ReturnInfo } from '@/lib/orders'
 
 function escapeCsv(value: any): string {
@@ -13,7 +13,8 @@ function escapeCsv(value: any): string {
 }
 
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req)
+  // 修复: 导出全量客户 PII 需 finance_view (原 requireAdmin 连 order_processor 都可导出)
+  const auth = requirePermission(req, 'finance_view')
   if ('error' in auth) return auth.error
 
   const { searchParams } = new URL(req.url)

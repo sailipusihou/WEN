@@ -2,12 +2,13 @@
 // GET  - 获取所有物流商配置
 // POST - 保存物流商配置
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { getCarrierConfigs, saveCarrierConfig, getCarrierConfig } from '@/lib/shipping-config'
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = requireAdmin(req)
+    // 修复: 读取配置 (含凭证掩码) 需 settings_view
+    const auth = requirePermission(req, 'settings_view')
     if ('error' in auth) return auth.error
 
     const configs = getCarrierConfigs()
@@ -30,7 +31,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = requireAdmin(req)
+    // 修复: 改写物流商 appKey/appSecret 需 settings_manage
+    const auth = requirePermission(req, 'settings_manage')
     if ('error' in auth) return auth.error
 
     const body = await req.json()
