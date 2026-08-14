@@ -323,7 +323,8 @@ export default function AdminPromotionsPage() {
                           <Pencil size={14} />
                         </button>
                         <button onClick={() => togglePromo(p.id, !p.active)} className="p-1.5 rounded-lg hover:bg-amber-500/10 transition-colors" style={{ color: 'var(--adm-text-secondary)' }} title="Toggle">
-                          {p.active ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {/* 修复: 启用中显示睁眼(正在展示), 停用时显示闭眼(已隐藏) — 原图标语义反了 */}
+                          {p.active ? <Eye size={14} /> : <EyeOff size={14} />}
                         </button>
                         <button onClick={() => delPromo(p.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" style={{ color: 'var(--adm-text-secondary)' }} title="Delete">
                           <Trash2 size={14} />
@@ -462,7 +463,8 @@ export default function AdminPromotionsPage() {
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => toggleCoupon(c.id, !c.active)} className="p-1.5 rounded-lg hover:bg-amber-500/10 transition-colors" style={{ color: 'var(--adm-text-secondary)' }} title="Toggle">
-                      {c.active ? <EyeOff size={14} /> : <Eye size={14} />}
+                      {/* 修复: 启用中显示睁眼, 停用时显示闭眼 — 原图标语义反了 */}
+                      {c.active ? <Eye size={14} /> : <EyeOff size={14} />}
                     </button>
                     <button onClick={() => delCoupon(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" style={{ color: 'var(--adm-text-secondary)' }} title="Delete">
                       <Trash2 size={14} />
