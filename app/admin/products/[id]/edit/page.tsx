@@ -13,5 +13,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const repo = getRepository()
   const product = repo.products.getById(id)
   if (!product) notFound()
-  return <ProductForm initial={product} />
+  // 汇率后台可配置: 从系统设置读取, 供编辑表单的人民币换算辅助使用
+  const settings = repo.settings.get()
+  const cnyRate = settings.cnyUsdRate || 7.2
+  return <ProductForm initial={product} cnyRate={cnyRate} />
 }

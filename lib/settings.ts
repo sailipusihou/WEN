@@ -239,6 +239,8 @@ export interface SiteSettings {
   footerEmail: string
   footerPhone: string
   currency: string
+  // 人民币换算汇率 (USD→CNY, 商品编辑表单辅助换算用; 后台可配置)
+  cnyUsdRate: number
   shippingFreeThreshold: number
   shippingCost: number
   smtpHost: string
@@ -526,6 +528,8 @@ export const DEFAULTS: SiteSettings = {
   footerPhone: "+86 400-888-8888",
   currency: "USD",
   shippingFreeThreshold: 416.67,
+  // 默认换算汇率 7.2, 可在后台系统设置中修改
+  cnyUsdRate: 7.2,
   shippingCost: 34.72,
   smtpHost: "",
   smtpPort: 587,

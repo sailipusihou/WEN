@@ -307,6 +307,14 @@ export async function PUT(req: NextRequest) {
       }
       cleanBody.shippingCost = cost
     }
+    if (body.cnyUsdRate !== undefined) {
+      // 人民币换算汇率 (商品编辑表单辅助换算用)
+      const rate = Number(body.cnyUsdRate)
+      if (Number.isNaN(rate) || rate < 1 || rate > 20) {
+        return NextResponse.json({ error: 'Invalid CNY/USD rate' }, { status: 400 })
+      }
+      cleanBody.cnyUsdRate = Math.round(rate * 10000) / 10000
+    }
 
     if (body.shippingZones !== undefined) cleanBody.shippingZones = body.shippingZones
     if (body.frontendContent !== undefined) cleanBody.frontendContent = body.frontendContent

@@ -825,7 +825,9 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Currency"><Input value={settings.currency || "USD"} onChange={v => update("currency", v)} /></Field>
-              <div />
+              <Field label="CNY/USD Rate (人民币换算汇率)" desc="商品编辑表单中 ¥↔$ 辅助换算使用; 修改后重新打开商品编辑页生效">
+                <Input type="number" value={String(settings.cnyUsdRate ?? 7.2)} onChange={v => update("cnyUsdRate", Number(v))} />
+              </Field>
               <Field label="Admin Username"><Input value={settings.adminUsername || ""} onChange={v => update("adminUsername", v)} /></Field>
               <Field label="Admin Password"><Input type="text" value={settings.adminPassword || ""} onChange={v => update("adminPassword", v)} /></Field>
             </div>
