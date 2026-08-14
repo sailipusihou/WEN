@@ -434,6 +434,8 @@ export function applyAdminChinese(root: Node = document.body): void {
   nodes.forEach(n => {
     const orig = n.nodeValue || ""
     if (!orig.trim()) return
+    // 防御: 含 URL/邮箱/占位符的业务文本不参与词典翻译
+    if (/https?:\/\/|[\w.+-]+@[\w-]+\.[\w.]+/.test(orig)) return
     const nv = translateAdminString(orig)
     if (nv !== orig) n.nodeValue = nv
   })

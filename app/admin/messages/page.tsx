@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState, useEffect, useRef } from "react"
 import { MessageSquare, Mail, MailOpen, Send, Check, User, Inbox, ShoppingBag, ExternalLink, Paperclip, Image as ImageIcon, Smile, CheckCheck, Bell, Search, Users, MessageCircle, Plus, X, Package, Info } from "lucide-react"
 
@@ -330,7 +330,7 @@ function CustomerMessages() {
                               <div className="flex items-center gap-2 mb-1 justify-end">
                                 <span className="text-[10px] text-indigo-400/80">{m.adminName || currentUser?.name || "Staff"}</span>
                               </div>
-                              {m.message && <p className="leading-relaxed whitespace-pre-wrap">{m.message}</p>}
+                              {m.message && <p data-admin-lang-ignore className="leading-relaxed whitespace-pre-wrap">{m.message}</p>}
                               {renderAttachments(m.adminAttachments || m.attachments)}
                               <div className="flex items-center justify-end gap-1 mt-1">
                                 <p className="text-[10px] text-gray-500">{new Date(m.createdAt).toLocaleString()}</p>
@@ -368,7 +368,7 @@ function CustomerMessages() {
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-[10px] text-indigo-400/80">{m.name || "Customer"}</span>
                             </div>
-                            {m.message && <p className="leading-relaxed whitespace-pre-wrap adm-text-primary">{m.message}</p>}
+                            {m.message && <p data-admin-lang-ignore className="leading-relaxed whitespace-pre-wrap adm-text-primary">{m.message}</p>}
                             {renderAttachments(m.attachments)}
                             <p className="text-[10px] text-gray-500 mt-1">{new Date(m.createdAt).toLocaleString()}</p>
                           </div>

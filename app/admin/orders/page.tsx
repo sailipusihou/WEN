@@ -1669,7 +1669,7 @@ export default function AdminOrdersPage() {
                               {order.returnInfo.notes && (
                                 <div>
                                   <span className="text-xs font-medium" style={{ color: "var(--adm-text-secondary)" }}>Notes:</span>
-                                  <p className="text-xs mt-1" style={{ color: "var(--adm-text)" }}>{order.returnInfo.notes}</p>
+                                  <p data-admin-lang-ignore className="text-xs mt-1" style={{ color: "var(--adm-text)" }}>{order.returnInfo.notes}</p>
                                 </div>
                               )}
                             </div>

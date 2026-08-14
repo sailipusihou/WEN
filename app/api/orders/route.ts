@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
+import { CNY_TO_USD } from "@/lib/cart-types"
 import {
   type Order,
   type OrderStatus,
@@ -461,16 +462,24 @@ export async function POST(req: NextRequest) {
     const settings = repo.settings.get()
     const total = Math.round((calculatedSubtotal - couponDiscount + shippingCalc.cost) * 100) / 100
 
+    // 修复 M2: 订单金额统一以实收币种 (USD) 入库 — 商品数据库价格为 CNY,
+    // 展示/支付均为 USD 换算值; 此前 CNY 数值标 USD 导致显示虚高 7.2 倍、对账错乱
+    const toUsd = (cny: number) => Math.round((cny / CNY_TO_USD) * 100) / 100
+    const orderTotalUsd = toUsd(total)
+    const orderSubtotalUsd = toUsd(calculatedSubtotal)
+    const orderDiscountUsd = toUsd(couponDiscount)
+    const orderShippingUsd = toUsd(shippingCalc.cost)
+
     const order: Order = {
       id,
-      items: validatedItems,
+      items: validatedItems.map(it => ({ ...it, price: toUsd(it.price), subtotal: toUsd(it.subtotal) })),
       shipping: body.shipping || {},
-      subtotal: calculatedSubtotal,
-      discount: couponDiscount,
+      subtotal: orderSubtotalUsd,
+      discount: orderDiscountUsd,
       couponCode,
-      shippingCost: shippingCalc.cost,
-      total,
-      currency: body.currency || "USD",
+      shippingCost: orderShippingUsd,
+      total: orderTotalUsd,
+      currency: "USD",
       status: "pending",
       createdAt: new Date().toISOString(),
       customerEmail: body.shipping?.email || body.customerEmail,
@@ -505,8 +514,8 @@ export async function POST(req: NextRequest) {
       if (!claimedTxn.captureId || Number.isNaN(claimedAmount)) {
         return NextResponse.json({ error: 'Invalid payment transaction data' }, { status: 400 })
       }
-      // 金额一致性: 声称的扣款金额必须与服务端重算的订单总额一致 (防止 0.01 美元买全单)
-      if (Math.abs(claimedAmount - total) > 0.01) {
+      // 金额一致性: 声称的扣款金额 (USD) 必须与服务端重算的订单总额 (USD, M2 统一口径) 一致
+      if (Math.abs(claimedAmount - orderTotalUsd) > 0.01) {
         return NextResponse.json({ error: 'Payment amount does not match order total' }, { status: 400 })
       }
       // 服务端向 PayPal 验证 capture 真实性; 失败/网络不可达 → 标记待人工核验, 不视为已支付

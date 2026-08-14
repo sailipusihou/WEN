@@ -168,7 +168,7 @@ export default function AdminReviewsPage() {
                 </div>
               </div>
 
-              <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--adm-text)' }}>{rev.content}</p>
+              <p data-admin-lang-ignore className="text-sm leading-relaxed mb-3" style={{ color: 'var(--adm-text)' }}>{rev.content}</p>
 
               <div className="flex items-center gap-2 flex-wrap">
                 {!rev.approved && (

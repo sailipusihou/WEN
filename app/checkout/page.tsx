@@ -276,7 +276,8 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: totalPrice,
+          // 修复 M2: Payoneer 按 USD 实收金额下单 (原传 CNY 数值, 金额口径与订单/对账不一致)
+          amount: convertPrice(totalPrice, 'USD'),
           orderId: orderData.id,
           customerEmail: shipping.email || userEmail,
         }),
