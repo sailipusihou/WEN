@@ -205,7 +205,7 @@ const PLATFORM_SYSTEM_STATUS: Record<
     insights: 'pending',
     comments: 'pending',
     messages: 'pending',
-    nextAction: 'TikTok 控制台已上线: 侧边栏进入 TikTok Console, 支持 OAuth 连接、账号资料、视频时间线(Display API)与视频发布(Content Posting API)。',
+    nextAction: 'TikTok 控制台已上线: 点击本卡片右上角 "TikTok Console" 进入, 支持 OAuth 连接、账号资料、视频时间线(Display API)与视频发布(Content Posting API)。',
   },
 }
 
@@ -9458,10 +9458,23 @@ export default function MarketingPage() {
                                   </p>
                                 </div>
                               </div>
-                              <span className="text-[10px] px-2 py-1 rounded-full font-medium flex-shrink-0"
-                                style={{ backgroundColor: item.connectedAccounts.length > 0 ? '#DCFCE7' : '#F3F4F6', color: item.connectedAccounts.length > 0 ? '#166534' : '#4B5563' }}>
-                                {item.connectedAccounts.length > 0 ? 'Auto tracked' : 'Waiting'}
-                              </span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-[10px] px-2 py-1 rounded-full font-medium"
+                                  style={{ backgroundColor: item.connectedAccounts.length > 0 ? '#DCFCE7' : '#F3F4F6', color: item.connectedAccounts.length > 0 ? '#166534' : '#4B5563' }}>
+                                  {item.connectedAccounts.length > 0 ? 'Auto tracked' : 'Waiting'}
+                                </span>
+                                {item.id === 'tiktok' && (
+                                  <a
+                                    href="/admin/tiktok"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full font-medium transition-opacity hover:opacity-80"
+                                    style={{ backgroundColor: 'var(--adm-accent-bg)', color: 'var(--adm-accent)', textDecoration: 'none' }}
+                                    title="Open TikTok Console"
+                                  >
+                                    <ExternalLink size={10} /> TikTok Console
+                                  </a>
+                                )}
+                              </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                               {(item.capabilityEntries as Array<[string, string]>).map(([label, status]) => {
