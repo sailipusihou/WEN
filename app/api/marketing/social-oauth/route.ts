@@ -65,7 +65,7 @@ const PLATFORM_CONFIG: Record<string, {
     clientIdKey: 'tkClientId',
     clientSecretKey: 'tkClientSecret',
     callbackUrlKey: 'tkCallbackUrl',
-    authUrl: 'https://www.tiktok.com/open-apis/oauth2/authorize',
+    authUrl: 'https://www.tiktok.com/v2/auth/authorize/',
     tokenUrl: 'https://open.tiktokapis.com/v2/oauth2/token/',
     scope: 'user.info.basic,video.publish,video.list',
   },

@@ -3,7 +3,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-  Music2, RefreshCw, Upload, Video, Share2, Link2, Settings, ExternalLink,
+  Music2, RefreshCw, Upload, Video, Settings, ExternalLink,
   CheckCircle2, AlertTriangle, Loader2, User as UserIcon, Eye, Heart,
   MessageCircle, CalendarDays, LogOut, Clapperboard, ArrowLeft, Info,
   ShieldCheck, KeyRound, PlugZap, FileVideo, Send, BadgeCheck,
@@ -102,7 +102,7 @@ function TikTokConsole() {
   const selectedAccount = useMemo(() => accounts.find(a => a.id === selectedAccountId) || null, [accounts, selectedAccountId])
 
   const canManage = currentUser?.role === "super_admin" || currentUser?.role === "admin"
-  const apiReady = settings?.tkApiEnabled && settings?.tkClientId && settings?.tkClientSecret
+  const apiReady = settings?.tkApiEnabled && settings?.tkClientId && settings?.hasTkClientSecret
 
   const loadProfile = useCallback(async (accountId: string) => {
     if (!accountId) return
@@ -268,14 +268,6 @@ function TikTokConsole() {
     }
   }
 
-  const handleShare = () => {
-    const siteUrl = (settings?.siteUrl || window.location.origin) as string
-    const shareUrl = `${siteUrl}${siteUrl.endsWith("/") ? "" : "/"}`
-    const text = settings?.siteName || "Low Flame"
-    const url = `https://www.tiktok.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`
-    window.open(url, "_blank", "noopener,noreferrer,width=720,height=640")
-  }
-
   const card = "rounded-2xl p-5"
   const cardStyle = { backgroundColor: "var(--adm-card)", border: "1px solid var(--adm-border)" }
   const labelStyle = { color: "var(--adm-text-secondary)" }
@@ -291,7 +283,7 @@ function TikTokConsole() {
           </div>
           <div>
             <h1 className="text-lg font-bold" style={{ color: "var(--adm-text)" }}>TikTok Console</h1>
-            <p className="text-xs" style={labelStyle}>Login Kit · Share Kit · Display API · Content Posting API</p>
+            <p className="text-xs" style={labelStyle}>Login Kit · Display API · Content Posting API</p>
           </div>
         </div>
         <Link href="/admin/marketing" className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg adm-hover-bg" style={{ color: "var(--adm-text-secondary)" }}>
@@ -593,43 +585,10 @@ function TikTokConsole() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-5">
-        {/* Share Kit */}
-        <div className={card} style={cardStyle}>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--adm-text)" }}>
-            <Share2 size={15} style={{ color: "var(--adm-accent)" }} /> Share Kit — Share to TikTok
-            <span className="text-[10px] font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.06)", color: "var(--adm-text-secondary)" }}>no auth needed</span>
-          </h3>
-          <p className="text-xs mb-4 leading-relaxed" style={labelStyle}>
-            Let visitors share the store (or any product page) to TikTok. The Share Kit opens TikTok&apos;s share sheet with the site link — a one-click way to spread content.
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleShare}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: "#000" }}
-            >
-              <Music2 size={15} /> Share to TikTok
-            </button>
-            <button
-              onClick={async () => {
-                const siteUrl = (settings?.siteUrl || window.location.origin) as string
-                try { await navigator.clipboard.writeText(siteUrl) } catch {}
-                showNotice("ok", "Site link copied — paste it in TikTok's share dialog")
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all adm-hover-bg"
-              style={{ color: "var(--adm-text-secondary)", border: "1px solid var(--adm-border)" }}
-            >
-              <Link2 size={14} /> Copy Site Link
-            </button>
-          </div>
-        </div>
-
-        {/* Scopes */}
-        <div className={card} style={cardStyle}>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--adm-text)" }}>
-            <ShieldCheck size={15} style={{ color: "var(--adm-accent)" }} /> Requested Scopes
-          </h3>
+      <div className={card} style={cardStyle}>
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--adm-text)" }}>
+          <ShieldCheck size={15} style={{ color: "var(--adm-accent)" }} /> Requested Scopes
+        </h3>
           <div className="space-y-2.5">
             {TIKTOK_SCOPES.map(s => (
               <div key={s.id} className="flex items-start gap-2.5">
@@ -646,7 +605,6 @@ function TikTokConsole() {
             </p>
           </div>
         </div>
-      </div>
     </div>
   )
 }

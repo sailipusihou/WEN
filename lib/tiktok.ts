@@ -110,7 +110,7 @@ export async function generateTikTokAuthLink(
     redirect_uri: callbackUrl,
     response_type: 'code',
     state: finalState,
-    scope: 'user.info,video.list,video.publish',
+    scope: 'user.info.basic,video.list,video.publish',
   })
 
   if (finalCodeChallenge) {
@@ -118,7 +118,7 @@ export async function generateTikTokAuthLink(
     params.set('code_challenge_method', 'S256')
   }
 
-  const url = `https://www.tiktok.com/open-apis/oauth2/authorize?${params.toString()}`
+  const url = `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`
   console.log('[TikTok] Auth link generated')
 
   return {
