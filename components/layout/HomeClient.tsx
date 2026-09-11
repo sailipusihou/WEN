@@ -27,7 +27,7 @@ const stagger = {
   transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
 }
 
-export default function HomeClient({ featuredProducts, heroBgImage = "" }: { featuredProducts: Product[], heroBgImage?: string }) {
+export default function HomeClient({ featuredProducts, heroBgImage = "", initialContent = null }: { featuredProducts: Product[], heroBgImage?: string, initialContent?: any }) {
   const heroRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
   const heroParallax = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
@@ -37,7 +37,8 @@ export default function HomeClient({ featuredProducts, heroBgImage = "" }: { fea
   const featuredHeadY = useTransform(featuredScroll, [0, 1], [24, -24])
   const searchParams = useSearchParams()
 
-  const [fc, setFc] = useState<any>(null)
+  // 首屏内容由服务端注入，避免「先闪默认图再切成后台设置的图」的问题
+  const [fc, setFc] = useState<any>(initialContent)
   const [categories, setCategories] = useState<any[]>([])
   const [newsletterEmail, setNewsletterEmail] = useState('')
   const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -105,12 +106,16 @@ export default function HomeClient({ featuredProducts, heroBgImage = "" }: { fea
   const defaultBg = heroBgImage || "https://images.unsplash.com/photo-1525123996019-3a89eb3aee80?w=1920&q=80"
 
   // === Hero 轮播逻辑 ===
+  // 内容未就绪前不渲染任何背景（避免先闪出兜底图/旧图，再切换到后台真正设置的背景）
+  const heroContentReady = fc !== null
+
   // 合并 backgroundImages 数组, 若为空则退化为单图模式 [backgroundImage || defaultBg]
   const slideshowImages: string[] = useMemo(() => {
+    if (!heroContentReady) return []
     const imgs = Array.isArray(hero.backgroundImages) ? hero.backgroundImages.filter(Boolean) : []
     if (imgs.length > 0) return imgs
     return [hero.backgroundImage || defaultBg]
-  }, [hero.backgroundImages, hero.backgroundImage, defaultBg])
+  }, [heroContentReady, hero.backgroundImages, hero.backgroundImage, defaultBg])
 
   const slideshowEnabled = hero.slideshowEnabled !== false && slideshowImages.length > 1
   const slideshowInterval = Math.max(3, hero.slideshowInterval ?? 6) // 秒
@@ -120,11 +125,12 @@ export default function HomeClient({ featuredProducts, heroBgImage = "" }: { fea
   // === 视频背景逻辑 ===
   // 启用视频时, 视频层覆盖图片轮播层
   const videoList: string[] = useMemo(() => {
+    if (!heroContentReady) return []
     const vids = Array.isArray(hero.backgroundVideos) ? hero.backgroundVideos.filter(Boolean) : []
     if (vids.length > 0) return vids
     if (hero.backgroundVideo) return [hero.backgroundVideo]
     return []
-  }, [hero.backgroundVideos, hero.backgroundVideo])
+  }, [heroContentReady, hero.backgroundVideos, hero.backgroundVideo])
 
   const videoEnabled = !!hero.videoEnabled && videoList.length > 0
   const videoMulti = videoList.length > 1
@@ -177,6 +183,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "" }: { fea
 
   // 跳到指定 slide
   const goToSlide = (idx: number) => {
+    if (slideshowImages.length === 0) return
     if (idx === currentSlide) return
     setCurrentSlide((idx + slideshowImages.length) % slideshowImages.length)
   }

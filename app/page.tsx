@@ -90,7 +90,11 @@ export default async function HomePage() {
           dangerouslySetInnerHTML={{ __html: escapeJson(ld) }}
         />
       ))}
-      <HomeClient featuredProducts={featuredProducts} heroBgImage={settings.heroBackgroundImage} />
+      <HomeClient
+        featuredProducts={featuredProducts}
+        heroBgImage={settings.heroBackgroundImage}
+        initialContent={settings.frontendContent || null}
+      />
     </>
   )
 }
