@@ -79,6 +79,8 @@ if ($needCommit) {
 
     Write-Host "[2/4] 提交改动..." -ForegroundColor Green
     git add -A 2>&1 | Out-Null
+    # 运行期上传文件不走 git 同步（否则会与服务器上已有文件冲突）
+    git reset -- public/uploads 2>&1 | Out-Null
     git commit -m $Message 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "提交失败（可能没有实际变化）" -ForegroundColor Yellow
