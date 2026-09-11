@@ -13,6 +13,16 @@
 # ============================================================
 set -e
 
+# 用法：bash scripts/deploy/update.sh [--force]
+#   --force  即使代码版本没变也强制重新安装依赖并构建
+#            （用于手动 git reset 后，或需要重建产物时）
+FORCE=0
+for arg in "$@"; do
+  case "$arg" in
+    --force|-f) FORCE=1 ;;
+  esac
+done
+
 APP_DIR="/var/www/lowflame"
 APP_NAME="lowflame"
 NODE_MEM="1024"   # 构建进程内存上限（MB），2GB 服务器建议 1024
@@ -40,9 +50,12 @@ fi
 
 NEW_COMMIT=$(git rev-parse --short HEAD)
 if [ "$PREV_COMMIT" = "$NEW_COMMIT" ]; then
-  echo "    已是最新版本（$NEW_COMMIT），无需更新。"
-  echo "    如需强制重建，执行：pm2 restart $APP_NAME"
-  exit 0
+  if [ "$FORCE" != "1" ]; then
+    echo "    已是最新版本（$NEW_COMMIT），无需更新。"
+    echo "    如需强制重建，执行：bash $APP_DIR/scripts/deploy/update.sh --force"
+    exit 0
+  fi
+  echo "    --force：版本未变（$NEW_COMMIT），仍强制重新构建。"
 fi
 echo "    新版本: $NEW_COMMIT"
 
