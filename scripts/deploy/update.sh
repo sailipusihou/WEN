@@ -28,10 +28,15 @@ PREV_COMMIT=$(git rev-parse --short HEAD)
 echo "==> 当前版本: $PREV_COMMIT"
 
 echo "==> 1/6 拉取最新代码..."
-# 拉取前先清理可能冲突的未跟踪文件（运行时上传文件与仓库同名时会阻塞 pull）
 git checkout -- . 2>/dev/null || true
-git clean -fd public/uploads 2>/dev/null || true
-git pull
+# 注意：不使用 git clean（会误删服务器上未跟踪的真实上传文件）
+if ! git pull; then
+  echo ""
+  echo "❌ 拉取失败：可能存在与仓库同名的未跟踪文件（通常是上传文件）"
+  echo "   处理方式：根据上面的提示，删除冲突文件后重新执行本脚本"
+  echo "   （这些文件在 git 中已有，pull 会自动恢复）"
+  exit 1
+fi
 
 NEW_COMMIT=$(git rev-parse --short HEAD)
 if [ "$PREV_COMMIT" = "$NEW_COMMIT" ]; then

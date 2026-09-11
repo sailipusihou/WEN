@@ -31,7 +31,6 @@ function connect() {
       host: HOST, port: PORT, username: USER, password: PASS,
       readyTimeout: 120000,
       keepaliveInterval: 20000,
-      algorithms: { serverHostKey: ['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'rsa-sha2-512', 'rsa-sha2-256'] },
     })
   })
 }
