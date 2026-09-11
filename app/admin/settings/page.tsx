@@ -5,9 +5,10 @@ import {
   Settings, ShoppingCart, Truck, Mail, Plus, X, Users,
   GalleryHorizontalEnd, Video, ArrowLeft, Type, Sparkles,
   Mailbox, Footprints, Cloud, Bell, Image as ImageIcon, Sun, Contrast, Star,
-  ChevronDown, Store, Monitor, Shield, Bot, Twitter,
+  ChevronDown, Store, Monitor, Shield, Bot,
   Facebook, Instagram, Linkedin, Youtube, Pin, MessageCircle, PenTool, Music,
 } from 'lucide-react'
+import XLogo from "@/components/ui/XLogo"
 import { Section, Field, Input, Textarea, ImageUploader, CollectionEditor, JournalEditor, QuoteEditor, RangeSlider } from '@/components/admin/SettingsSection'
 import HeroSlideshowEditor from '@/components/admin/HeroSlideshowEditor'
 import HeroVideoEditor from '@/components/admin/HeroVideoEditor'
@@ -44,7 +45,7 @@ const systemTabs: { id: SubTab; label: string; icon: any; desc: string }[] = [
   { id: "admin-ui", label: "Admin UI", icon: Monitor, desc: "Background, panel style, effects" },
   { id: "notifications", label: "Notifications", icon: Bell, desc: "Desktop push notifications" },
   { id: "ai-assistant", label: "AI Assistant", icon: Bot, desc: "Configure AI model and behavior" },
-  { id: "social-apis", label: "Social APIs", icon: Twitter, desc: "X (Twitter) API integration" },
+  { id: "social-apis", label: "Social APIs", icon: XLogo, desc: "X API integration" },
 ]
 
 export default function AdminSettingsPage() {
@@ -1909,7 +1910,7 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
 
         {/* ============ Social APIs tab (System) ============ */}
         {subTab === "social-apis" && settings && (
-          <Section icon={Twitter} title="Social API Integration">
+          <Section icon={XLogo} title="Social API Integration">
             <p className="text-xs mb-4" style={{ color: "var(--adm-text-secondary)" }}>
               Connect social media platforms via their official APIs for automated posting and account management.
             </p>
@@ -1919,10 +1920,10 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
               <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-border)" }}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#E0F2FE" }}>
-                    <Twitter size={24} style={{ color: "#1DA1F2" }} />
+                    <XLogo size={24} style={{ color: "#1DA1F2" }} />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-semibold" style={{ color: "var(--adm-text)" }}>X (Twitter) API</h4>
+                    <h4 className="text-sm font-semibold" style={{ color: "var(--adm-text)" }}>X API</h4>
                     <p className="text-xs" style={{ color: "var(--adm-text-secondary)" }}>
                       OAuth 1.0a authentication for posting tweets and reading profile data
                     </p>
@@ -2482,7 +2483,7 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
           <Section icon={Globe} title="Social & Footer Links">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Facebook"><Input value={settings.socialFacebook || ""} onChange={v => update("socialFacebook", v)} /></Field>
-              <Field label="X (Twitter)"><Input value={settings.socialX || ""} onChange={v => update("socialX", v)} /></Field>
+              <Field label="X"><Input value={settings.socialX || ""} onChange={v => update("socialX", v)} /></Field>
               <Field label="Instagram"><Input value={settings.socialInstagram || ""} onChange={v => update("socialInstagram", v)} /></Field>
               <Field label="YouTube"><Input value={settings.socialYoutube || ""} onChange={v => update("socialYoutube", v)} /></Field>
               <Field label="Footer Hours"><Input value={settings.footerHours || ""} onChange={v => update("footerHours", v)} /></Field>

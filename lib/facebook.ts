@@ -238,8 +238,9 @@ export async function refreshFacebookToken(refreshToken?: string): Promise<{ acc
 }
 
 export async function getFacebookPageInfo(accessToken: string, pageId?: string): Promise<FacebookPageInfo[]> {
+  // Page 端点无 likes_count 字段（用 fan_count）；me/accounts 用 likes_count
   const params = new URLSearchParams({
-    fields: 'id,name,picture,followers_count,likes_count',
+    fields: pageId ? 'id,name,picture,followers_count,fan_count' : 'id,name,picture,followers_count,likes_count',
     access_token: accessToken,
   })
 
@@ -258,13 +259,14 @@ export async function getFacebookPageInfo(accessToken: string, pageId?: string):
   }
 
   const data = await response.json()
-  const pages = data.data ? (Array.isArray(data.data) ? data.data : [data.data]) : []
+  // pageId 模式: 返回单对象 {id,name,...}; me/accounts 模式: 返回 {data:[...]}
+  const pages = pageId ? [data] : (data.data ? (Array.isArray(data.data) ? data.data : [data.data]) : [])
   return pages.map((p: any) => ({
     id: p.id,
     name: p.name,
     picture: p.picture,
     followers_count: p.followers_count,
-    likes_count: p.likes_count,
+    likes_count: p.likes_count ?? p.fan_count ?? 0,
   }))
 }
 
@@ -391,7 +393,18 @@ export async function getAllFacebookComments(
   postLimit: number = 50
 ): Promise<FBCommentItem[]> {
   // 先获取帖子列表
-  const posts = await getFacebookTimeline(accessToken, pageId, postLimit)
+  let posts: any[] = []
+  try {
+    posts = await getFacebookTimeline(accessToken, pageId, postLimit)
+  } catch (err: any) {
+    // pages_read_engagement 未授权（高级访问）时静默返回空，避免前端误报"同步失败"
+    const msg = String(err?.message || '')
+    if (msg.includes('pages_read_engagement') || msg.includes('Page Public Content Access') || msg.includes('#10')) {
+      console.warn('[Facebook] Timeline unavailable (needs pages_read_engagement):', msg)
+      return []
+    }
+    throw err
+  }
   const allComments: FBCommentItem[] = []
 
   for (const post of posts) {

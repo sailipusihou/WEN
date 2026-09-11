@@ -2,14 +2,15 @@
 import { useMemo } from "react"
 import {
   User, ChevronRight, Check, Globe,
-  Instagram, Facebook, Twitter, Youtube, Linkedin,
+  Instagram, Facebook, Youtube, Linkedin,
   MessageCircle, Target, AtSign
 } from "lucide-react"
+import XLogo from "@/components/ui/XLogo"
 
 const PLATFORM_INFO: Record<string, { name: string; icon: any; color: string; bgColor: string }> = {
   instagram: { name: 'Instagram', icon: Instagram, color: '#E4405F', bgColor: '#FFF0F3' },
   facebook: { name: 'Facebook', icon: Facebook, color: '#1877F2', bgColor: '#EEF2FF' },
-  twitter: { name: 'X / Twitter', icon: Twitter, color: '#1DA1F2', bgColor: '#E0F2FE' },
+  twitter: { name: 'X', icon: XLogo, color: '#000000', bgColor: '#E0F2FE' },
   linkedin: { name: 'LinkedIn', icon: Linkedin, color: '#0077B5', bgColor: '#E0F2FE' },
   youtube: { name: 'YouTube', icon: Youtube, color: '#FF0000', bgColor: '#FEF2F2' },
   pinterest: { name: 'Pinterest', icon: Target, color: '#E60023', bgColor: '#FEF2F2' },

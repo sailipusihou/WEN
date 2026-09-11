@@ -647,7 +647,11 @@ export async function getInstagramConversations(
         }))
         result.push({
           id: conv.id,
-          participants: conv.participants?.data || [],
+          participants: (conv.participants?.data || []).map((p: any) => ({
+            ...p,
+            picture: p.profile_pic || p.profile_picture_url || '',
+            profileUrl: p.username ? `https://instagram.com/${p.username}` : '',
+          })),
           messages: messages.reverse(),
           updatedAt: conv.updated_time || '',
         })
@@ -680,6 +684,42 @@ export async function sendInstagramDM(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
     throw new Error(`Instagram DM send failed: ${errorData?.error?.message || 'Unknown error'}`)
+  }
+
+  const data = await response.json()
+  return { id: data.id }
+}
+
+// 发送 IG 图片附件私信
+export async function sendInstagramDMAttachment(
+  accessToken: string,
+  recipientId: string,
+  attachmentUrl: string,
+  text?: string
+): Promise<{ id: string }> {
+  const url = `${API_BASE}/me/messages`
+  const message: any = {
+    attachment: {
+      type: 'image',
+      payload: { url: attachmentUrl, is_reusable: true },
+    },
+  }
+  if (text) message.text = text
+  const body = {
+    recipient: { id: recipientId },
+    message,
+    access_token: accessToken,
+  }
+
+  const response = await fetchWithProxy(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(`Instagram DM attachment send failed: ${errorData?.error?.message || 'Unknown error'}`)
   }
 
   const data = await response.json()

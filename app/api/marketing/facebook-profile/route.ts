@@ -48,7 +48,20 @@ export async function GET(req: NextRequest) {
 
     let userInfo
     try {
-      userInfo = await getFacebookUserInfo(accessToken)
+      // Page 账号（platformUserId = Page ID）用 Page 端点验证；个人账号用 /me
+      if (account.platformUserId && account.username === 'Low Flame') {
+        const pages = await getFacebookPageInfo(accessToken, account.platformUserId)
+        const page = pages[0]
+        userInfo = {
+          id: page.id,
+          name: page.name,
+          email: '',
+          picture: page.picture,
+          link: `https://facebook.com/${page.id}`,
+        }
+      } else {
+        userInfo = await getFacebookUserInfo(accessToken)
+      }
     } catch (err: any) {
       console.error('[Facebook Profile] Token validation failed:', err?.message)
       if (account.refreshToken && !tokenRefreshed) {
@@ -61,7 +74,19 @@ export async function GET(req: NextRequest) {
             refreshToken: newTokens.refreshToken,
             lastSync: new Date().toISOString(),
           })
-          userInfo = await getFacebookUserInfo(accessToken)
+          if (account.platformUserId && account.username === 'Low Flame') {
+            const pages = await getFacebookPageInfo(accessToken, account.platformUserId)
+            const page = pages[0]
+            userInfo = {
+              id: page.id,
+              name: page.name,
+              email: '',
+              picture: page.picture,
+              link: `https://facebook.com/${page.id}`,
+            }
+          } else {
+            userInfo = await getFacebookUserInfo(accessToken)
+          }
         } catch (refreshErr) {
           console.error('[Facebook Profile] Token refresh also failed:', refreshErr)
           return NextResponse.json({ error: 'Facebook token expired. Please re-login.' }, { status: 401 })

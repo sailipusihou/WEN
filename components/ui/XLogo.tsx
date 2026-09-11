@@ -1,0 +1,29 @@
+import type { CSSProperties } from 'react'
+
+/**
+ * X (Twitter) 官方新 logo —— 替代 lucide 的 Twitter 小鸟图标
+ * 使用 fill=currentColor，颜色通过 style={{ color }} 传入
+ */
+export default function XLogo({
+  size = 20,
+  style,
+  className,
+}: {
+  size?: number
+  style?: CSSProperties
+  className?: string
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      style={style}
+      className={className}
+      aria-label="X"
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  )
+}

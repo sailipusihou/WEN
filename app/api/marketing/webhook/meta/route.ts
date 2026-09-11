@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSettings } from '@/lib/settings'
 import { socialEventBus, SocialEvent } from '@/lib/social-event-bus'
 import { getSocialAccountById, getAllSocialAccounts } from '@/lib/social-accounts'
+import { invalidateCacheKey } from '@/lib/marketing-cache'
 import crypto from 'crypto'
 
 export const runtime = 'nodejs'
@@ -42,15 +43,18 @@ export async function POST(req: NextRequest) {
     const body = await req.text()
     const signature = req.headers.get('x-hub-signature-256') || ''
 
-    // 优先使用 Meta App Secret，回退到 OAuth Client Secret
-    const appSecret = settings.metaAppSecret || settings.igClientSecret || settings.fbClientSecret
-    if (!appSecret) {
+    // 签名验证：Meta App Secret 或 IG/FB Client Secret 任一匹配即可
+    // （Instagram 产品可能使用独立 Instagram App 的密钥签名）
+    const candidateSecrets = [settings.metaAppSecret, settings.igClientSecret, settings.fbClientSecret].filter(Boolean) as string[]
+    if (candidateSecrets.length === 0) {
       console.warn('[Meta Webhook] No app secret configured — rejecting event (secure default)')
       return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 403 })
     }
-    const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(body).digest('hex')
-    if (signature !== expectedSig) {
-      console.warn('[Meta Webhook] Invalid signature', { received: signature ? 'present' : 'missing', expected: 'sha256=...' })
+    const valid = candidateSecrets.some(
+      (s) => signature === 'sha256=' + crypto.createHmac('sha256', s).update(body).digest('hex')
+    )
+    if (!valid) {
+      console.warn('[Meta Webhook] Invalid signature', { received: signature ? 'present' : 'missing', secretsTried: candidateSecrets.length })
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
     }
 
@@ -65,6 +69,11 @@ export async function POST(req: NextRequest) {
     } else {
       console.log('[Meta Webhook] Unknown object type:', payload.object)
     }
+
+    // 有事件到达：失效对应平台缓存，让下一次轮询立即拉取最新（不等待 8s TTL）
+    invalidateCacheKey('ig-dms:')
+    invalidateCacheKey('fb-dms:')
+    invalidateCacheKey('x-dms:')
 
     // Meta 要求必须返回 200
     return NextResponse.json({ received: true }, { status: 200 })

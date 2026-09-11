@@ -1,0 +1,56 @@
+Meta App Review - Usage Policy Texts (Oriental Treasures Market)
+===============================================================
+应用审核权限使用守则说明文本 —— 每个权限对应一段，直接复制粘贴到
+Meta 后台「应用审核提交内容」页面对应权限的「使用守则」区域。
+
+---------------------------------------------------------------
+1. pages_messaging
+---------------------------------------------------------------
+We use this permission to read and respond to private messages sent to our Facebook Page. Customers contact us about order status, product questions, and support issues. Our staff replies to these messages directly from our admin dashboard so we can provide timely customer support.
+
+---------------------------------------------------------------
+2. pages_show_list
+---------------------------------------------------------------
+We use this permission to list the Facebook Pages managed by our admins, so the correct Page can be selected and connected to our marketing dashboard before publishing content or managing messages.
+
+---------------------------------------------------------------
+3. business_management
+---------------------------------------------------------------
+We use this permission to read the business assets (Facebook Pages and Instagram accounts) associated with our Business Manager, so our marketing team can manage social media content and messaging from a single dashboard.
+
+---------------------------------------------------------------
+4. pages_read_engagement
+---------------------------------------------------------------
+We use this permission to read posts, comments and engagement metrics on our Facebook Page so our team can monitor customer feedback, respond to comments and measure the performance of published content.
+
+---------------------------------------------------------------
+5. public_profile
+---------------------------------------------------------------
+We use the public profile permission to verify the identity of users who log in with Facebook and to display their name and avatar within our admin panel.
+
+---------------------------------------------------------------
+6. instagram_business_manage_messages
+---------------------------------------------------------------
+We use this permission to read and respond to direct messages sent to our Instagram business account. Customers contact us about products, orders and support; our staff replies to these messages from our marketing dashboard to provide fast customer service. We also receive real-time webhook notifications when new messages arrive.
+
+---------------------------------------------------------------
+7. instagram_business_manage_comments
+---------------------------------------------------------------
+We use this permission to read and reply to comments on our Instagram business account's posts, and to moderate spam or inappropriate comments. Our marketing team monitors comments through our dashboard and receives real-time webhook notifications when new comments arrive.
+
+---------------------------------------------------------------
+8. instagram_basic
+---------------------------------------------------------------
+We use this permission to read basic profile information and media from our Instagram business account (username, profile picture, media) so we can display account status and content in our marketing dashboard.
+
+===============================================================
+IG 高级权限（6、7 两项）的屏幕录制要求
+===============================================================
+Meta 审核 instagram_business_manage_messages 和
+instagram_business_manage_comments 时通常要求提供屏幕录制，
+演示以下操作（建议 2-3 分钟，可上传 YouTube 后贴链接）：
+
+1. 打开商家后台 → 营销中心 → 社交账号（Instagram 已连接）
+2. 进入「评论」面板：展示查看评论、回复评论、隐藏垃圾评论
+3. 进入「消息」面板：展示查看私信、回复私信
+4. 全程清晰展示网址栏（lowflame.store）和应用名称

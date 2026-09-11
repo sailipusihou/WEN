@@ -9,14 +9,14 @@ import {
   User, AtSign, Globe2, Share2, Monitor, ShoppingCart,
   Zap, Target, Award, Briefcase, Calendar, Clock, Mail,
   Layers, Image as ImageIcon, Settings, ChevronRight, ChevronLeft,
-  Facebook, Twitter, Instagram, Youtube, Linkedin, MessageCircle,
+  Facebook, Instagram, Youtube, Linkedin, MessageCircle,
   Globe as GlobeIcon, LineChart, Activity, Eye, DollarSign,
   Phone, MapPin, Building, MoreHorizontal, Pause, Play,
   Globe as Globe3, MessageSquare, Send, Bookmark, Camera, Music,
   Heart, Film, Users2, Trophy,
   ShoppingBag, CreditCard, BarChart, PieChart,
   Paperclip, Bot, PenTool, AlertCircle, Smartphone, GripVertical, Filter, Shield,
-  Download, Upload, Signal, Wifi,
+  Download, Upload, Signal, Wifi, Smile, Mic, MicVocal, Square,
 } from "lucide-react"
 import { buildReferralBioLandingUrl, buildReferralProductUrl } from "@/lib/referral-links"
 import { getInstagramInsightsSummary } from "@/lib/marketing-insights"
@@ -27,10 +27,12 @@ import AudioStudio from "@/components/marketing/AudioStudio"
 import VideoAudioEditor from "@/components/marketing/VideoAudioEditor"
 import type { AudioItem } from "@/components/marketing/audioUtils"
 
+import XLogo from "@/components/ui/XLogo"
+
 const PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F', bgColor: '#FFF0F3', url: 'https://instagram.com', loginUrl: 'https://www.instagram.com/accounts/login/' },
   { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2', bgColor: '#EEF2FF', url: 'https://facebook.com', loginUrl: 'https://www.facebook.com/login.php' },
-  { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2', bgColor: '#E0F2FE', url: 'https://twitter.com', loginUrl: 'https://twitter.com/i/flow/login' },
+  { id: 'twitter', name: 'X', icon: XLogo, color: '#000000', bgColor: '#E0F2FE', url: 'https://x.com', loginUrl: 'https://x.com/i/flow/login' },
   { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0077B5', bgColor: '#E0F2FE', url: 'https://linkedin.com', loginUrl: 'https://www.linkedin.com/login' },
   { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000', bgColor: '#FEF2F2', url: 'https://youtube.com', loginUrl: 'https://accounts.google.com/ServiceLogin?service=youtube' },
   { id: 'pinterest', name: 'Pinterest', icon: Target, color: '#E60023', bgColor: '#FEF2F2', url: 'https://pinterest.com', loginUrl: 'https://www.pinterest.com/login/' },
@@ -839,11 +841,30 @@ export default function MarketingPage() {
   const [dmAccountFilter, setDmAccountFilter] = useState('all')
   const [dmSearch, setDmSearch] = useState('')
   const [activeConversation, setActiveConversation] = useState<any>(null)
+  // 已读基线: conversationId -> 打开时的 unread 数。轮询/刷新后保持已读(0), 仅当平台未读数超过基线(新消息)时显示新增部分
+  const readBaselineRef = useRef<Record<string, number>>({})
+  const [viewedAccount, setViewedAccount] = useState<any>(null)
   const [dmText, setDmText] = useState('')
   const [dmSending, setDmSending] = useState(false)
   const [unreadDmCount, setUnreadDmCount] = useState(0)
   const [unreadCommentCount, setUnreadCommentCount] = useState(0)
   const [lastNotificationCheck, setLastNotificationCheck] = useState<Date | null>(null)
+  // 对话框工具栏：表情 / 附件 / 语音 / 语音转文字
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const [isTranscribing, setIsTranscribing] = useState(false)
+  const [sendingAttachment, setSendingAttachment] = useState(false)
+  // 录音暂停后生成的语音预览（待发送，不自动发送）
+  const [pendingVoice, setPendingVoice] = useState<{ url: string; blob: Blob; duration: number } | null>(null)
+  const previewAudioRef = useRef<HTMLAudioElement>(null)
+  const mediaRecorderRef = useRef<any>(null)
+  const mediaChunksRef = useRef<Blob[]>([])
+  const recorderTimerRef = useRef<any>(null)
+  const speechRecognitionRef = useRef<any>(null)
+  const dmFileInputRef = useRef<HTMLInputElement>(null)
+  // 图片点击展开预览（lightbox）
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   // 实时通知弹窗
   const [liveNotifications, setLiveNotifications] = useState<{ id: string; type: string; platform: string; message: string; timestamp: Date }[]>([])
   const [sseConnected, setSseConnected] = useState(false)
@@ -1309,7 +1330,7 @@ export default function MarketingPage() {
     const connectorConfigs = [
       { id: 'instagram', name: 'Instagram', enabledKey: 'igApiEnabled', clientIdKey: 'igClientId', callbackKey: 'igCallbackUrl' },
       { id: 'facebook', name: 'Facebook', enabledKey: 'fbApiEnabled', clientIdKey: 'fbClientId', callbackKey: 'fbCallbackUrl' },
-      { id: 'twitter', name: 'X (Twitter)', enabledKey: 'xApiEnabled', clientIdKey: 'xClientId', callbackKey: 'xCallbackUrl' },
+      { id: 'twitter', name: 'X', enabledKey: 'xApiEnabled', clientIdKey: 'xClientId', callbackKey: 'xCallbackUrl' },
     ]
 
     return connectorConfigs.map(item => {
@@ -1663,7 +1684,7 @@ export default function MarketingPage() {
   const loadXInsights = async () => {
     setXInsightsLoading(true)
     try {
-      const xAccounts = socialAccounts.filter((a: any) => a.platform === 'twitter' && a.accessToken)
+      const xAccounts = socialAccounts.filter((a: any) => a.platform === 'twitter' && a.hasAccessToken)
       const results: Record<string, any> = {}
       for (const account of xAccounts) {
         try {
@@ -1689,7 +1710,7 @@ export default function MarketingPage() {
   const loadXInsightsForAccounts = async (accounts: any[]) => {
     setXInsightsLoading(true)
     try {
-      const xAccounts = accounts.filter((a: any) => a.platform === 'twitter' && a.accessToken)
+      const xAccounts = accounts.filter((a: any) => a.platform === 'twitter' && a.hasAccessToken)
       const results: Record<string, any> = {}
       for (const account of xAccounts) {
         try {
@@ -1715,7 +1736,7 @@ export default function MarketingPage() {
   const loadFacebookInsights = async () => {
     setFacebookInsightsLoading(true)
     try {
-      const fbAccounts = socialAccounts.filter((a: any) => a.platform === 'facebook' && a.accessToken)
+      const fbAccounts = socialAccounts.filter((a: any) => a.platform === 'facebook' && a.hasAccessToken)
       const results: Record<string, any> = {}
       for (const account of fbAccounts) {
         try {
@@ -1741,7 +1762,7 @@ export default function MarketingPage() {
   const loadFacebookInsightsForAccounts = async (accounts: any[]) => {
     setFacebookInsightsLoading(true)
     try {
-      const fbAccounts = accounts.filter((a: any) => a.platform === 'facebook' && a.accessToken)
+      const fbAccounts = accounts.filter((a: any) => a.platform === 'facebook' && a.hasAccessToken)
       const results: Record<string, any> = {}
       for (const account of fbAccounts) {
         try {
@@ -1771,184 +1792,248 @@ export default function MarketingPage() {
     const syncErrors: { platform: string; label: string; message: string }[] = []
     const visibleAccounts = isAdmin ? socialAccounts : socialAccounts.filter(a => a.staffId === currentUser?.id)
 
-    // Instagram
-    const igAccounts = visibleAccounts.filter((a: any) => a.platform === 'instagram' && a.accessToken && a.status === 'connected')
-    const igAll: any[] = []
-    for (const account of igAccounts) {
+    // 带超时的 fetch（慢平台不阻塞其他平台，超时视为失败）
+    const fetchJson = async (url: string, timeoutMs = 20000): Promise<{ ok: boolean; data: any }> => {
       try {
-        const r = await fetch(`/api/marketing/instagram-comments?accountId=${account.id}&mode=all`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const c of d.comments) {
-            igAll.push({ ...c, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'instagram', _timestamp: c.timestamp })
-          }
-        } else {
-          syncErrors.push({ platform: 'instagram', label: 'Instagram', message: d?.error || `同步失败 (${r.status})` })
-        }
+        const ctrl = new AbortController()
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+        const r = await fetch(url, { signal: ctrl.signal })
+        clearTimeout(timer)
+        const data = await r.json().catch(() => null)
+        return { ok: r.ok && data?.success, data }
       } catch {
-        syncErrors.push({ platform: 'instagram', label: 'Instagram', message: '网络连接失败' })
+        return { ok: false, data: null }
       }
+    }
+
+    const igAccounts = visibleAccounts.filter((a: any) => a.platform === 'instagram' && a.hasAccessToken && a.status === 'connected')
+    const xAccounts = visibleAccounts.filter((a: any) => a.platform === 'twitter' && a.hasAccessToken && a.status === 'connected')
+    const fbAccounts = visibleAccounts.filter((a: any) => a.platform === 'facebook' && a.hasAccessToken && a.status === 'connected')
+    const ptAccounts = visibleAccounts.filter((a: any) => a.platform === 'pinterest' && a.hasAccessToken && a.status === 'connected')
+
+    // 四平台并行抓取
+    const [igRes, xRes, fbRes, ptRes] = await Promise.all([
+      igAccounts.length > 0 ? fetchJson(`/api/marketing/instagram-comments?accountId=${igAccounts[0].id}&mode=all`) : Promise.resolve({ ok: false, data: null }),
+      xAccounts.length > 0 ? fetchJson(`/api/marketing/x-comments?accountId=${xAccounts[0].id}`) : Promise.resolve({ ok: false, data: null }),
+      fbAccounts.length > 0 ? fetchJson(`/api/marketing/facebook-comments?accountId=${fbAccounts[0].id}&mode=all`) : Promise.resolve({ ok: false, data: null }),
+      ptAccounts.length > 0 ? fetchJson(`/api/marketing/pinterest-comments?accountId=${ptAccounts[0].id}&mode=all`) : Promise.resolve({ ok: false, data: null }),
+    ])
+
+    // Instagram
+    const igOk = igRes.ok
+    const igAll: any[] = []
+    if (igOk) {
+      for (const c of igRes.data.comments || []) {
+        igAll.push({ ...c, accountId: igAccounts[0].id, accountUsername: igAccounts[0].username, staffName: igAccounts[0].staffName, platform: 'instagram', _timestamp: c.timestamp })
+      }
+    } else if (igAccounts.length > 0) {
+      syncErrors.push({ platform: 'instagram', label: 'Instagram', message: igRes.data?.error || '同步失败/超时' })
     }
     igAll.sort((a, b) => new Date(b._timestamp).getTime() - new Date(a._timestamp).getTime())
     // 保留实时评论（_realtime标记），避免API刷新覆盖SSE推送的数据
     setIgComments(prev => {
       const realtimeComments = prev.filter(c => c._realtime)
-      return [...realtimeComments, ...igAll]
+      return igOk ? [...realtimeComments, ...igAll] : prev
     })
 
-    // X/Twitter
-    const xAccounts = visibleAccounts.filter((a: any) => a.platform === 'twitter' && a.accessToken && a.status === 'connected')
+    // X/Twitter（需充值 credits，静默：失败不报错、不覆盖已有数据）
+    const xOk = xRes.ok
     const xAll: any[] = []
-    for (const account of xAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/x-comments?accountId=${account.id}`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const c of d.comments) {
-            xAll.push({ ...c, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'twitter', _timestamp: c.createdAt })
-          }
-        } else {
-          syncErrors.push({ platform: 'twitter', label: 'X', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'twitter', label: 'X', message: '网络连接失败' })
+    if (xOk) {
+      for (const c of xRes.data.comments || []) {
+        xAll.push({ ...c, accountId: xAccounts[0].id, accountUsername: xAccounts[0].username, staffName: xAccounts[0].staffName, platform: 'twitter', _timestamp: c.createdAt })
       }
     }
     xAll.sort((a, b) => new Date(b._timestamp).getTime() - new Date(a._timestamp).getTime())
     setXComments(prev => {
       const realtimeComments = prev.filter(c => c._realtime)
-      return [...realtimeComments, ...xAll]
+      return xOk ? [...realtimeComments, ...xAll] : prev
     })
 
-    // Facebook
-    const fbAccounts = visibleAccounts.filter((a: any) => a.platform === 'facebook' && a.accessToken && a.status === 'connected')
+    // Facebook（需 pages_read_engagement 高级访问，静默）
+    const fbOk = fbRes.ok
     const fbAll: any[] = []
-    for (const account of fbAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/facebook-comments?accountId=${account.id}&mode=all`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const c of d.comments) {
-            fbAll.push({ ...c, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'facebook', _timestamp: c.createdAt })
-          }
-        } else {
-          syncErrors.push({ platform: 'facebook', label: 'Facebook', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'facebook', label: 'Facebook', message: '网络连接失败' })
+    if (fbOk) {
+      for (const c of fbRes.data.comments || []) {
+        fbAll.push({ ...c, accountId: fbAccounts[0].id, accountUsername: fbAccounts[0].username, staffName: fbAccounts[0].staffName, platform: 'facebook', _timestamp: c.createdAt })
       }
     }
     fbAll.sort((a, b) => new Date(b._timestamp).getTime() - new Date(a._timestamp).getTime())
     setFbComments(prev => {
       const realtimeComments = prev.filter(c => c._realtime)
-      return [...realtimeComments, ...fbAll]
+      return fbOk ? [...realtimeComments, ...fbAll] : prev
     })
 
     // Pinterest
-    const ptAccounts = visibleAccounts.filter((a: any) => a.platform === 'pinterest' && a.accessToken && a.status === 'connected')
+    const ptOk = ptRes.ok
     const ptAll: any[] = []
-    for (const account of ptAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/pinterest-comments?accountId=${account.id}&mode=all`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const c of d.comments) {
-            ptAll.push({ ...c, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'pinterest', _timestamp: c.createdAt })
-          }
-        } else {
-          syncErrors.push({ platform: 'pinterest', label: 'Pinterest', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'pinterest', label: 'Pinterest', message: '网络连接失败' })
+    if (ptOk) {
+      for (const c of ptRes.data.comments || []) {
+        ptAll.push({ ...c, accountId: ptAccounts[0].id, accountUsername: ptAccounts[0].username, staffName: ptAccounts[0].staffName, platform: 'pinterest', _timestamp: c.createdAt })
       }
+    } else if (ptAccounts.length > 0) {
+      syncErrors.push({ platform: 'pinterest', label: 'Pinterest', message: ptRes.data?.error || '同步失败/超时' })
     }
     ptAll.sort((a, b) => new Date(b._timestamp).getTime() - new Date(a._timestamp).getTime())
     setPtComments(prev => {
       const realtimeComments = prev.filter(c => c._realtime)
-      return [...realtimeComments, ...ptAll]
+      return ptOk ? [...realtimeComments, ...ptAll] : prev
     })
 
     setCommentsSyncErrors(syncErrors)
     setCommentsLoading(false)
+
+    // 持久化：成功抓取到的评论保存到后端历史（帖子删除后评论历史仍保留）
+    // 固化关联帖子信息，帖子删除后评论仍显示"来自哪个帖子"
+    try {
+      const postMap = new Map<string, any>()
+      for (const r of socialContent) {
+        if (r.platformPostId && r.status === 'published') postMap.set(r.platformPostId, r)
+      }
+      const withPostInfo = (arr: any[], keyExtractor: (c: any) => string | undefined) =>
+        arr.map(c => {
+          const pid = keyExtractor(c)
+          const post = pid ? postMap.get(pid) : null
+          return {
+            ...c,
+            linkedPostTitle: post?.contentTitle || '',
+            linkedProductName: post?.productName || '',
+            linkedPostId: post?.id || '',
+            isOurPost: !!post,
+          }
+        })
+      await fetch('/api/marketing/comment-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ig: igOk ? withPostInfo(igAll, c => c.mediaId) : null,
+          x: xOk ? withPostInfo(xAll, c => c.tweetId) : null,
+          fb: fbOk ? withPostInfo(fbAll, c => c.postId) : null,
+          pt: ptOk ? withPostInfo(ptAll, c => c.pinId) : null,
+        }),
+      })
+    } catch {}
   }
 
   // ===== DM / Messages Loading =====
-  const loadAllConversations = async () => {
-    setDmLoading(true)
+  const loadAllConversations = async (silent = false) => {
+    if (!silent) setDmLoading(true)
     const syncErrors: { platform: string; label: string; message: string }[] = []
     const visibleAccounts = isAdmin ? socialAccounts : socialAccounts.filter(a => a.staffId === currentUser?.id)
 
+    // 已读保护：会话曾被打开过(unread 已清零)，平台返回的 unread 不超过基线时保持 0，
+    // 超过基线(新消息)则显示新增未读数。
+    // prevList 为当前 state(历史)，用于旧数据无基线时的自动基线：历史已读(0) + 平台有未读 → 视为旧消息，保持 0
+    const applyReadProtection = (conv: any, prevList?: any[]) => {
+      const baseline = readBaselineRef.current[conv.id]
+      if (baseline !== undefined && baseline !== null) {
+        const unread = conv.unreadCount || 0
+        if (unread <= baseline) return { ...conv, unreadCount: 0, _readBaseline: baseline }
+        return { ...conv, unreadCount: unread - baseline, _readBaseline: baseline }
+      }
+      const prev = prevList?.find(c => c.id === conv.id)
+      if (prev && (prev.unreadCount || 0) === 0 && (conv.unreadCount || 0) > 0) {
+        readBaselineRef.current[conv.id] = conv.unreadCount
+        return { ...conv, unreadCount: 0, _readBaseline: conv.unreadCount }
+      }
+      return conv
+    }
+
+    // 带超时的 fetch（慢平台不阻塞其他平台，超时视为失败）
+    const fetchJson = async (url: string, timeoutMs = 20000): Promise<{ ok: boolean; data: any }> => {
+      try {
+        const ctrl = new AbortController()
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+        const r = await fetch(url, { signal: ctrl.signal })
+        clearTimeout(timer)
+        const data = await r.json().catch(() => null)
+        return { ok: r.ok && data?.success, data }
+      } catch {
+        return { ok: false, data: null }
+      }
+    }
+
     // Instagram DMs
-    const igAccounts = visibleAccounts.filter((a: any) => a.platform === 'instagram' && a.accessToken && a.status === 'connected')
-    const igAll: any[] = []
-    for (const account of igAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/instagram-dms?accountId=${account.id}`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const conv of d.conversations) {
-            igAll.push({ ...conv, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'instagram' })
-          }
-        } else {
-          syncErrors.push({ platform: 'instagram', label: 'Instagram', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'instagram', label: 'Instagram', message: '网络连接失败' })
-      }
-    }
-    setIgConversations(prev => {
-      const realtime = prev.filter(c => c._realtime)
-      return [...realtime, ...igAll]
-    })
-
+    const igAccounts = visibleAccounts.filter((a: any) => a.platform === 'instagram' && a.hasAccessToken && a.status === 'connected')
     // X/Twitter DMs
-    const xAccounts = visibleAccounts.filter((a: any) => a.platform === 'twitter' && a.accessToken && a.status === 'connected')
-    const xAll: any[] = []
-    for (const account of xAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/x-dms?accountId=${account.id}`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const conv of d.conversations) {
-            xAll.push({ ...conv, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'twitter' })
-          }
-        } else {
-          syncErrors.push({ platform: 'twitter', label: 'X', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'twitter', label: 'X', message: '网络连接失败' })
+    const xAccounts = visibleAccounts.filter((a: any) => a.platform === 'twitter' && a.hasAccessToken && a.status === 'connected')
+    // Facebook DMs
+    const fbAccounts = visibleAccounts.filter((a: any) => a.platform === 'facebook' && a.hasAccessToken && a.status === 'connected')
+
+    // 三平台并行抓取（大幅缩短整体轮询时间；单个慢平台最多等 20s 超时）
+    const [igRes, xRes, fbRes] = await Promise.all([
+      igAccounts.length > 0 ? fetchJson(`/api/marketing/instagram-dms?accountId=${igAccounts[0].id}`) : Promise.resolve({ ok: false, data: null }),
+      xAccounts.length > 0 ? fetchJson(`/api/marketing/x-dms?accountId=${xAccounts[0].id}`) : Promise.resolve({ ok: false, data: null }),
+      fbAccounts.length > 0 ? fetchJson(`/api/marketing/facebook-dms?accountId=${fbAccounts[0].id}`) : Promise.resolve({ ok: false, data: null }),
+    ])
+
+    const igOk = igRes.ok
+    const igAll: any[] = []
+    if (igOk) {
+      for (const conv of igRes.data.conversations || []) {
+        igAll.push({ ...conv, accountId: igAccounts[0].id, accountUsername: igAccounts[0].username, staffName: igAccounts[0].staffName, platform: 'instagram' })
       }
+    } else if (igAccounts.length > 0) {
+      syncErrors.push({ platform: 'instagram', label: 'Instagram', message: igRes.data?.error || '同步失败/超时' })
     }
-    setXConversations(prev => {
+
+    const xOk = xRes.ok
+    const xAll: any[] = []
+    if (xOk) {
+      for (const conv of xRes.data.conversations || []) {
+        xAll.push({ ...conv, accountId: xAccounts[0].id, accountUsername: xAccounts[0].username, staffName: xAccounts[0].staffName, platform: 'twitter' })
+      }
+    } else if (xAccounts.length > 0) {
+      syncErrors.push({ platform: 'twitter', label: 'X', message: xRes.data?.error || '同步失败/超时' })
+    }
+
+    const fbOk = fbRes.ok
+    const fbAll: any[] = []
+    if (fbOk) {
+      for (const conv of fbRes.data.conversations || []) {
+        fbAll.push({ ...conv, accountId: fbAccounts[0].id, accountPlatformUserId: fbAccounts[0].platformUserId || '', accountUsername: fbAccounts[0].username, staffName: fbAccounts[0].staffName, platform: 'facebook' })
+      }
+    } else if (fbAccounts.length > 0) {
+      syncErrors.push({ platform: 'facebook', label: 'Facebook', message: fbRes.data?.error || '同步失败/超时' })
+    }
+
+    let igPrevSnapshot: any[] | null = null
+    setIgConversations(prev => {
+      igPrevSnapshot = prev
       const realtime = prev.filter(c => c._realtime)
-      return [...realtime, ...xAll]
+      // 仅本次成功抓取才更新；失败时保留旧数据，避免已加载的消息凭空消失
+      return igOk ? [...realtime, ...igAll.map(c => applyReadProtection(c, prev))] : prev
     })
 
-    // Facebook DMs
-    const fbAccounts = visibleAccounts.filter((a: any) => a.platform === 'facebook' && a.accessToken && a.status === 'connected')
-    const fbAll: any[] = []
-    for (const account of fbAccounts) {
-      try {
-        const r = await fetch(`/api/marketing/facebook-dms?accountId=${account.id}`)
-        const d = await r.json().catch(() => null)
-        if (r.ok && d?.success) {
-          for (const conv of d.conversations) {
-            fbAll.push({ ...conv, accountId: account.id, accountUsername: account.username, staffName: account.staffName, platform: 'facebook' })
-          }
-        } else {
-          syncErrors.push({ platform: 'facebook', label: 'Facebook', message: d?.error || `同步失败 (${r.status})` })
-        }
-      } catch {
-        syncErrors.push({ platform: 'facebook', label: 'Facebook', message: '网络连接失败' })
-      }
-    }
-    setFbConversations(prev => {
+    let xPrevSnapshot: any[] | null = null
+    setXConversations(prev => {
+      xPrevSnapshot = prev
       const realtime = prev.filter(c => c._realtime)
-      return [...realtime, ...fbAll]
+      return xOk ? [...realtime, ...xAll.map(c => applyReadProtection(c, prev))] : prev
+    })
+
+    let fbPrevSnapshot: any[] | null = null
+    setFbConversations(prev => {
+      fbPrevSnapshot = prev
+      const realtime = prev.filter(c => c._realtime)
+      return fbOk ? [...realtime, ...fbAll.map(c => applyReadProtection(c, prev))] : prev
     })
 
     setConversationSyncErrors(syncErrors)
-    setDmLoading(false)
+    if (!silent) setDmLoading(false)
+
+    // 持久化：成功抓取到的会话保存到后端历史，失败平台(null)保留旧历史不覆盖
+    try {
+      await fetch('/api/marketing/dm-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ig: igOk ? igAll.map(c => applyReadProtection(c, igPrevSnapshot || undefined)) : null,
+          x: xOk ? xAll.map(c => applyReadProtection(c, xPrevSnapshot || undefined)) : null,
+          fb: fbOk ? fbAll.map(c => applyReadProtection(c, fbPrevSnapshot || undefined)) : null,
+        }),
+      })
+    } catch {}
   }
 
   // 统一私信会话列表
@@ -1965,6 +2050,8 @@ export default function MarketingPage() {
           _lastTimestamp: conv.updatedTime || conv.updated_time || conv.updatedAt || conv.timestamp || '',
           _participantName: participant?.name || participant?.username || conv.senderName || 'Unknown',
           _participantId: participant?.id || conv.senderId || '',
+          _participantAvatar: participant?.picture || '',
+          _participantProfileUrl: participant?.profileUrl || (participant?.username ? `https://instagram.com/${participant.username}` : ''),
           _unread: conv.unreadCount || (conv.unread ? 1 : 0),
         }
       }),
@@ -1979,11 +2066,17 @@ export default function MarketingPage() {
           _lastTimestamp: conv.lastMessageTimestamp || '',
           _participantName: conv.participantNames?.[otherParticipantId] || otherParticipantId || 'Unknown',
           _participantId: otherParticipantId || '',
+          _participantAvatar: conv.participantAvatars?.[otherParticipantId] || '',
+          _participantProfileUrl: conv.participantProfileUrls?.[otherParticipantId] || '',
           _unread: conv.unreadCount || 0,
         }
       }),
       ...fbConversations.map(conv => {
-        const participant = conv.participants?.find((p: any) => p.id !== conv.accountId) || conv.participants?.[0]
+        // 排除自己（用 platformUserId 精确排除，避免发给自己）
+        const participant =
+          conv.participants?.find((p: any) => p.id !== conv.accountPlatformUserId && p.id !== conv.accountId) ||
+          conv.participants?.find((p: any) => p.id !== conv.accountPlatformUserId) ||
+          conv.participants?.[0]
         return {
           ...conv,
           _platformLabel: 'Facebook',
@@ -1993,6 +2086,8 @@ export default function MarketingPage() {
           _lastTimestamp: conv.updatedAt || conv.updated_time || conv.timestamp || '',
           _participantName: participant?.name || participant?.username || conv.senderName || 'Unknown',
           _participantId: participant?.id || conv.senderId || '',
+          _participantAvatar: participant?.picture || '',
+          _participantProfileUrl: participant?.profileUrl || (participant?.id ? `https://facebook.com/${participant.id}` : ''),
           _unread: conv.unreadCount || (conv.unread ? 1 : 0),
         }
       }),
@@ -2020,9 +2115,124 @@ export default function MarketingPage() {
     return result
   }, [allConversationsUnified, dmPlatformFilter, dmAccountFilter, dmSearch])
 
+  // 打开会话：设置当前会话 + 标记已读（本地清除未读 + 后端通知平台）
+  const openConversation = (conv: any) => {
+    setActiveConversation(conv)
+    if (conv._unread > 0) {
+      // 记录已读基线：之后轮询/刷新中该会话 unread 不超过基线则保持 0（新消息超过基线才重新显示）
+      const cur = readBaselineRef.current[conv.id]
+      const baseline = Math.max(cur || 0, conv._unread)
+      readBaselineRef.current[conv.id] = baseline
+      // 本地清除未读
+      if (conv.platform === 'facebook') {
+        setFbConversations(prev => prev.map(c => (c.id === conv.id ? { ...c, unreadCount: 0 } : c)))
+      } else if (conv.platform === 'instagram') {
+        setIgConversations(prev => prev.map(c => (c.id === conv.id ? { ...c, unreadCount: 0 } : c)))
+      } else if (conv.platform === 'twitter') {
+        setXConversations(prev => prev.map(c => (c.id === conv.id ? { ...c, unreadCount: 0 } : c)))
+      }
+      // 持久化已读状态到历史（刷新后保持 0 未读，直到平台出现超过基线的新消息）
+      const platformKey = conv.platform === 'instagram' ? 'ig' : conv.platform === 'twitter' ? 'x' : 'fb'
+      fetch('/api/marketing/dm-history')
+        .then(r => r.json())
+        .then(d => {
+          if (!d?.success) return
+          const curList = d.history[platformKey] || []
+          const next = curList.map((c: any) => (c.id === conv.id ? { ...c, unreadCount: 0, _readBaseline: Math.max(c._readBaseline || 0, baseline) } : c))
+          if (next.length === 0) return
+          fetch('/api/marketing/dm-history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [platformKey]: next }),
+          }).catch(() => {})
+        })
+        .catch(() => {})
+      // 后端通知平台标记已读（静默，失败忽略；dev 模式 FB 可能无权限，本地已读保护兜底）
+      const endpoint = conv.platform === 'facebook' ? '/api/marketing/facebook-dms'
+        : conv.platform === 'instagram' ? '/api/marketing/instagram-dms'
+        : '/api/marketing/x-dms'
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: conv.accountId, action: 'mark-read', conversationId: conv.id }),
+      }).catch(() => {})
+    }
+  }
+
+  // 删除私信会话（历史 + 内存）
+  const handleDeleteConversation = async (conv: any) => {
+    if (!window.confirm(`Delete conversation with ${conv._participantName}?`)) return
+    const platformKey = conv.platform === 'instagram' ? 'ig' : conv.platform === 'twitter' ? 'x' : 'fb'
+    try {
+      await fetch('/api/marketing/dm-history', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: platformKey, conversationId: conv.id || conv._id }),
+      })
+    } catch {}
+    if (conv.platform === 'instagram') setIgConversations(prev => prev.filter(c => c.id !== conv.id && c._id !== conv._id))
+    else if (conv.platform === 'twitter') setXConversations(prev => prev.filter(c => c.id !== conv.id && c._id !== conv._id))
+    else setFbConversations(prev => prev.filter(c => c.id !== conv.id && c._id !== conv._id))
+    if (activeConversation?._id === conv._id) setActiveConversation(null)
+  }
+
   // 发送私信
   const handleSendDM = async () => {
-    if (!activeConversation || !dmText.trim()) return
+    if (!activeConversation) return
+    // 有语音预览：乐观发送（立即显示语音气泡，后台上传+发送）
+    if (pendingVoice) {
+      setDmSending(true)
+      const ownId = activeConversation.accountPlatformUserId || activeConversation.accountId
+      const text = dmText.trim()
+      const localMsg = {
+        id: 'local-' + Date.now(),
+        text,
+        fromId: ownId,
+        fromUsername: activeConversation.accountUsername,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        _pending: true,
+        _attachmentUrl: pendingVoice.url,
+        _attachmentType: 'audio',
+      }
+      // 乐观：立即显示语音气泡（不等待上传/FB 抓取）
+      setActiveConversation((prev: any) => prev ? { ...prev, messages: [...(prev.messages || []), localMsg] } : prev)
+      setPendingVoice(null)
+      setDmText('')
+      try {
+        const file = new File([pendingVoice.blob], `voice-${Date.now()}.wav`, { type: 'audio/wav' })
+        const { url } = await uploadFileToServer(file)
+        const staticPath = `https://lowflame.store${url.replace('/api/uploads?file=', '/uploads/')}`
+        const endpoint = activeConversation.platform === 'instagram' ? '/api/marketing/instagram-dms'
+          : activeConversation.platform === 'twitter' ? '/api/marketing/x-dms'
+          : '/api/marketing/facebook-dms'
+        const r = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accountId: activeConversation.accountId,
+            recipientId: activeConversation._participantId,
+            attachmentUrl: staticPath,
+            attachmentType: 'audio',
+          }),
+        })
+        const d = await r.json()
+        if (!r.ok || !d.success) {
+          alert(d.error || '语音发送失败')
+          // 发送失败：移除乐观消息
+          setActiveConversation((prev: any) => prev ? { ...prev, messages: (prev.messages || []).filter((m: any) => m.id !== localMsg.id) } : prev)
+        }
+        // 后台同步真实消息
+        loadAllConversations(true)
+      } catch (e: any) {
+        alert('语音发送失败: ' + (e.message || ''))
+        setActiveConversation((prev: any) => prev ? { ...prev, messages: (prev.messages || []).filter((m: any) => m.id !== localMsg.id) } : prev)
+      } finally {
+        setDmSending(false)
+      }
+      return
+    }
+    if (!dmText.trim()) return
     setDmSending(true)
     try {
       const endpoint = activeConversation.platform === 'instagram' ? '/api/marketing/instagram-dms'
@@ -2039,9 +2249,22 @@ export default function MarketingPage() {
       })
       const d = await r.json()
       if (r.ok && d.success) {
+        const msgText = dmText.trim()
         setDmText('')
-        // 重新加载会话以获取最新消息
-        loadAllConversations()
+        // 本地即时追加消息（立即显示，不整页刷新）
+        const ownId = activeConversation.accountPlatformUserId || activeConversation.accountId
+        const newMsg = {
+          id: 'local-' + Date.now(),
+          text: msgText,
+          fromId: ownId,
+          fromUsername: activeConversation.accountUsername,
+          timestamp: new Date().toISOString(),
+          isRead: true,
+          _pending: true,
+        }
+        setActiveConversation((prev: any) => prev ? { ...prev, messages: [...(prev.messages || []), newMsg] } : prev)
+        // 静默后台刷新（不显示 loading，避免整页闪烁）
+        loadAllConversations(true)
       } else {
         alert(d.error || 'Send failed')
       }
@@ -2049,6 +2272,213 @@ export default function MarketingPage() {
       alert('Network error')
     } finally {
       setDmSending(false)
+    }
+  }
+
+  // ===== 对话框工具栏：附件 / 表情 / 语音 / 语音转文字 =====
+  // 上传文件到服务器，返回相对 URL
+  const uploadFileToServer = async (file: File): Promise<{ url: string; type: string }> => {
+    const fd = new FormData()
+    fd.append('file', file)
+    // 根据文件类型告知 upload 路由（音频走 audio 分支，否则走图片分支）
+    fd.append('type', file.type.startsWith('audio/') ? 'audio' : 'general')
+    const r = await fetch('/api/upload', { method: 'POST', body: fd })
+    const d = await r.json()
+    if (!r.ok || !d.url) throw new Error(d.error || 'Upload failed')
+    return { url: d.url, type: d.type || 'image' }
+  }
+
+  // 发送附件消息（图片/音频）
+  const handleSendAttachment = async (attachmentUrl: string, attachmentType: string, text?: string) => {
+    if (!activeConversation) return
+    setSendingAttachment(true)
+    try {
+      // 平台需要公网可访问的静态 URL（FB/IG 抓取器不支持带 query 的动态 API URL）
+      // /api/uploads?file=xxx → /uploads/xxx（public/uploads 静态路径）
+      const staticPath = attachmentUrl.startsWith('http')
+        ? attachmentUrl
+        : `https://lowflame.store${attachmentUrl.replace('/api/uploads?file=', '/uploads/')}`
+      const endpoint = activeConversation.platform === 'instagram' ? '/api/marketing/instagram-dms'
+        : activeConversation.platform === 'twitter' ? '/api/marketing/x-dms'
+        : '/api/marketing/facebook-dms'
+      const r = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: activeConversation.accountId,
+          recipientId: activeConversation._participantId,
+          message: text || '',
+          attachmentUrl: staticPath,
+          attachmentType,
+        }),
+      })
+      const d = await r.json()
+      if (r.ok && d.success) {
+        // 本地即时追加附件消息
+        const ownId = activeConversation.accountPlatformUserId || activeConversation.accountId
+        const newMsg = {
+          id: 'local-' + Date.now(),
+          text: text || '',
+          fromId: ownId,
+          fromUsername: activeConversation.accountUsername,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          _pending: true,
+          _attachmentUrl: staticPath,
+          _attachmentType: attachmentType,
+        }
+        setActiveConversation((prev: any) => prev ? { ...prev, messages: [...(prev.messages || []), newMsg] } : prev)
+        loadAllConversations(true)
+      } else {
+        alert(d.error || 'Send failed')
+      }
+    } catch (e: any) {
+      alert('发送失败: ' + (e.message || 'Network error'))
+    } finally {
+      setSendingAttachment(false)
+    }
+  }
+
+  // 选择图片/文件后上传并发送
+  const handleDmFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const { url, type } = await uploadFileToServer(file)
+      const isAudio = type === 'audio' || file.type.startsWith('audio/')
+      await handleSendAttachment(url, isAudio ? 'audio' : 'image')
+    } catch (err: any) {
+      alert('上传失败: ' + (err.message || ''))
+    }
+  }
+
+  // 插入表情到输入框
+  const insertEmoji = (emoji: string) => {
+    setDmText(prev => prev + emoji)
+    setShowEmojiPicker(false)
+  }
+
+  // 语音转文字（Web Speech API，浏览器原生）
+  const startVoiceTranscription = () => {
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) {
+      alert('当前浏览器不支持语音识别，请使用 Chrome/Edge')
+      return
+    }
+    if (isTranscribing) return
+    setIsTranscribing(true)
+    const recognition = new SR()
+    recognition.lang = 'zh-CN'
+    recognition.interimResults = false
+    recognition.continuous = true
+    recognition.onresult = (event: any) => {
+      let transcript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript
+      }
+      setDmText(prev => (prev + transcript).trim())
+    }
+    recognition.onerror = (event: any) => {
+      console.log('[SpeechRecognition] error:', event?.error)
+      if (event?.error === 'not-allowed') alert('麦克风权限被拒绝')
+    }
+    recognition.onend = () => setIsTranscribing(false)
+    speechRecognitionRef.current = recognition
+    recognition.start()
+  }
+
+  // 停止语音转文字
+  const stopVoiceTranscription = () => {
+    try { speechRecognitionRef.current?.stop() } catch {}
+    setIsTranscribing(false)
+  }
+
+  // 把 webm 录音转成 WAV（FB 等平台支持 WAV 音频）
+  const blobToWav = async (blob: Blob): Promise<Blob> => {
+    const arrayBuffer = await blob.arrayBuffer()
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+    const numChannels = audioBuffer.numberOfChannels
+    const sampleRate = audioBuffer.sampleRate
+    const numFrames = audioBuffer.length
+    const bytesPerSample = 2
+    const blockAlign = numChannels * bytesPerSample
+    const buffer = new ArrayBuffer(44 + numFrames * blockAlign)
+    const view = new DataView(buffer)
+    const writeString = (v: DataView, off: number, str: string) => {
+      for (let i = 0; i < str.length; i++) v.setUint8(off + i, str.charCodeAt(i))
+    }
+    writeString(view, 0, 'RIFF')
+    view.setUint32(4, 36 + numFrames * blockAlign, true)
+    writeString(view, 8, 'WAVE')
+    writeString(view, 12, 'fmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, numChannels, true)
+    view.setUint32(24, sampleRate, true)
+    view.setUint32(28, sampleRate * blockAlign, true)
+    view.setUint16(32, blockAlign, true)
+    view.setUint16(34, bytesPerSample * 8, true)
+    writeString(view, 36, 'data')
+    view.setUint32(40, numFrames * blockAlign, true)
+    const channels: Float32Array[] = []
+    for (let ch = 0; ch < numChannels; ch++) channels.push(audioBuffer.getChannelData(ch))
+    let offset = 44
+    for (let i = 0; i < numFrames; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const s = Math.max(-1, Math.min(1, channels[ch][i]))
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
+        offset += 2
+      }
+    }
+    try { audioCtx.close() } catch {}
+    return new Blob([buffer], { type: 'audio/wav' })
+  }
+
+  // 录音（MediaRecorder）
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // 停止录音
+      try { mediaRecorderRef.current?.stop() } catch {}
+      if (recorderTimerRef.current) clearInterval(recorderTimerRef.current)
+      // 立即退出录音状态（隐藏红色提示条，生成语音预览）
+      setIsRecording(false)
+      setRecordingSeconds(0)
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : ''
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      mediaChunksRef.current = []
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) mediaChunksRef.current.push(e.data)
+      }
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        if (mediaChunksRef.current.length === 0) return
+        const rawBlob = new Blob(mediaChunksRef.current, { type: mimeType || 'audio/webm' })
+        try {
+          // 转 WAV 并生成预览（暂停后不自动发送，等待用户点发送）
+          const wavBlob = await blobToWav(rawBlob)
+          const url = URL.createObjectURL(wavBlob)
+          // WAV 16bit 单声道 44.1kHz ≈ 88200 字节/秒，用字节数精确估算时长（不依赖闭包 state）
+          const duration = Math.max(1, Math.round(wavBlob.size / 88200))
+          setPendingVoice({ url, blob: wavBlob, duration })
+        } catch (err: any) {
+          alert('语音处理失败: ' + (err.message || ''))
+        }
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setIsRecording(true)
+      setRecordingSeconds(0)
+      recorderTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+    } catch (e: any) {
+      alert('无法访问麦克风: ' + (e.message || ''))
     }
   }
 
@@ -2068,11 +2498,13 @@ export default function MarketingPage() {
           ...c,
           _platformLabel: 'Instagram', _platformIcon: 'instagram', _id: `ig_${c.id}`,
           _text: c.text, _username: c.username, _replied: c.replies?.length > 0,
-          _linkedPostTitle: linkedPost?.contentTitle || '',
-          _linkedPostId: linkedPost?.id || '',
-          _linkedProductName: linkedPost?.productName || '',
+          _avatar: c.from?.profile_pic_url || c.avatar || c.profile_pic || '',
+          _profileUrl: c.username ? `https://instagram.com/${c.username}` : '',
+          _linkedPostTitle: linkedPost?.contentTitle || c.linkedPostTitle || '',
+          _linkedPostId: linkedPost?.id || c.linkedPostId || '',
+          _linkedProductName: linkedPost?.productName || c.linkedProductName || '',
           _linkedReferralCode: linkedPost?.referralCode || '',
-          _isOurPost: !!linkedPost,
+          _isOurPost: !!linkedPost || !!c.isOurPost,
         }
       }),
       ...xComments.map(c => {
@@ -2081,11 +2513,13 @@ export default function MarketingPage() {
           ...c,
           _platformLabel: 'X', _platformIcon: 'twitter', _id: `x_${c.id}`,
           _text: c.text, _username: c.username, _replied: false,
-          _linkedPostTitle: linkedPost?.contentTitle || '',
-          _linkedPostId: linkedPost?.id || '',
-          _linkedProductName: linkedPost?.productName || '',
+          _avatar: c.avatar || c.profileImageUrl || '',
+          _profileUrl: c.username ? `https://x.com/${c.username}` : '',
+          _linkedPostTitle: linkedPost?.contentTitle || c.linkedPostTitle || '',
+          _linkedPostId: linkedPost?.id || c.linkedPostId || '',
+          _linkedProductName: linkedPost?.productName || c.linkedProductName || '',
           _linkedReferralCode: linkedPost?.referralCode || '',
-          _isOurPost: !!linkedPost,
+          _isOurPost: !!linkedPost || !!c.isOurPost,
         }
       }),
       ...fbComments.map(c => {
@@ -2094,11 +2528,13 @@ export default function MarketingPage() {
           ...c,
           _platformLabel: 'Facebook', _platformIcon: 'facebook',
           _text: c.text, _username: c.username, _replied: c.replies?.length > 0, _id: `fb_${c.id}`,
-          _linkedPostTitle: linkedPost?.contentTitle || c.postMessage || '',
-          _linkedPostId: linkedPost?.id || '',
-          _linkedProductName: linkedPost?.productName || '',
+          _avatar: c.from?.picture || c.avatar || (c.from?.id ? `https://graph.facebook.com/${c.from.id}/picture?type=small&width=100&height=100` : ''),
+          _profileUrl: c.from?.id ? `https://facebook.com/${c.from.id}` : '',
+          _linkedPostTitle: linkedPost?.contentTitle || c.linkedPostTitle || c.postMessage || '',
+          _linkedPostId: linkedPost?.id || c.linkedPostId || '',
+          _linkedProductName: linkedPost?.productName || c.linkedProductName || '',
           _linkedReferralCode: linkedPost?.referralCode || '',
-          _isOurPost: !!linkedPost,
+          _isOurPost: !!linkedPost || !!c.isOurPost,
         }
       }),
       ...ptComments.map(c => {
@@ -2107,11 +2543,13 @@ export default function MarketingPage() {
           ...c,
           _platformLabel: 'Pinterest', _platformIcon: 'pinterest',
           _text: c.text, _username: c.commenter?.username || c.username || '', _replied: false, _id: `pt_${c.id}`,
-          _linkedPostTitle: linkedPost?.contentTitle || c.pinTitle || '',
-          _linkedPostId: linkedPost?.id || '',
-          _linkedProductName: linkedPost?.productName || '',
+          _avatar: c.commenter?.image_url || c.avatar || '',
+          _profileUrl: '',
+          _linkedPostTitle: linkedPost?.contentTitle || c.linkedPostTitle || c.pinTitle || '',
+          _linkedPostId: linkedPost?.id || c.linkedPostId || '',
+          _linkedProductName: linkedPost?.productName || c.linkedProductName || '',
           _linkedReferralCode: linkedPost?.referralCode || '',
-          _isOurPost: !!linkedPost,
+          _isOurPost: !!linkedPost || !!c.isOurPost,
         }
       }),
     ]
@@ -2265,7 +2703,7 @@ export default function MarketingPage() {
     
     // 平台 OAuth 回调参数映射：统一处理所有平台的登录回调
     const OAUTH_PARAM_MAP: Record<string, string> = {
-      x_auth: 'X (Twitter)',
+      x_auth: 'X',
       facebook_auth: 'Facebook',
       instagram_auth: 'Instagram',
       linkedin_auth: 'LinkedIn',
@@ -2530,19 +2968,57 @@ export default function MarketingPage() {
 
     connectSSE()
 
+    // 加载私信历史：刷新后立即显示已保存的会话，再拉取最新（避免空白等待）
+    fetch('/api/marketing/dm-history')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.success) {
+          // 恢复已读基线：历史中已读(unreadCount=0)的会话在轮询后保持 0 未读
+          const restoreBaselines = (list: any[]) => {
+            ;(list || []).forEach((c: any) => {
+              if (c._readBaseline !== undefined && c._readBaseline !== null) {
+                readBaselineRef.current[c.id] = c._readBaseline
+              }
+              // 旧数据无 _readBaseline 字段: 不设基线, 由 applyReadProtection 的 prev 分支在首次合并时自动取平台 unread 为基线并清零
+            })
+          }
+          restoreBaselines(d.history.ig || [])
+          restoreBaselines(d.history.x || [])
+          restoreBaselines(d.history.fb || [])
+          setIgConversations(d.history.ig || [])
+          setXConversations(d.history.x || [])
+          setFbConversations(d.history.fb || [])
+        }
+      })
+      .catch(() => {})
+
+    // 加载评论历史：刷新后立即显示已保存的评论
+    fetch('/api/marketing/comment-history')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.success) {
+          setIgComments(d.history.ig || [])
+          setXComments(d.history.x || [])
+          setFbComments(d.history.fb || [])
+          setPtComments(d.history.pt || [])
+        }
+      })
+      .catch(() => {})
+
     // 延迟检查在线状态
     setTimeout(() => handleCheckOnlineStatus(), 3000)
 
     // 每5分钟检查在线状态
     const statusInterval = setInterval(() => handleCheckOnlineStatus(), 5 * 60 * 1000)
 
-    // 降级：如果SSE不可用，每3分钟轮询一次
-    const fallbackPoll = setInterval(() => {
-      if (!sseConnectedRef.current) {
-        loadAllComments()
-        loadAllConversations()
-      }
-    }, 180000)
+    // 主动轮询：每10秒刷新私信和评论（SSE 实时事件即时更新 + 轮询兜底；无 messaging 权限时轮询是唯一通道）
+    // 防重叠：上次轮询未完成则跳过本次（慢平台请求不堆积）
+    let polling = false
+    const pollInterval = setInterval(() => {
+      if (polling) return
+      polling = true
+      Promise.all([loadAllComments(), loadAllConversations()]).finally(() => { polling = false })
+    }, 10000)
 
     return () => {
       // 清理：关闭EventSource和定时器
@@ -2551,11 +3027,22 @@ export default function MarketingPage() {
         eventSourceRef.current = null
       }
       if (reconnectTimer) clearTimeout(reconnectTimer)
-      clearInterval(fallbackPoll)
+      clearInterval(pollInterval)
       clearInterval(statusInterval)
       sseConnectedRef.current = false
     }
   }, [])
+
+  // 首次拉取：等 socialAccounts 和 currentUser 都加载完成后执行一次（避免空账号时保存空历史）
+  const initialLoadDoneRef = useRef(false)
+  useEffect(() => {
+    if (initialLoadDoneRef.current) return
+    if (socialAccounts.length > 0 && currentUser) {
+      initialLoadDoneRef.current = true
+      loadAllConversations()
+      loadAllComments()
+    }
+  }, [socialAccounts, currentUser])
 
   useEffect(() => {
     const account = selectedPreviewAccount
@@ -3285,7 +3772,7 @@ export default function MarketingPage() {
 
   const loadXProfileData = async (accountId: string) => {
     const account = socialAccounts.find(a => a.id === accountId)
-    if (!account || account.platform !== 'twitter' || !account.accessToken) {
+    if (!account || account.platform !== 'twitter' || !account.hasAccessToken) {
       setXProfileData(null)
       return
     }
@@ -3398,7 +3885,7 @@ export default function MarketingPage() {
   const [socialOAuthLoading, setSocialOAuthLoading] = useState(false)
 
   const PLATFORMS_OAUTH_CONFIG: Record<string, { enabledKey: string; clientIdKey: string; name: string }> = {
-    twitter: { enabledKey: 'xApiEnabled', clientIdKey: 'xClientId', name: 'X (Twitter)' },
+    twitter: { enabledKey: 'xApiEnabled', clientIdKey: 'xClientId', name: 'X' },
     facebook: { enabledKey: 'fbApiEnabled', clientIdKey: 'fbClientId', name: 'Facebook' },
     instagram: { enabledKey: 'igApiEnabled', clientIdKey: 'igClientId', name: 'Instagram' },
     linkedin: { enabledKey: 'liApiEnabled', clientIdKey: 'liClientId', name: 'LinkedIn' },
@@ -3600,7 +4087,7 @@ export default function MarketingPage() {
       const accounts = data.accounts || []
       // 为每个已连接且有 token 的账户同步用户信息
       const syncPromises = accounts
-        .filter((a: any) => a.status === 'connected' && a.accessToken)
+        .filter((a: any) => a.status === 'connected' && a.hasAccessToken)
         .map((a: any) =>
           fetch('/api/marketing/social-accounts', {
             method: 'POST',
@@ -3895,7 +4382,7 @@ export default function MarketingPage() {
       {/* 实时通知弹窗（固定在右上角） */}
       <div className="fixed top-4 right-4 z-50 space-y-2" style={{ maxWidth: '380px' }}>
         {liveNotifications.map((notification) => {
-          const platformColor = notification.platform === 'instagram' ? '#E4405F' : notification.platform === 'twitter' ? '#1DA1F2' : notification.platform === 'pinterest' ? '#E60023' : '#1877F2'
+          const platformColor = notification.platform === 'instagram' ? '#E4405F' : notification.platform === 'twitter' ? '#000000' : notification.platform === 'pinterest' ? '#E60023' : '#1877F2'
           const typeIcon = notification.type === 'comment' ? '💬' : notification.type === 'dm' ? '✉️' : notification.type === 'mention' ? '📢' : '🔔'
           return (
             <div
@@ -7150,7 +7637,7 @@ export default function MarketingPage() {
                                             <p className="font-bold text-sm" style={{ color: '#1a1a1a' }}>
                                               {xProfileData?.name || account.staffName}
                                               {xProfileData?.verified && (
-                                                <span className="inline-block ml-1 text-[10px]" style={{ color: '#1DA1F2' }}>✓</span>
+                                                <span className="inline-block ml-1 text-[10px]" style={{ color: '#000000' }}>✓</span>
                                               )}
                                             </p>
                                             <div className="flex items-center gap-1 mt-0.5">
@@ -7267,7 +7754,7 @@ export default function MarketingPage() {
                                                   ) : (
                                                     <div className="flex flex-col items-center justify-center py-10 px-4">
                                                       <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: pInfo.bgColor }}>
-                                                        <Twitter size={24} style={{ color: pInfo.color }} />
+                                                        <XLogo size={24} style={{ color: pInfo.color }} />
                                                       </div>
                                                       <p className="text-[11px] font-semibold" style={{ color: '#0f1419' }}>No tweets yet</p>
                                                       <p className="text-[9px] text-center mt-1" style={{ color: '#536471' }}>
@@ -9997,7 +10484,7 @@ export default function MarketingPage() {
                       {[
                         { platform: 'instagram', label: 'Instagram', color: '#E4405F', subscribed: systemSettings?.webhookIgSubscribed, icon: Instagram },
                         { platform: 'facebook', label: 'Facebook', color: '#1877F2', subscribed: systemSettings?.webhookFbSubscribed, icon: Facebook },
-                        { platform: 'x', label: 'X / Twitter', color: '#1DA1F2', subscribed: systemSettings?.webhookXSubscribed, icon: Twitter },
+                        { platform: 'x', label: 'X', color: '#000000', subscribed: systemSettings?.webhookXSubscribed, icon: XLogo },
                         { platform: 'pinterest', label: 'Pinterest', color: '#E60023', subscribed: systemSettings?.webhookPtSubscribed, icon: Target },
                       ].map(({ platform, label, color, subscribed, icon: PlatformIcon }) => (
                         <div key={platform} className="rounded-xl p-4 flex items-center justify-between"
@@ -10051,7 +10538,7 @@ export default function MarketingPage() {
                       <p className="text-xs font-medium mb-2" style={{ color: 'var(--adm-text-secondary)' }}>Webhook Endpoints:</p>
                       <div className="space-y-1 text-xs font-mono" style={{ color: 'var(--adm-text)' }}>
                         <p>Meta (IG+FB): <span style={{ color: 'var(--adm-accent)' }}>/api/marketing/webhook/meta</span></p>
-                        <p>X/Twitter: <span style={{ color: 'var(--adm-accent)' }}>/api/marketing/webhook/x</span></p>
+                        <p>X: <span style={{ color: 'var(--adm-accent)' }}>/api/marketing/webhook/x</span></p>
                         <p>Pinterest: <span style={{ color: 'var(--adm-accent)' }}>/api/marketing/webhook/pinterest</span></p>
                         <p>SSE Stream: <span style={{ color: 'var(--adm-accent)' }}>/api/marketing/events/stream</span></p>
                       </div>
@@ -10179,8 +10666,8 @@ export default function MarketingPage() {
                   <p className="text-xl font-bold mt-1" style={{ color: '#E4405F' }}>{igComments.length.toLocaleString()}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}>
-                  <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><Twitter size={12} style={{ color: '#1DA1F2' }} /> X</p>
-                  <p className="text-xl font-bold mt-1" style={{ color: '#1DA1F2' }}>{xComments.length.toLocaleString()}</p>
+                  <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><XLogo size={12} style={{ color: '#000000' }} /> X</p>
+                  <p className="text-xl font-bold mt-1" style={{ color: '#000000' }}>{xComments.length.toLocaleString()}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}>
                   <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><Facebook size={12} style={{ color: '#1877F2' }} /> Facebook</p>
@@ -10226,8 +10713,8 @@ export default function MarketingPage() {
                 </div>
 
                 {filteredComments.slice(0, 100).map((comment) => {
-                  const platformColor = comment.platform === 'instagram' ? '#E4405F' : comment.platform === 'twitter' ? '#1DA1F2' : comment.platform === 'pinterest' ? '#E60023' : '#1877F2'
-                  const PlatformIcon = comment.platform === 'instagram' ? Instagram : comment.platform === 'twitter' ? Twitter : comment.platform === 'pinterest' ? Target : Facebook
+                  const platformColor = comment.platform === 'instagram' ? '#E4405F' : comment.platform === 'twitter' ? '#000000' : comment.platform === 'pinterest' ? '#E60023' : '#1877F2'
+                  const PlatformIcon = comment.platform === 'instagram' ? Instagram : comment.platform === 'twitter' ? XLogo : comment.platform === 'pinterest' ? Target : Facebook
                   return (
                     <div
                       key={comment._id}
@@ -10247,8 +10734,21 @@ export default function MarketingPage() {
                         />
 
                         {/* Platform avatar */}
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: comment.platform === 'instagram' ? '#FFF0F3' : comment.platform === 'twitter' ? '#E0F2FE' : comment.platform === 'pinterest' ? '#FEF2F2' : '#EEF2FF' }}>
-                          <PlatformIcon size={14} style={{ color: platformColor }} />
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setViewedAccount(comment) }}
+                          className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden ring-1 ring-white/40"
+                          style={{ backgroundColor: comment.platform === 'instagram' ? '#FFF0F3' : comment.platform === 'twitter' ? '#E0F2FE' : comment.platform === 'pinterest' ? '#FEF2F2' : '#EEF2FF' }}
+                          title={`View ${comment._username} profile`}
+                        >
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: platformColor }}>{(comment._username || '?').charAt(0).toUpperCase()}</span>
+                          {comment._avatar && (
+                            <img
+                              src={comment._avatar}
+                              alt=""
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = 'none' }}
+                            />
+                          )}
                         </div>
 
                         {/* Comment content */}
@@ -10416,7 +10916,7 @@ export default function MarketingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={loadAllConversations}
+                  onClick={() => loadAllConversations()}
                   disabled={dmLoading}
                   className="px-3 py-2 text-sm rounded-lg font-medium flex items-center gap-2"
                   style={{ backgroundColor: 'var(--adm-accent)', color: 'var(--adm-accent-text)' }}
@@ -10443,8 +10943,8 @@ export default function MarketingPage() {
                   <p className="text-xl font-bold mt-1" style={{ color: '#E4405F' }}>{igConversations.length.toLocaleString()}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}>
-                  <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><Twitter size={12} style={{ color: '#1DA1F2' }} /> X</p>
-                  <p className="text-xl font-bold mt-1" style={{ color: '#1DA1F2' }}>{xConversations.length.toLocaleString()}</p>
+                  <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><XLogo size={12} style={{ color: '#000000' }} /> X</p>
+                  <p className="text-xl font-bold mt-1" style={{ color: '#000000' }}>{xConversations.length.toLocaleString()}</p>
                 </div>
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}>
                   <p className="text-xs flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}><Facebook size={12} style={{ color: '#1877F2' }} /> Facebook</p>
@@ -10514,7 +11014,7 @@ export default function MarketingPage() {
                     Re-login
                   </button>
                   <button
-                    onClick={loadAllConversations}
+                    onClick={() => loadAllConversations()}
                     className="px-2.5 py-1 text-xs rounded-lg font-medium inline-flex items-center gap-1"
                     style={{ backgroundColor: '#fff', color: '#991B1B', border: '1px solid #FCA5A5' }}
                   >
@@ -10546,13 +11046,13 @@ export default function MarketingPage() {
                 {/* Conversation List (Left Panel) */}
                 <div className="w-2/5 space-y-2 overflow-y-auto max-h-[600px] pr-2" style={{ scrollbarWidth: 'thin' }}>
                   {filteredConversations.slice(0, 100).map((conv) => {
-                    const platformColor = conv.platform === 'instagram' ? '#E4405F' : conv.platform === 'twitter' ? '#1DA1F2' : conv.platform === 'pinterest' ? '#E60023' : '#1877F2'
-                    const PlatformIcon = conv.platform === 'instagram' ? Instagram : conv.platform === 'twitter' ? Twitter : Facebook
+                    const platformColor = conv.platform === 'instagram' ? '#E4405F' : conv.platform === 'twitter' ? '#000000' : conv.platform === 'pinterest' ? '#E60023' : '#1877F2'
+                    const PlatformIcon = conv.platform === 'instagram' ? Instagram : conv.platform === 'twitter' ? XLogo : Facebook
                     const isActive = activeConversation?._id === conv._id
                     return (
                       <div
                         key={conv._id}
-                        onClick={() => setActiveConversation(conv)}
+                        onClick={() => openConversation(conv)}
                         className="rounded-xl p-3 cursor-pointer transition-all hover:scale-[1.01]"
                         style={{
                           backgroundColor: isActive ? 'var(--adm-accent-bg)' : conv._unread > 0 ? '#FEF2F2' : 'var(--adm-card)',
@@ -10560,8 +11060,21 @@ export default function MarketingPage() {
                         }}
                       >
                         <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: conv.platform === 'instagram' ? '#FFF0F3' : conv.platform === 'twitter' ? '#E0F2FE' : '#EEF2FF' }}>
-                            <PlatformIcon size={14} style={{ color: platformColor }} />
+                          <div
+                            onClick={(e) => { e.stopPropagation(); setViewedAccount(conv) }}
+                            className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden ring-1 ring-white/40"
+                            style={{ backgroundColor: conv.platform === 'instagram' ? '#FFF0F3' : conv.platform === 'twitter' ? '#E0F2FE' : '#EEF2FF' }}
+                            title={`View ${conv._participantName} profile`}
+                          >
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: platformColor }}>{(conv._participantName || '?').charAt(0).toUpperCase()}</span>
+                            {conv._participantAvatar && (
+                              <img
+                                src={conv._participantAvatar}
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                              />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -10581,6 +11094,14 @@ export default function MarketingPage() {
                             <p className="text-xs truncate mt-1" style={{ color: 'var(--adm-text-secondary)' }}>{conv._lastMessage}</p>
                             <p className="text-[10px] mt-0.5" style={{ color: 'var(--adm-text-secondary)' }}>{new Date(conv._lastTimestamp).toLocaleString()}</p>
                           </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv) }}
+                            className="p-1.5 rounded-lg flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+                            style={{ color: 'var(--adm-text-secondary)' }}
+                            title="Delete conversation"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
                     )
@@ -10593,8 +11114,23 @@ export default function MarketingPage() {
                     <div className="flex flex-col h-full min-h-[500px]">
                       {/* Chat Header */}
                       <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--adm-border)' }}>
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: activeConversation.platform === 'instagram' ? '#FFF0F3' : activeConversation.platform === 'twitter' ? '#E0F2FE' : '#EEF2FF' }}>
-                          {activeConversation.platform === 'instagram' ? <Instagram size={18} style={{ color: '#E4405F' }} /> : activeConversation.platform === 'twitter' ? <Twitter size={18} style={{ color: '#1DA1F2' }} /> : <Facebook size={18} style={{ color: '#1877F2' }} />}
+                        <div
+                          onClick={() => setViewedAccount(activeConversation)}
+                          className="relative w-10 h-10 rounded-full flex items-center justify-center cursor-pointer overflow-hidden ring-1 ring-white/40"
+                          style={{ backgroundColor: activeConversation.platform === 'instagram' ? '#FFF0F3' : activeConversation.platform === 'twitter' ? '#E0F2FE' : '#EEF2FF' }}
+                          title={`View ${activeConversation._participantName} profile`}
+                        >
+                          <span className="absolute inset-0 flex items-center justify-center text-base font-bold" style={{ color: activeConversation.platform === 'instagram' ? '#E4405F' : activeConversation.platform === 'twitter' ? '#000000' : '#1877F2' }}>
+                            {(activeConversation._participantName || '?').charAt(0).toUpperCase()}
+                          </span>
+                          {activeConversation._participantAvatar && (
+                            <img
+                              src={activeConversation._participantAvatar}
+                              alt=""
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = 'none' }}
+                            />
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-bold" style={{ color: 'var(--adm-text)' }}>{activeConversation._participantName}</p>
@@ -10609,54 +11145,264 @@ export default function MarketingPage() {
                         )}
                       </div>
 
-                      {/* Messages */}
-                      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ maxHeight: '400px' }}>
+                      {/* Messages — iMessage 风格（纯黑背景） */}
+                      <div className="flex-1 overflow-y-auto p-4 space-y-1" style={{ maxHeight: '420px', background: '#000000' }}>
                         {(activeConversation.messages || []).map((msg: any, idx: number) => {
-                          const isOurMessage = msg.senderId === activeConversation.accountId || msg.from?.id === activeConversation.accountId
+                          // 用平台真实 id（platformUserId）判断是否自己发的消息，避免全部靠左
+                          const ownId = activeConversation.accountPlatformUserId || activeConversation.accountId
+                          const isOurMessage = msg.senderId === ownId || msg.from?.id === ownId || msg.fromId === ownId || msg.from?.username === activeConversation.accountUsername
                           // 检查是否是Instagram会话中来自我们自己账号的消息
                           const isFromUs = isOurMessage || (activeConversation.platform === 'instagram' && msg.from?.username === activeConversation.accountUsername)
+                          const prevMsg = activeConversation.messages[idx - 1]
+                          const prevIsOurs = prevMsg
+                            ? (prevMsg.senderId === ownId || prevMsg.from?.id === ownId || prevMsg.fromId === ownId)
+                            : false
+                          const sameSender = prevMsg && prevIsOurs === isFromUs
+                          // 图片/音频附件提取
+                          const imgUrl = msg._attachmentUrl && msg._attachmentType === 'image'
+                            ? msg._attachmentUrl
+                            : (msg.attachments?.find?.((a: any) => a.image_data)?.image_data?.url || msg.attachments?.find?.((a: any) => a.payload?.url)?.payload?.url || '')
+                          const audioUrl = msg._attachmentUrl && msg._attachmentType === 'audio'
+                            ? msg._attachmentUrl
+                            : (msg.attachments?.find?.((a: any) => a.audio_data)?.audio_data?.url || msg.attachments?.find?.((a: any) => a.file_data)?.file_data?.url || msg.attachments?.find?.((a: any) => a.payload?.url)?.payload?.url || '')
+                          const isImg = !!imgUrl
+                          const isAudio = !!audioUrl
+                          const senderName = msg.senderName || msg.from?.name || msg.from?.username || 'User'
                           return (
-                            <div key={msg.id || idx} className={`flex ${isFromUs ? 'justify-end' : 'justify-start'}`}>
-                              <div className="max-w-[70%] rounded-xl px-3 py-2" style={{
-                                backgroundColor: isFromUs ? 'var(--adm-accent-bg)' : 'var(--adm-input)',
-                                border: isFromUs ? '1px solid var(--adm-accent)' : '1px solid var(--adm-border)',
-                              }}>
-                                {!isFromUs && (
-                                  <p className="text-xs font-medium mb-1" style={{ color: activeConversation.platform === 'instagram' ? '#E4405F' : activeConversation.platform === 'twitter' ? '#1DA1F2' : '#1877F2' }}>
-                                    {msg.senderName || msg.from?.name || msg.from?.username || 'User'}
-                                  </p>
+                            <div key={msg.id || idx} className={`flex items-end gap-2 ${isFromUs ? 'justify-end' : 'justify-start'}`} style={{ marginTop: sameSender ? 2 : 10 }}>
+                              {/* 对方头像 */}
+                              {!isFromUs && (
+                                <div
+                                  className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden cursor-pointer"
+                                  style={{ backgroundColor: '#E4E4E8', opacity: sameSender ? 0 : 1 }}
+                                  onClick={() => setViewedAccount(activeConversation)}
+                                >
+                                  {activeConversation._participantAvatar ? (
+                                    <img src={activeConversation._participantAvatar} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                                  ) : (
+                                    <span className="text-[11px] font-bold" style={{ color: '#333' }}>{senderName.charAt(0).toUpperCase()}</span>
+                                  )}
+                                </div>
+                              )}
+                              {/* 气泡（纯黑背景适配） */}
+                              <div
+                                className="px-3 py-2 shadow-sm"
+                                style={{
+                                  maxWidth: '72%',
+                                  borderRadius: isFromUs ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                  borderTopLeftRadius: sameSender && !isFromUs ? 4 : undefined,
+                                  borderTopRightRadius: sameSender && isFromUs ? 4 : undefined,
+                                  background: isFromUs
+                                    ? 'linear-gradient(135deg, #0A84FF, #0066E6)'
+                                    : '#26262A',
+                                  border: isFromUs ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                                }}
+                              >
+                                {/* 图片附件 */}
+                                {isImg && (
+                                  <img
+                                    src={imgUrl}
+                                    alt=""
+                                    className="rounded-[14px] object-cover cursor-zoom-in mb-1 block"
+                                    style={{ maxWidth: 210, maxHeight: 210 }}
+                                    onClick={(e) => { e.stopPropagation(); setLightboxImage(imgUrl) }}
+                                  />
                                 )}
-                                <p className="text-sm" style={{ color: isFromUs ? 'var(--adm-accent)' : 'var(--adm-text)' }}>{msg.text || msg.message || ''}</p>
-                                <p className="text-[10px] mt-1" style={{ color: 'var(--adm-text-secondary)' }}>{new Date(msg.timestamp || msg.createdAt || msg.created_time || '').toLocaleString()}</p>
+                                {/* 音频附件 */}
+                                {isAudio && (
+                                  <div className="flex items-center gap-2 py-1">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isFromUs ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)' }}>
+                                      <MicVocal size={15} style={{ color: isFromUs ? '#fff' : '#8E8E93' }} />
+                                    </div>
+                                    <audio controls preload="none" className="h-9" style={{ width: 190 }} src={audioUrl} />
+                                  </div>
+                                )}
+                                {/* 文字 */}
+                                {msg.text || msg.message ? (
+                                  <p className="text-sm leading-snug" style={{ color: isFromUs ? '#fff' : '#E5E5EA', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                    {msg.text || msg.message}
+                                  </p>
+                                ) : null}
+                                {/* 时间（已取消 ✓/✓✓ 已读回执显示） */}
+                                <div className="flex items-center justify-end gap-1 mt-0.5">
+                                  <span className="text-[9px]" style={{ color: isFromUs ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.4)' }}>
+                                    {new Date(msg.timestamp || msg.createdAt || msg.created_time || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           )
                         })}
                         {(activeConversation.messages || []).length === 0 && (
-                          <p className="text-center text-sm" style={{ color: 'var(--adm-text-secondary)' }}>No messages in this conversation yet.</p>
+                          <div className="text-center py-16">
+                            <Mail size={36} className="mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>No messages in this conversation yet.</p>
+                          </div>
                         )}
                       </div>
 
                       {/* Send DM */}
-                      <div className="p-4" style={{ borderTop: '1px solid var(--adm-border)' }}>
+                      <div className="p-4 relative" style={{ borderTop: '1px solid var(--adm-border)' }}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          {/* + 附件 */}
+                          <button
+                            onClick={() => dmFileInputRef.current?.click()}
+                            disabled={sendingAttachment}
+                            className="w-9 h-9 rounded-full hover:opacity-70 transition-opacity flex items-center justify-center flex-shrink-0"
+                            style={{ color: 'var(--adm-text-secondary)', backgroundColor: 'var(--adm-input)' }}
+                            title="Upload image or file"
+                          >
+                            <Plus size={16} />
+                          </button>
+                          <input
+                            ref={dmFileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/gif,image/webp,audio/*"
+                            className="hidden"
+                            onChange={handleDmFileChange}
+                          />
+                          {/* 表情 */}
+                          <button
+                            onClick={() => setShowEmojiPicker(v => !v)}
+                            className="w-9 h-9 rounded-full hover:opacity-70 transition-opacity flex items-center justify-center"
+                            style={{ color: 'var(--adm-text-secondary)', backgroundColor: 'var(--adm-input)', outline: showEmojiPicker ? '2px solid var(--adm-accent)' : 'none' }}
+                            title="Emoji"
+                          >
+                            <Smile size={16} />
+                          </button>
+                          {/* 语音转文字（监听时显示取消 ×） */}
+                          {isTranscribing ? (
+                            <button
+                              onClick={stopVoiceTranscription}
+                              className="px-2.5 py-2 rounded-full flex items-center gap-1.5 transition-opacity"
+                              style={{ color: '#fff', backgroundColor: '#D97706' }}
+                              title="Stop voice to text"
+                            >
+                              <Mic size={14} />
+                              <span className="text-[11px] font-semibold">Listening…</span>
+                              <span className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}>
+                                <X size={11} />
+                              </span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={startVoiceTranscription}
+                              className="w-9 h-9 rounded-full hover:opacity-70 transition-opacity flex items-center justify-center"
+                              style={{ color: 'var(--adm-text-secondary)', backgroundColor: 'var(--adm-input)' }}
+                              title="Voice to text (zh-CN)"
+                            >
+                              <Mic size={16} />
+                            </button>
+                          )}
+                          {/* 录音（录音中显示红色状态 + 秒数，停止后显示发送状态） */}
+                          <button
+                            onClick={toggleRecording}
+                            className="rounded-full hover:opacity-70 transition-opacity flex items-center gap-1.5 px-3"
+                            style={{
+                              height: 36,
+                              color: isRecording ? '#fff' : sendingAttachment ? 'var(--adm-accent)' : 'var(--adm-text-secondary)',
+                              background: isRecording
+                                ? 'linear-gradient(135deg, #FF3B30, #D70015)'
+                                : sendingAttachment ? 'var(--adm-accent-bg)' : 'var(--adm-input)',
+                              boxShadow: isRecording ? '0 0 0 3px rgba(255,59,48,0.25)' : 'none',
+                            }}
+                            title={isRecording ? 'Stop recording' : 'Record voice message'}
+                          >
+                            {isRecording ? (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                <span className="text-[11px] font-bold tracking-wide">REC {recordingSeconds}s</span>
+                                <Square size={11} />
+                              </>
+                            ) : sendingAttachment ? (
+                              <>
+                                <Loader2 size={14} className="animate-spin" />
+                                <span className="text-[10px] font-medium">Sending…</span>
+                              </>
+                            ) : (
+                              <MicVocal size={16} />
+                            )}
+                          </button>
+                          {/* 录音状态提示条 */}
+                          {isRecording && (
+                            <div className="absolute bottom-[64px] left-4 right-4 z-20 flex items-center justify-center gap-2 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)' }}>
+                              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#FF3B30' }} />
+                              <span className="text-[11px] font-medium" style={{ color: '#FF3B30' }}>录音中… 点击红色按钮暂停，生成语音后发送</span>
+                            </div>
+                          )}
+                          {/* emoji 面板 */}
+                          {showEmojiPicker && (
+                            <div className="absolute bottom-[110px] left-4 z-20 p-3 rounded-2xl shadow-xl grid grid-cols-8 gap-1 max-w-[320px]" style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}>
+                              {['😀','😂','😊','😍','😎','🤔','😅','😭','👍','👎','🙏','👏','🔥','❤️','💯','🎉','😴','🤝','💪','✨','🚀','💰','🛍️','🎁'].map(e => (
+                                <button key={e} onClick={() => insertEmoji(e)} className="text-lg hover:scale-125 transition-transform" style={{ color: 'var(--adm-text)' }}>
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {sendingAttachment && <span className="text-[10px]" style={{ color: 'var(--adm-text-secondary)' }}>Uploading...</span>}
+                        </div>
+                        {/* 语音预览条（录音暂停后生成，待发送） */}
+                        {pendingVoice && (
+                          <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-2xl" style={{ backgroundColor: 'var(--adm-input)', border: '1px solid var(--adm-border)' }}>
+                            <button
+                              onClick={() => {
+                                const a = previewAudioRef.current
+                                if (a) { if (a.paused) a.play(); else a.pause() }
+                              }}
+                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: 'var(--adm-accent)', color: '#fff' }}
+                              title="Play preview"
+                            >
+                              <Play size={14} />
+                            </button>
+                            <audio ref={previewAudioRef} src={pendingVoice.url} className="hidden" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium" style={{ color: 'var(--adm-text)' }}>🎙️ 语音消息</p>
+                              <p className="text-[10px]" style={{ color: 'var(--adm-text-secondary)' }}>{pendingVoice.duration}s · 点击播放预览，按发送按钮发送</p>
+                            </div>
+                            <button
+                              onClick={() => { setPendingVoice(null); URL.revokeObjectURL(pendingVoice.url) }}
+                              className="p-1.5 rounded-full hover:opacity-70"
+                              style={{ color: 'var(--adm-text-secondary)' }}
+                              title="Remove voice"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             value={dmText}
                             onChange={e => setDmText(e.target.value)}
                             placeholder="Type a message..."
-                            className="flex-1 px-3 py-2 text-sm rounded-lg"
-                            style={{ backgroundColor: 'var(--adm-input)', border: '1px solid var(--adm-input-border)', color: 'var(--adm-text)' }}
+                            className="flex-1 px-4 text-sm rounded-full"
+                            style={{
+                              height: 38,
+                              backgroundColor: 'var(--adm-input)',
+                              border: '1px solid var(--adm-input-border)',
+                              color: 'var(--adm-text)',
+                              outline: 'none',
+                            }}
                             onKeyDown={e => { if (e.key === 'Enter') handleSendDM() }}
                             autoFocus
                           />
                           <button
                             onClick={handleSendDM}
-                            disabled={dmSending || !dmText.trim()}
-                            className="px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2"
-                            style={{ backgroundColor: 'var(--adm-accent)', color: 'var(--adm-accent-text)', opacity: dmSending || !dmText.trim() ? 0.6 : 1 }}
+                            disabled={dmSending || isRecording || (!dmText.trim() && !pendingVoice)}
+                            className="rounded-full font-medium flex items-center justify-center transition-opacity flex-shrink-0"
+                            style={{
+                              height: 38,
+                              minWidth: 38,
+                              padding: '0 14px',
+                              background: dmText.trim() || pendingVoice ? 'linear-gradient(135deg, #0A84FF, #0066E6)' : 'var(--adm-input)',
+                              color: dmText.trim() || pendingVoice ? '#fff' : 'var(--adm-text-secondary)',
+                              opacity: dmSending ? 0.6 : 1,
+                            }}
                           >
-                            <Send size={14} /> {dmSending ? 'Sending...' : 'Send'}
+                            <Send size={15} />
                           </button>
                         </div>
                         <p className="text-[10px] mt-1" style={{ color: 'var(--adm-text-secondary)' }}>
@@ -10677,6 +11423,102 @@ export default function MarketingPage() {
             )}
           </div>
         )}
+
+        {/* 图片放大预览（lightbox） */}
+        {lightboxImage && (
+          <div
+            className="fixed inset-0 z-[300] flex items-center justify-center p-6"
+            style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center text-white"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={lightboxImage}
+              alt=""
+              className="max-w-full max-h-full rounded-xl shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+
+        {/* 账号信息弹窗 */}
+        {viewedAccount && (() => {
+          const acc = viewedAccount
+          const accName = acc._participantName || acc._username || acc.senderName || 'Unknown'
+          const accAvatar = acc._participantAvatar || acc._avatar || ''
+          const accProfileUrl = acc._participantProfileUrl || acc._profileUrl || ''
+          const pColor = acc.platform === 'instagram' ? '#E4405F' : acc.platform === 'twitter' ? '#000000' : acc.platform === 'pinterest' ? '#E60023' : '#1877F2'
+          const pIcon = acc.platform === 'instagram' ? <Instagram size={16} style={{ color: pColor }} /> : acc.platform === 'twitter' ? <XLogo size={16} style={{ color: pColor }} /> : <Facebook size={16} style={{ color: pColor }} />
+          return (
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+              style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+              onClick={() => setViewedAccount(null)}
+            >
+              <div
+                className="rounded-2xl p-6 w-full max-w-sm"
+                style={{ backgroundColor: 'var(--adm-card)', border: '1px solid var(--adm-border)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm font-bold" style={{ color: 'var(--adm-text)' }}>Account Profile</p>
+                  <button onClick={() => setViewedAccount(null)} className="p-1 rounded-lg" style={{ color: 'var(--adm-text-secondary)' }}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="relative w-16 h-16 rounded-full flex items-center justify-center overflow-hidden ring-2"
+                    style={{ backgroundColor: acc.platform === 'instagram' ? '#FFF0F3' : acc.platform === 'twitter' ? '#E0F2FE' : '#EEF2FF', borderColor: pColor }}
+                  >
+                    <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold" style={{ color: pColor }}>{(accName || '?').charAt(0).toUpperCase()}</span>
+                    {accAvatar && (
+                      <img
+                        src={accAvatar}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-bold truncate" style={{ color: 'var(--adm-text)' }}>{accName}</p>
+                    <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: 'var(--adm-text-secondary)' }}>
+                      {pIcon} {acc._platformLabel} · @{acc.accountUsername || acc._username}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--adm-input)' }}>
+                    <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--adm-text-secondary)' }}>Platform</p>
+                    <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--adm-text)' }}>{acc._platformLabel} · {accName}</p>
+                  </div>
+                  {accProfileUrl && (
+                    <a
+                      href={accProfileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all"
+                      style={{ backgroundColor: pColor, color: '#fff' }}
+                    >
+                      <ExternalLink size={14} /> Open Profile on {acc._platformLabel}
+                    </a>
+                  )}
+                  {!accProfileUrl && (
+                    <p className="text-xs text-center" style={{ color: 'var(--adm-text-secondary)' }}>No profile link available</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {activeTab === 'referrals' && (
           <div className="space-y-6">
@@ -12907,8 +13749,8 @@ export default function MarketingPage() {
                   <div className="space-y-3">
                     <div className="p-3 rounded-xl" style={{ backgroundColor: '#E0F2FE', border: '1px solid #7DD3FC' }}>
                       <div className="flex items-center gap-2 mb-2">
-                        <Twitter size={18} style={{ color: '#1DA1F2' }} />
-                        <span className="text-sm font-semibold" style={{ color: '#0C4A6E' }}>X (Twitter) OAuth Login</span>
+                        <XLogo size={18} style={{ color: '#000000' }} />
+                        <span className="text-sm font-semibold" style={{ color: '#0C4A6E' }}>X OAuth Login</span>
                       </div>
                       <p className="text-xs" style={{ color: '#0369A1' }}>
                         Click the button below to connect your X account securely via OAuth. You will be redirected to X to authorize this app.
@@ -12947,12 +13789,12 @@ export default function MarketingPage() {
                     onClick={() => connectStaffId && handleConnectX(connectStaffId)}
                     disabled={!connectStaffId || xAuthLoading}
                     className="px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                    style={{ backgroundColor: '#1DA1F2', color: 'white' }}
+                    style={{ backgroundColor: '#000000', color: 'white' }}
                   >
                     {xAuthLoading ? (
                       <><Loader2 size={16} className="animate-spin" /> Connecting...</>
                     ) : (
-                      <><Twitter size={16} /> Connect with X</>
+                      <><XLogo size={16} /> Connect with X</>
                     )}
                   </button>
                 ) : (

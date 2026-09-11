@@ -55,7 +55,20 @@ export async function GET(req: NextRequest) {
 
     let userInfo
     try {
-      userInfo = await getFacebookUserInfo(accessToken)
+      // Page 账号（platformUserId = Page ID）用 Page 端点验证，避免 /me email 字段报错
+      if (account.platformUserId && account.username === 'Low Flame') {
+        const pages = await getFacebookPageInfo(accessToken, account.platformUserId)
+        const page = pages[0]
+        userInfo = {
+          id: page.id,
+          name: page.name,
+          email: '',
+          picture: page.picture,
+          link: `https://facebook.com/${page.id}`,
+        }
+      } else {
+        userInfo = await getFacebookUserInfo(accessToken)
+      }
     } catch (err: any) {
       console.error('[Facebook Insights] Token validation failed:', err?.message)
       // 修复: 网络错误 ≠ token 过期 — 不误报 401, 提示检查网络/代理

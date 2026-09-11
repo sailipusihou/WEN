@@ -41,5 +41,13 @@ next-env.d.ts
 # runtime data (DB / JSON stores / sessions) - keep out of git, ship via backup
 /data/
 
+# dev server pid file
+*.pid
+
+# newly uploaded runtime media (商品图/语音等运行期文件不纳入版本控制;
+# 历史已跟踪文件保持不变, 部署时用 scp/rsync 同步 public/uploads/)
+/public/uploads/aud-*
+/public/uploads/voice-*
+
 # logs
 *.log

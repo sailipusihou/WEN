@@ -372,50 +372,61 @@ export async function getXMentionsAndReplies(
   const client = getXClientOAuth2(accessToken)
   if (!client) throw new Error('X API is not configured')
 
-  // 获取 mentioning 该用户的推文
-  const mentions = await client.v2.userMentionTimeline(userId, {
-    max_results: Math.min(maxResults, 100),
-    'tweet.fields': ['created_at', 'text', 'author_id', 'in_reply_to_user_id', 'public_metrics', 'referenced_tweets'],
-    'user.fields': ['username', 'name'],
-    expansions: ['author_id', 'referenced_tweets.id'],
-  })
+  try {
+    // 获取 mentioning 该用户的推文
+    const mentions = await client.v2.userMentionTimeline(userId, {
+      max_results: Math.min(maxResults, 100),
+      'tweet.fields': ['created_at', 'text', 'author_id', 'in_reply_to_user_id', 'public_metrics', 'referenced_tweets'],
+      'user.fields': ['username', 'name'],
+      expansions: ['author_id', 'referenced_tweets.id'],
+    })
 
-  const usersMap: Record<string, string> = {}
-  if (mentions.includes?.users) {
-    for (const u of mentions.includes.users) {
-      usersMap[u.id] = u.username
+    const usersMap: Record<string, string> = {}
+    if (mentions.includes?.users) {
+      for (const u of mentions.includes.users) {
+        usersMap[u.id] = u.username
+      }
     }
-  }
 
-  const tweetsMap: Record<string, string> = {}
-  if (mentions.includes?.tweets) {
-    for (const t of mentions.includes.tweets) {
-      tweetsMap[t.id] = t.text
+    const tweetsMap: Record<string, string> = {}
+    if (mentions.includes?.tweets) {
+      for (const t of mentions.includes.tweets) {
+        tweetsMap[t.id] = t.text
+      }
     }
-  }
 
-  const items: XCommentItem[] = []
-  if (mentions.data) {
-    const mentionTweets = (mentions.data as any) as Array<any>
-    for (const tweet of mentionTweets) {
-      const metrics = (tweet as any).public_metrics || {}
-      items.push({
-        id: tweet.id,
-        text: tweet.text,
-        username: usersMap[tweet.author_id || ''] || 'unknown',
-        authorId: tweet.author_id || '',
-        createdAt: tweet.created_at || '',
-        tweetId: tweet.id,
-        tweetText: (tweet as any).referenced_tweets?.[0]?.id
-          ? tweetsMap[(tweet as any).referenced_tweets[0].id] || ''
-          : '',
-        inReplyToUserId: (tweet as any).in_reply_to_user_id,
-        likes: metrics.like_count || 0,
-        retweets: metrics.retweet_count || 0,
-      })
+    const items: XCommentItem[] = []
+    if (mentions.data) {
+      const mentionTweets = (mentions.data as any) as Array<any>
+      for (const tweet of mentionTweets) {
+        const metrics = (tweet as any).public_metrics || {}
+        items.push({
+          id: tweet.id,
+          text: tweet.text,
+          username: usersMap[tweet.author_id || ''] || 'unknown',
+          authorId: tweet.author_id || '',
+          createdAt: tweet.created_at || '',
+          tweetId: tweet.id,
+          tweetText: (tweet as any).referenced_tweets?.[0]?.id
+            ? tweetsMap[(tweet as any).referenced_tweets[0].id] || ''
+            : '',
+          inReplyToUserId: (tweet as any).in_reply_to_user_id,
+          likes: metrics.like_count || 0,
+          retweets: metrics.retweet_count || 0,
+        })
+      }
     }
+    return items
+  } catch (error: any) {
+    const code = error?.code || error?.statusCode || error?.status || ''
+    const msg = String(error?.message || '')
+    // 402(需充值 credits)/403(权限不足)/404(层级不支持) 是预期状态：静默返回空
+    if (code === 402 || code === 403 || code === 404 || msg.includes('402') || msg.includes('403') || msg.includes('404')) {
+      console.warn('[X] Mention timeline unavailable (needs credits/permission):', msg)
+      return []
+    }
+    throw error
   }
-  return items
 }
 
 export async function replyToXTweet(
@@ -451,6 +462,8 @@ export interface XDMConversation {
   id: string
   participantIds: string[]
   participantNames: Record<string, string>
+  participantAvatars: Record<string, string>
+  participantProfileUrls: Record<string, string>
   lastMessageText: string
   lastMessageTimestamp: string
   unreadCount: number
@@ -481,7 +494,7 @@ export async function getXConversations(
   try {
     // 使用 twitter-api-v2 的 DM events API
     // v1 DM API: 获取收到和发出的 DM 事件
-    const dmEventsUrl = `https://api.x.com/2/dm_conversations?dm_conversation.fields=conversation_type,created_at&dm_event.fields=created_at,text_attachments,event_type&expansions=participant_ids&user.fields=username,name&max_results=${maxResults}`
+    const dmEventsUrl = `https://api.x.com/2/dm_conversations?dm_conversation.fields=conversation_type,created_at&dm_event.fields=created_at,text_attachments,event_type&expansions=participant_ids&user.fields=username,name,profile_image_url&max_results=${maxResults}`
     
     const response = await fetch(dmEventsUrl, {
       headers: {
@@ -493,20 +506,21 @@ export async function getXConversations(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      // X DM API 可能需要额外权限，提供友好错误信息
-      if (response.status === 403) {
-        throw new Error('X DM access requires OAuth 2.0 scope: dm.read. Please re-authenticate with DM permissions.')
+      // 402(需充值)/403(权限不足)/404(层级不支持) 是预期状态：静默返回空，避免前端误报"同步失败"
+      if (response.status === 402 || response.status === 403 || response.status === 404) {
+        console.warn('[X] DM conversations unavailable (status ' + response.status + '): ' + (errorData?.errors?.[0]?.message || 'requires credits/permission'))
+        return []
       }
       throw new Error(`X DM conversations fetch failed: ${errorData?.errors?.[0]?.message || errorData?.error || 'Unknown error'}`)
     }
 
     const data = await response.json()
     const conversations = data.data || []
-    const usersMap: Record<string, { username: string; name: string }> = {}
+    const usersMap: Record<string, { username: string; name: string; avatar: string }> = {}
     
     if (data.includes?.users) {
       for (const u of data.includes.users) {
-        usersMap[u.id] = { username: u.username, name: u.name }
+        usersMap[u.id] = { username: u.username, name: u.name, avatar: u.profile_image_url || '' }
       }
     }
 
@@ -514,9 +528,13 @@ export async function getXConversations(
     for (const conv of conversations) {
       const participantIds = conv.participant_ids || []
       const participantNames: Record<string, string> = {}
+      const participantAvatars: Record<string, string> = {}
+      const participantProfileUrls: Record<string, string> = {}
       for (const pid of participantIds) {
         const userInfo = usersMap[pid]
         participantNames[pid] = userInfo ? `@${userInfo.username}` : pid
+        participantAvatars[pid] = userInfo?.avatar || ''
+        participantProfileUrls[pid] = userInfo?.username ? `https://x.com/${userInfo.username}` : ''
       }
 
       // 获取每个会话的消息详情
@@ -564,6 +582,8 @@ export async function getXConversations(
         id: conv.id,
         participantIds,
         participantNames,
+        participantAvatars,
+        participantProfileUrls,
         lastMessageText: messages.length > 0 ? messages[messages.length - 1].text : '',
         lastMessageTimestamp: messages.length > 0 ? messages[messages.length - 1].createdAt : conv.created_at || '',
         unreadCount,

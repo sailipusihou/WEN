@@ -13,7 +13,7 @@ const ALLOWED_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp"])
 // 允许的视频扩展名
 const ALLOWED_VIDEO_EXTS = new Set(["mp4", "webm", "mov", "ogg", "ogv"])
 // 允许的音频扩展名
-const ALLOWED_AUDIO_EXTS = new Set(["mp3", "wav", "m4a", "aac", "ogg", "flac"])
+const ALLOWED_AUDIO_EXTS = new Set(["mp3", "wav", "m4a", "aac", "ogg", "flac", "webm"])
 // 视频最大 50MB (浏览器自动播放的背景视频建议 < 10MB)
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024
 // 音频最大 50MB
@@ -72,6 +72,8 @@ function detectAudioType(buf: Buffer): string | null {
   if (buf[0] === 0x4f && buf[1] === 0x67 && buf[2] === 0x67 && buf[3] === 0x53) return "ogg"
   // FLAC: fLaC
   if (buf[0] === 0x66 && buf[1] === 0x4c && buf[2] === 0x61 && buf[3] === 0x43) return "flac"
+  // WebM / WebAudio (EBML): 1A 45 DF A3
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return "webm"
   return null
 }
 
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(bytes)
       const detected = detectAudioType(buffer)
       if (!detected) {
-        return NextResponse.json({ error: "Invalid audio file (only MP3/WAV/M4A/AAC/OGG/FLAC)" }, { status: 400 })
+        return NextResponse.json({ error: "Invalid audio file (only MP3/WAV/M4A/AAC/OGG/FLAC/WebM)" }, { status: 400 })
       }
       const fileExt = (file.name.split(".").pop() || "").toLowerCase()
       if (!ALLOWED_AUDIO_EXTS.has(fileExt)) {

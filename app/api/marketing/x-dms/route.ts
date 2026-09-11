@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { getSocialAccountById, updateSocialAccount } from '@/lib/social-accounts'
 import { getXConversations, sendXDM, refreshOAuth2Token, getXUserInfoOAuth2 } from '@/lib/x-twitter'
+import { cachedFetch, invalidateCacheKey } from '@/lib/marketing-cache'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
     let accessToken = account.accessToken
     if (account.refreshToken) {
       try {
-        const newTokens = await refreshOAuth2Token(account.refreshToken)
+        const newTokens = await cachedFetch(`x-refresh:${accountId}`, 10 * 60 * 1000, () => refreshOAuth2Token(account.refreshToken as string))
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing user ID for this account' }, { status: 400 })
     }
 
-    const conversations = await getXConversations(accessToken, userId)
+    const conversations = await cachedFetch(`x-dms:${accountId}`, 8000, () => getXConversations(accessToken, userId))
     return NextResponse.json({ success: true, conversations, total: conversations.length })
   } catch (err: any) {
     console.error('[X DMs API] GET error:', err)
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
     let accessToken = account.accessToken
     if (account.refreshToken) {
       try {
-        const newTokens = await refreshOAuth2Token(account.refreshToken)
+        const newTokens = await refreshOAuth2Token(account.refreshToken as string)
         accessToken = newTokens.accessToken
         updateSocialAccount(accountId, {
           accessToken: newTokens.accessToken,
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await sendXDM(accessToken, recipientId, message)
+    invalidateCacheKey(`x-dms:${accountId}`)
     return NextResponse.json({ success: true, result })
   } catch (err: any) {
     console.error('[X DMs API] POST error:', err)

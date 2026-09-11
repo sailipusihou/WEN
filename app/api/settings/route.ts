@@ -138,6 +138,7 @@ export async function GET(req: NextRequest) {
 
 const STRING_FIELDS: Record<string, number> = {
   siteName: 100,
+  siteUrl: 500,
   siteTagline: 200,
   heroTitle: 200,
   heroSubtitle: 500,
@@ -247,7 +248,6 @@ export async function PUT(req: NextRequest) {
     delete body.adminPassword
     delete body.adminPasswordHash
     delete body.adminPasswordSalt
-    delete body.smtpPass
     delete body.staffMembers
 
     const cleanBody: any = {}
@@ -292,6 +292,14 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid shipping days' }, { status: 400 })
       }
       cleanBody.defaultShippingDays = days
+    }
+    // SMTP 端口（上线配置邮箱必需）
+    if (body.smtpPort !== undefined) {
+      const port = Number(body.smtpPort)
+      if (Number.isNaN(port) || port < 1 || port > 65535) {
+        return NextResponse.json({ error: 'Invalid SMTP port' }, { status: 400 })
+      }
+      cleanBody.smtpPort = port
     }
     if (body.shippingFreeThreshold !== undefined) {
       const threshold = Number(body.shippingFreeThreshold)
