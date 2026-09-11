@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepository } from '@/lib/repository'
 import type { SiteSettings } from '@/lib/settings'
-import { requireSuperAdmin } from '@/lib/auth'
+import { requireSuperAdmin, hashAdminPassword } from '@/lib/auth'
 import { validateString, sanitizeString } from '@/lib/validation'
 
 function maskSecret(s: string | undefined): string {
@@ -245,6 +245,9 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
 
+    // 管理员密码修改：前端提交非空的 adminPassword 时，重新哈希后保存
+    // （不允许前端直接写入 hash/salt，防止绕过校验）
+    const newAdminPassword = typeof body.adminPassword === 'string' ? body.adminPassword.trim() : ''
     delete body.adminPassword
     delete body.adminPasswordHash
     delete body.adminPasswordSalt
@@ -413,6 +416,17 @@ export async function PUT(req: NextRequest) {
     }
 
     if (body.staffMembers !== undefined) cleanBody.staffMembers = body.staffMembers
+
+    // 管理员密码：提交了非空新密码才更新（哈希存储，明文不落库）
+    if (newAdminPassword) {
+      if (newAdminPassword.length < 8) {
+        return NextResponse.json({ error: '管理员密码至少需要 8 位字符' }, { status: 400 })
+      }
+      const { hash, salt } = hashAdminPassword(newAdminPassword)
+      cleanBody.adminPasswordHash = hash
+      cleanBody.adminPasswordSalt = salt
+      cleanBody.adminPassword = ''
+    }
 
     const repo = getRepository()
     const updated = repo.settings.update(cleanBody)

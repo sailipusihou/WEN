@@ -830,7 +830,14 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
                 <Input type="number" value={String(settings.cnyUsdRate ?? 7.2)} onChange={v => update("cnyUsdRate", Number(v))} />
               </Field>
               <Field label="Admin Username"><Input value={settings.adminUsername || ""} onChange={v => update("adminUsername", v)} /></Field>
-              <Field label="Admin Password"><Input type="text" value={settings.adminPassword || ""} onChange={v => update("adminPassword", v)} /></Field>
+              <Field label="Admin Password（留空则不修改，填写后保存即生效，至少 8 位）">
+                <Input
+                  type="password"
+                  value={settings.adminPassword || ""}
+                  placeholder="留空表示保持当前密码不变"
+                  onChange={v => update("adminPassword", v)}
+                />
+              </Field>
             </div>
           </Section>
         )}
