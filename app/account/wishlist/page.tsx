@@ -48,7 +48,6 @@ export default function WishlistPage() {
       price: product.price,
       category: product.category,
     })
-    addToast('Added to cart', 'success')
   }
 
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-otb-terracotta border-t-transparent rounded-full animate-spin" /></div>

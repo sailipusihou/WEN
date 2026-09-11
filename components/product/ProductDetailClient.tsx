@@ -185,7 +185,6 @@ export default function ProductDetailClient({
       })
     }
     setAdded(true)
-    addToast(`Added to cart`, 'success')
     setTimeout(() => setAdded(false), 2000)
   }
 

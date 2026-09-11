@@ -60,7 +60,6 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       image: product.image, price: product.price,
       category: product.category,
     })
-    addToast('Added to cart', 'success')
   }
 
   const hoverImage = product.detailImages?.[0] || product.image
