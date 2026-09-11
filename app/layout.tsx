@@ -1,40 +1,21 @@
 import type { Metadata, Viewport } from "next"
-import { Playfair_Display, Inter, Noto_Serif_SC, Noto_Sans_SC } from 'next/font/google'
+// 自托管字体（避免构建时依赖 fonts.gstatic.com，服务器在部分网络环境下无法访问 Google Fonts）
+import '@fontsource/inter/300.css'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/playfair-display/400.css'
+import '@fontsource/playfair-display/500.css'
+import '@fontsource/playfair-display/600.css'
+import '@fontsource/playfair-display/700.css'
+import '@fontsource/playfair-display/400-italic.css'
+import '@fontsource/playfair-display/600-italic.css'
 import { CartProvider } from "@/context/CartContext"
 import { CurrencyProvider } from "@/context/CurrencyContext"
 import { ToastProvider } from "@/context/ToastContext"
 import FrontendLayout from "@/components/layout/FrontendLayout"
 import { WebVitals } from "@/components/WebVitals"
 import "./globals.css"
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-playfair',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const notoSerifSC = Noto_Serif_SC({
-  subsets: ['latin'],
-  weight: ['400', '500', '700', '900'],
-  variable: '--font-noto-serif-sc',
-  display: 'swap',
-})
-
-const notoSansSC = Noto_Sans_SC({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
-  variable: '--font-noto-sans-sc',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: { default: "Low Flame | Contemporary Craftsmanship", template: "%s | Low Flame" },
@@ -58,7 +39,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${inter.variable} ${notoSerifSC.variable} ${notoSansSC.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/images/low-flame-logo.png" />
         <script dangerouslySetInnerHTML={{

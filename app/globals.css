@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 :root {
+  /* —— 字体栈 ——
+     Inter / Playfair Display 通过 @fontsource 自托管（随 node_modules 安装，构建无需访问 Google Fonts）
+     中文使用系统字体栈，保证跨平台渲染质量与零下载体积 */
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-playfair: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-noto-sans-sc: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
+  --font-noto-serif-sc: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', Georgia, serif;
+
   --ink-deep: #1A1C1E;
   --ink: #2D2F33;
   --ink-mid: #4A4D52;
