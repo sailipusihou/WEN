@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown } from 'lucide-react'
+import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown, Lock } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -39,6 +39,9 @@ export default function CheckoutPage() {
   }, [submitted, items.length])
   const [processing, setProcessing] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  // 结算需要登录：未登录时展示登录引导卡片
+  const [authChecked, setAuthChecked] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [paypalError, setPaypalError] = useState('')
   const [payoneerError, setPayoneerError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -57,8 +60,11 @@ export default function CheckoutPage() {
   const [couponAppliedCode, setCouponAppliedCode] = useState('')
 
   useEffect(() => {
-    // 无登录 cookie 时跳过请求, 消除 401 控制台噪音
-    if (document.cookie.includes('user_token=')) {
+    // 结算需登录：先判断登录态，未登录时展示登录引导卡片
+    const loggedIn = document.cookie.includes('user_token=')
+    setIsLoggedIn(loggedIn)
+    setAuthChecked(true)
+    if (loggedIn) {
       fetch('/api/auth/user').then(r => r.ok ? r.json() : null).then(d => { if (d?.user?.email) setUserEmail(d.user.email) }).catch(() => {})
     }
   }, [])
@@ -306,6 +312,45 @@ export default function CheckoutPage() {
         <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#2C2C2C] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors mt-4">Shop Now</Link>
       </div>
     </div>
+  }
+
+  // 未登录：结算前引导登录 / 注册（购物车内容保留，登录后回到本页继续）
+  if (authChecked && !isLoggedIn && !submitted && items.length > 0) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-[#F8F5F0] px-6">
+        <div className="w-full max-w-[300px]">
+          <div className="bg-white border border-[#EDE8DC] rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.03)] px-6 py-7 text-center">
+            <div className="w-10 h-10 mx-auto mb-3.5 rounded-full bg-[#EDE8DC]/60 flex items-center justify-center">
+              <Lock size={15} strokeWidth={1.5} className="text-[#6B6B6B]" />
+            </div>
+            <h1 className="font-en text-base text-[#2C2C2C] tracking-tight mb-1.5">Sign in to check out</h1>
+            <p className="font-sans text-[11px] text-[#6B6B6B]/70 leading-relaxed mb-5">
+              Your cart is saved. Sign in or create an account to complete your order.
+            </p>
+            <div className="space-y-1.5">
+              <Link
+                href="/login?redirect=/checkout"
+                className="flex items-center justify-center w-full py-2.5 bg-[#2C2C2C] text-white text-[10px] tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors rounded-sm"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register?redirect=/checkout"
+                className="flex items-center justify-center w-full py-2.5 border border-[#2C2C2C]/20 text-[#2C2C2C] text-[10px] tracking-[0.08em] uppercase font-sans font-medium hover:border-[#2C2C2C] transition-colors rounded-sm"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+          <Link
+            href="/cart"
+            className="mt-4 flex items-center justify-center gap-1 font-sans text-[10px] text-[#6B6B6B]/50 hover:text-[#6B6B6B] transition-colors"
+          >
+            <ArrowUpLeft size={11} /> Back to cart
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   if (submitted) {
@@ -635,3 +680,4 @@ export default function CheckoutPage() {
     </div>
   )
 }
+

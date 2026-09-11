@@ -49,6 +49,16 @@ echo "    新版本: $NEW_COMMIT"
 echo "==> 2/6 安装依赖..."
 NODE_OPTIONS="--max-old-space-size=$NODE_MEM" npm ci --no-audit --no-fund
 
+echo "==> 2.5/6 重建原生模块（better-sqlite3，防止中断导致绑定缺失）..."
+npm rebuild better-sqlite3 2>&1 | tail -2
+
+# 验证 SQLite 可用，否则中止更新（避免网站起来但数据库不可用）
+if ! node -e "require('better-sqlite3')" 2>/dev/null; then
+  echo "❌ better-sqlite3 加载失败，中止更新以防服务不可用"
+  exit 1
+fi
+echo "    SQLite 模块正常 ✓"
+
 echo "==> 3/6 暂停服务（释放内存给构建，避免 OOM 卡死）..."
 pm2 stop "$APP_NAME" 2>/dev/null || true
 
