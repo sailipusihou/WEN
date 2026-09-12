@@ -9,8 +9,9 @@ import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email"
 import { calculateShipping } from "@/lib/settings"
 import { requireAdmin, requirePermission, requireUser, rateLimit, getClientIp } from "@/lib/auth"
 import { getRepository } from "@/lib/repository"
-import { getReferralLinkByCode, markTouchpointsAsConverted, findAttributableReferralClick, getReferralClickByOrderId, getAllReferralClicks } from "@/lib/referral-tracking"
+import { getReferralLinkByCode, getReferralClickByOrderId, getAllReferralClicks } from "@/lib/referral-tracking"
 import { deductStockForOrder } from "@/lib/stock"
+import { maybeMarkOrderReferralConversion } from "@/lib/order-finalize"
 import { type Shipment } from "@/lib/shipping"
 import { getActivePromotions, computePromotionForProduct, getCouponByCode, validateCouponForSubtotal, incrementCouponUsed } from "@/lib/promotions"
 
@@ -136,44 +137,6 @@ function enrichOrdersWithReferralConversion(orders: any[]): any[] {
       },
     }
   })
-}
-
-function resolveOrderReferralAttribution(order: Order, visitorId: string | undefined, settings: any) {
-  if (!order.referralCode) return
-  return findAttributableReferralClick({
-    referralCode: order.referralCode,
-    visitorId,
-    model: settings.attributionModel,
-    lookbackDays: settings.attributionLookbackDays,
-    requireVisitorMatch: settings.attributionRequireVisitorMatch,
-    allowReferralFallback: settings.attributionAllowReferralFallback,
-  })
-}
-
-function maybeMarkOrderReferralConversion(order: Order, visitorId: string | undefined, settings: any) {
-  const attribution = resolveOrderReferralAttribution(order, visitorId, settings)
-  if (attribution) {
-    order.attributionClickId = attribution.click.id
-    order.attributionModel = attribution.model as 'last_click' | 'first_click'
-    // attribution.touchpoints 是 AttributedTouchpoint[] 类型
-    // 旧版存的是 number, 我们把它存为一个 json 结构或保留其数量
-    // 假设 Order 模型能支持 object 或者 stringify，这里用 totalTouchpointsCount 保持原语义为 number
-    order.attributionTouchpoints = attribution.totalTouchpointsCount || attribution.touchpoints?.length || 1
-    // 可以添加 order.attributionTouchpointsData = JSON.stringify(attribution.touchpoints) 以备后用
-    order.attributionLookbackDays = attribution.lookbackDays
-    order.attributionMatchedBy = attribution.matchedBy as 'visitor' | 'referral_code'
-    order.attributionFallbackUsed = attribution.fallbackUsed
-    
-    // 如果存在多触点数组，则按权重标记；否则按单触点
-    if (attribution.touchpoints && Array.isArray(attribution.touchpoints)) {
-      markTouchpointsAsConverted(attribution.touchpoints, order.id, order.total || 0)
-    } else {
-      markTouchpointsAsConverted([{ click: attribution.click, weight: 1.0 }], order.id, order.total || 0)
-    }
-    
-    return attribution
-  }
-  return undefined
 }
 
 function getOrderStatsFromRepo() {
@@ -643,7 +606,10 @@ export async function POST(req: NextRequest) {
       }
     }
     // 优惠券核销同样只在支付真实 (或未声称已支付) 时执行, 防止伪造 COMPLETED 刷券
-    const couponEligible = !claimedTxn || claimedTxn.status !== 'COMPLETED' || paymentVerified
+    // 例外：PayPal「先建单后扣款」流程此时订单还是 unpaid，券要等 capture 确认收款后
+    // 由 finalizePaidOrder 核销；否则用户放弃支付也会白白消耗一次券的使用次数。
+    const pendingPaypalOrder = body.paymentMethod === 'paypal' && !paymentVerified
+    const couponEligible = (!claimedTxn || claimedTxn.status !== 'COMPLETED' || paymentVerified) && !pendingPaypalOrder
     if (couponCode && couponEligible) {
       incrementCouponUsed(couponCode)
       // 修复 H2: welcome 券同步核销持有者实例 (used=true), 防止重复使用

@@ -516,6 +516,9 @@ export const orderRepo = {
       const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(row.id) as any[]
       const items: OrderItem[] = itemRows.map(r => ({
         id: r.id,
+        // 必须回填 productId：deductStockForOrder 依赖它扣库存，
+        // 缺了它 item.id（订单项 ID）会被当成商品 ID，查不到商品而静默跳过扣减。
+        productId: r.productId || undefined,
         name: r.name,
         nameEn: r.nameEn || '',
         image: r.image || '',
@@ -533,6 +536,8 @@ export const orderRepo = {
     const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(id) as any[]
     const items: OrderItem[] = itemRows.map(r => ({
       id: r.id,
+      // 同 list()：回填 productId，否则按订单取回的订单扣不了库存
+      productId: r.productId || undefined,
       name: r.name,
       nameEn: r.nameEn || '',
       image: r.image || '',

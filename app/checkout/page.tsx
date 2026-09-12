@@ -193,44 +193,84 @@ export default function CheckoutPage() {
     return d
   }
 
+  // ==== PayPal 先建单后扣款 ====
+  // 旧流程是「先 capture 扣款、再调用 /api/orders 建单」，一旦建单失败
+  // （金额不符 / 限流 / 运费异常）钱已经扣了却没有订单，且无法自动退款——即孤儿扣款。
+  // 新流程把顺序倒过来：先落一张 pending 订单（金额由服务端核算），
+  // 再按这张订单的总额创建 PayPal 订单，最后 capture 并确认同一张订单。
+  // 这样「找不到订单就拒绝 capture」，孤儿扣款在结构上不可能发生。
+  const pendingOrderRef = useRef<string | null>(null)
+
+  const createPendingOrder = async (): Promise<string> => {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: discountedItems,
+        shipping,
+        subtotal: discountedSubtotal,
+        shippingCost,
+        discount: couponDiscount,
+        couponCode: couponAppliedCode || undefined,
+        total: totalPrice,
+        currency,
+        notes: `Payment: PayPal`,
+        userEmail,
+        paymentMethod: 'paypal',
+        paypalTransaction: null,
+        referralCode: referralCode || undefined,
+        referralVisitorId: referralCode ? getOrCreateVisitorId() : undefined,
+      }),
+    })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok || !d?.id) {
+      throw new Error(d?.error || 'Could not start your order. Please try again.')
+    }
+    pendingOrderRef.current = d.id
+    return d.id
+  }
+
   useEffect(() => {
     if (!paypalReady) return
     const container = document.getElementById('paypal-button-container')
     if (!container || !(window as any).paypal) return
     ;(window as any).paypal.Buttons({
-      createOrder: () =>
-        fetch('/api/create-paypal-order', {
+      createOrder: async () => {
+        // 1) 先建站内订单（服务端核价、落库为 unpaid）
+        const orderId = await createPendingOrder()
+        // 2) 再按服务端确认的订单总额创建 PayPal 订单（金额不接受客户端指定）
+        const res = await fetch('/api/create-paypal-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: convertPrice(totalPriceRef.current, 'USD') }),
-        }).then(r => r.json()).then(d => { if (d.error) throw new Error(d.error); return d.id }),
+          body: JSON.stringify({ orderId }),
+        })
+        const d = await res.json().catch(() => ({}))
+        if (!res.ok || !d?.id) throw new Error(d?.error || 'PayPal order creation failed')
+        return d.id
+      },
       onApprove: async (data: any) => {
         setProcessing(true)
         setPaypalError('')
         try {
+          const orderId = pendingOrderRef.current
+          if (!orderId) throw new Error('Order reference lost. Please refresh and try again.')
+
           const capRes = await fetch('/api/capture-paypal-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paypalOrderId: data.orderID }),
+            body: JSON.stringify({ orderId, paypalOrderId: data.orderID }),
           })
-          const capData = await capRes.json()
-          if (!capRes.ok || capData.status !== 'COMPLETED')
-            throw new Error(capData.error || 'Capture failed')
-          
-          const paypalTransaction = {
-            orderId: data.orderID,
-            captureId: capData.captureId,
-            transactionId: capData.transactionId,
-            amount: capData.amount,
-            fee: capData.fee,
-            netAmount: capData.netAmount,
-            currency: capData.currency,
-            status: capData.status,
-            createdAt: capData.createTime,
-            updatedAt: capData.updateTime,
+          const capData = await capRes.json().catch(() => ({}))
+          if (!capRes.ok || capData.status !== 'COMPLETED') {
+            throw new Error(
+              capData.error ||
+                'Payment could not be confirmed. If you were charged, contact us with the reference and we will resolve it.'
+            )
           }
-          
-          await submitOrder(paypalTransaction)
+
+          const finalOrderId = capData.orderId || orderId
+          setOrderId(finalOrderId)
+          try { sessionStorage.setItem('otm_last_order', finalOrderId) } catch { /* ignore */ }
           clearCart()
           setSubmitted(true)
         } catch (e: any) {
