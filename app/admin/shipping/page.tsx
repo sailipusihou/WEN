@@ -1984,13 +1984,13 @@ function NotifyCustomerModal({
   const order = shipment._orderInfo
   const email: string = order?.customerEmail || ''
   const [sending, setSending] = useState<'' | 'email' | 'message'>('')
-  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [result, setResult] = useState<{ ok: boolean; text: string; to?: string } | null>(null)
 
   const alreadySent = !!shipment.notifiedAt
   const channelLabel = shipment.notifiedChannel === 'email' ? 'Email' : shipment.notifiedChannel === 'message' ? 'In-site message' : ''
 
   const send = async (channel: 'email' | 'message') => {
-    if (alreadySent && !confirm(`This shipment was already notified via ${channelLabel} at ${fmtDate(shipment.notifiedAt)}.\n\nSend again?`)) return
+    // 已发送过时不再弹原生 confirm (原生弹窗无法走中文字典), 改为弹窗内提示 + 按钮显示「重新发送」
     setSending(channel)
     setResult(null)
     try {
@@ -2001,7 +2001,11 @@ function NotifyCustomerModal({
       })
       const d = await r.json().catch(() => ({}))
       if (r.ok) {
-        setResult({ ok: true, text: channel === 'email' ? `Email sent to ${d.sentTo}` : `In-site message delivered to ${d.sentTo}` })
+        setResult({
+          ok: true,
+          text: channel === 'email' ? 'Email sent to' : 'In-site message delivered to',
+          to: d.sentTo,
+        })
         onSent()
       } else {
         setResult({ ok: false, text: d.error || 'Failed to notify customer' })
@@ -2064,10 +2068,8 @@ function NotifyCustomerModal({
         {!email && (
           <div className="px-3 py-2 rounded-lg text-xs flex items-start gap-2" style={{ backgroundColor: 'rgba(245,158,11,0.1)', color: '#b45309' }}>
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
-            <span>
-              This order has no customer email, so neither an email nor an in-site message can be delivered.
-              Please contact the customer by phone or another channel.
-            </span>
+            {/* 整句写成单个字符串, 否则 JSX 换行会拆成多个文本节点, 中文字典匹配不上 */}
+            <span>{'This order has no customer email, so neither an email nor an in-site message can be delivered. Please contact the customer by phone or another channel.'}</span>
           </div>
         )}
 
@@ -2075,6 +2077,7 @@ function NotifyCustomerModal({
           <div className="px-3 py-2 rounded-lg text-xs flex items-center gap-2"
             style={{ backgroundColor: result.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: result.ok ? '#16a34a' : '#ef4444' }}>
             {result.ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />} {result.text}
+            {result.to ? <span className="font-mono">{result.to}</span> : null}
           </div>
         )}
 
@@ -2087,7 +2090,7 @@ function NotifyCustomerModal({
             className="text-xs px-4 py-2 rounded-lg font-medium inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--adm-accent)', color: '#fff' }}
           >
-            <Send size={13} /> {sending === 'email' ? 'Sending…' : 'Send Shipping Email'}
+            <Send size={13} /> {sending === 'email' ? 'Sending…' : (alreadySent ? 'Resend Shipping Email' : 'Send Shipping Email')}
           </button>
           <button
             type="button"
@@ -2096,12 +2099,16 @@ function NotifyCustomerModal({
             className="text-xs px-4 py-2 rounded-lg font-medium inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ color: 'var(--adm-accent)', border: '1px solid var(--adm-border)' }}
           >
-            <Package size={13} /> {sending === 'message' ? 'Sending…' : 'Send In-site Message'}
+            <Package size={13} /> {sending === 'message' ? 'Sending…' : (alreadySent ? 'Resend In-site Message' : 'Send In-site Message')}
           </button>
         </div>
+        {alreadySent && (
+          <p className="text-[10px]" style={{ color: '#f59e0b' }}>
+            {'This shipment was already notified. Sending again will deliver a second copy to the customer.'}
+          </p>
+        )}
         <p className="text-[10px]" style={{ color: 'var(--adm-text-secondary)' }}>
-          Emails are sent through the SMTP account configured in Settings → Email. The in-site message appears in the
-          customer&apos;s Messages page when they sign in.
+          {'Emails are sent through the SMTP account configured in Settings → Email. The in-site message appears in the customer\'s Messages page when they sign in.'}
         </p>
       </div>
     </Modal>
