@@ -16,8 +16,10 @@
  *   - 只有显式传 --delete 才会删除
  *
  * 用法 (在服务器 /var/www/lowflame 下执行):
- *   node scripts/cleanup-orphan-uploads.cjs            # 只报告
- *   node scripts/cleanup-orphan-uploads.cjs --delete   # 执行删除
+ *   node scripts/cleanup-orphan-uploads.cjs                       # 只报告
+ *   node scripts/cleanup-orphan-uploads.cjs --backup /root/uploads-trash
+ *                                                                 # 移到备份目录 (推荐, 可回滚)
+ *   node scripts/cleanup-orphan-uploads.cjs --delete              # 直接删除
  */
 const fs = require('fs')
 const path = require('path')
@@ -27,6 +29,8 @@ const UPLOAD_DIR = path.join(ROOT, 'public', 'uploads')
 const DATA_DIR = path.join(ROOT, 'data')
 const DB_FILE = path.join(DATA_DIR, 'site.db')
 const DELETE = process.argv.includes('--delete')
+const BACKUP_IDX = process.argv.indexOf('--backup')
+const BACKUP_DIR = BACKUP_IDX !== -1 ? process.argv[BACKUP_IDX + 1] : null
 const MIN_AGE_MS = 24 * 60 * 60 * 1000
 
 function log(...a) { console.log(...a) }
@@ -171,15 +175,37 @@ function main() {
     if (orphans.length > 40) log(`  ... 其余 ${orphans.length - 40} 个`)
   }
 
-  if (!DELETE) {
+  if (!DELETE && !BACKUP_DIR) {
     log('')
-    log('这是「只报告」模式, 没有删除任何文件。确认无误后执行:')
-    log('  node scripts/cleanup-orphan-uploads.cjs --delete')
+    log('这是「只报告」模式, 没有删除任何文件。确认无误后执行其一:')
+    log('  node scripts/cleanup-orphan-uploads.cjs --backup /root/uploads-trash   # 移到备份目录 (可回滚, 推荐)')
+    log('  node scripts/cleanup-orphan-uploads.cjs --delete                       # 直接删除')
+    return
+  }
+
+  let moved = 0
+  let freed = 0
+  if (BACKUP_DIR) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true })
+    for (const f of orphans) {
+      const dest = path.join(BACKUP_DIR, f.name)
+      try {
+        fs.mkdirSync(path.dirname(dest), { recursive: true })
+        fs.renameSync(f.full, dest)
+        moved++
+        freed += f.size
+      } catch (e) {
+        log('移动失败:', f.name, e.message)
+      }
+    }
+    log('')
+    log(`已移动 ${moved} 个文件 (${mb(freed)}) 到 ${BACKUP_DIR}`)
+    log('确认站点一切正常后, 可用 rm -rf 删除该备份目录。')
     return
   }
 
   let deleted = 0
-  let freed = 0
+  freed = 0
   for (const f of orphans) {
     try {
       fs.unlinkSync(f.full)
