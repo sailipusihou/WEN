@@ -26,6 +26,13 @@ export async function POST(req: NextRequest) {
       const paid = o.paymentStatus === 'paid' || o.paypalTransaction?.verified === true
       const created = new Date(o.createdAt).getTime()
       if (!paid) {
+        // 关键：pending_verification 表示「客户很可能已经付了款，只是服务端当时无法核验」
+        // （PayPal 接口超时等）。这类订单绝不能当作未支付自动取消——否则真付了钱的
+        // 客户会被静默取消且永不发货。它们必须留给人工核对处理。
+        if (o.paymentStatus === 'pending_verification') {
+          console.warn(`[auto-confirm] 订单 ${o.id} 处于待人工核验状态，跳过自动取消`)
+          return
+        }
         if (now - created >= UNPAID_CANCEL_MS) {
           repo.orders.update(o.id, { status: "cancelled" as any, statusNote: 'Auto-cancelled: unpaid for 3 days' } as any)
           cancelled++
