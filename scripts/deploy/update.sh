@@ -143,26 +143,37 @@ if [ "$APP_STOPPED" = "0" ]; then
 fi
 
 # ---- 独立看门狗 ----
-# 事故记录：这台 2GB 机器在 next build 结束后，主脚本进程曾两次被内核直接
-# 杀掉（SIGKILL，trap 无法执行），结果是构建成功、但服务永远停在 stopped，
-# 网站 502。看门狗是一个脱离本脚本进程组的独立进程：它等构建结束标记，
-# 然后只在服务确实没运行时兜底拉起，确保「无论主脚本怎么死，站点都会回来」。
-BUILD_DONE="/tmp/lowflame-build-done"
-rm -f "$BUILD_DONE"
+# 事故记录：这台 2GB 机器在 next build 结束后，主脚本进程被内核直接杀掉
+# （SIGKILL，trap 捕不到，连结尾的 echo 都来不及输出），结果是构建成功、
+# 但服务永远停在 stopped，网站 502。
+#
+# 因此看门狗刻意做成「不依赖主脚本」的独立进程：它自己观察 next build 进程
+# 的出现与消失来判断构建是否结束（而不是等主脚本写标记文件——主脚本正是
+# 在写标记前后被杀掉的），然后再兜底把服务拉起来。
 setsid bash -c "
-  for i in \$(seq 1 240); do [ -f '$BUILD_DONE' ] && break; sleep 5; done
-  sleep 10
+  SEEN=0
+  for i in \$(seq 1 300); do
+    sleep 5
+    if pgrep -f 'next build' >/dev/null 2>&1 || pgrep -f 'next/dist/bin/next' >/dev/null 2>&1; then
+      SEEN=1
+      continue
+    fi
+    # 见过构建进程、现在它没了 → 构建已结束，留 25 秒给主脚本正常收尾
+    [ \"\$SEEN\" = \"1\" ] && break
+  done
+  sleep 25
   PID=\$(pm2 pid '$APP_NAME' 2>/dev/null || echo 0)
   if [ -z \"\$PID\" ] || [ \"\$PID\" = \"0\" ]; then
+    echo \"[\$(date '+%H:%M:%S')] 看门狗：服务未运行，正在拉起\" >> /tmp/lowflame-watchdog.log
     pm2 start '$APP_NAME' >/dev/null 2>&1 || true
+  else
+    echo \"[\$(date '+%H:%M:%S')] 看门狗：服务已在运行，无需干预\" >> /tmp/lowflame-watchdog.log
   fi
 " >/dev/null 2>&1 < /dev/null &
-WATCHDOG_PID=$!
-echo "    已启动看门狗（pid $WATCHDOG_PID），保证构建后服务必定被拉起"
+echo "    已启动独立看门狗（即使本脚本被杀，构建结束后也会兜底拉起服务）"
 
 echo "==> 4/6 生产构建（内存上限 ${BUILD_MEM}MB，约 1-3 分钟）..."
 if ! NODE_OPTIONS="--max-old-space-size=$BUILD_MEM" npm run build; then
-  touch "$BUILD_DONE"   # 通知看门狗放行
   echo ""
   echo "❌ 构建失败！正在恢复旧版本服务..."
   pm2 start "$APP_NAME" 2>/dev/null || true
@@ -170,7 +181,6 @@ if ! NODE_OPTIONS="--max-old-space-size=$BUILD_MEM" npm run build; then
   echo "   网站已恢复运行（仍是旧版本 $PREV_COMMIT）"
   exit 1
 fi
-touch "$BUILD_DONE"     # 构建成功，通知看门狗
 
 echo "==> 5/6 启动服务..."
 pm2 restart "$APP_NAME" 2>/dev/null || pm2 start "$APP_NAME" 2>/dev/null || pm2 start npm --name "$APP_NAME" -- start
