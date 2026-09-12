@@ -150,7 +150,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             onClick={handleToggleWishlist}
             type="button"
             aria-label="Add to wishlist"
-            className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-white shadow-soft"
+            className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-white shadow-soft"
           >
             <Heart size={14} strokeWidth={1.5} />
           </button>
@@ -160,7 +160,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             onClick={handleAddToCart}
             type="button"
             aria-label="Add to cart"
-            className="absolute bottom-16 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-white shadow-soft"
+            className="absolute bottom-16 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-white shadow-soft"
           >
             <Plus size={15} strokeWidth={1.5} />
           </button>
