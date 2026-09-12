@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getRepository } from "@/lib/repository"
+import { refundPayPalOrder } from "@/lib/paypal-refund"
 import { requirePermission } from "@/lib/auth"
 import { getAllPayPalTransactions, syncPayPalTransactions } from "@/lib/paypal-transactions"
 import { findAttributableReferralClick, markTouchpointsAsConverted } from "@/lib/referral-tracking"
@@ -658,64 +659,24 @@ export async function POST(req: NextRequest) {
       const order = repo.orders.getById(body.orderId)
       if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
 
-      const captureId = order.paypalTransaction?.captureId
-      if (!captureId) return NextResponse.json({ error: "No capture ID found for order" }, { status: 400 })
-
-      // 修复 L2: 金额强转 Number (原字符串值会抛 toFixed TypeError 被吞成 400)
-      const refundAmountValue = body.amount !== undefined && body.amount !== '' ? Number(body.amount) : order.total
-      if (Number.isNaN(refundAmountValue) || refundAmountValue <= 0) {
-        return NextResponse.json({ error: "Invalid refund amount" }, { status: 400 })
+      // 统一走 lib/paypal-refund：与后台「退货 → 退款」同一套实现，
+      // 部分退款如实记账（不再一律标成全退），幂等键固定避免重复退款。
+      const result = await refundPayPalOrder(body.orderId, body.amount, body.note)
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error || "Refund failed" }, { status: 400 })
       }
-
-      const response = await fetch(`${getPayPalConfig().base}/v2/payments/captures/${captureId}/refund`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-          "PayPal-Request-Id": `refund-${body.orderId}-${Date.now()}`,
+      const updated = repo.orders.getById(body.orderId)
+      return NextResponse.json({
+        success: true,
+        refund: {
+          refundId: result.refundId,
+          amount: result.refundedAmount,
+          totalRefunded: result.totalRefunded,
+          fullyRefunded: result.fullyRefunded,
+          viaPayPal: result.viaPayPal,
         },
-        body: JSON.stringify({
-          amount: {
-            value: refundAmountValue.toFixed(2),
-            currency_code: order.currency || "USD",
-          },
-          note_to_payer: body.note || "Refund for return",
-        }),
-        signal: AbortSignal.timeout(30000),
+        order: updated,
       })
-
-      const refundData = await response.json()
-
-      if (response.ok) {
-        const updatedTransaction = {
-          ...(order.paypalTransaction || {}),
-          status: "REFUNDED" as const,
-          refundId: refundData.id,
-          refundAmount: refundAmountValue,
-          updatedAt: new Date().toISOString(),
-        }
-
-        const updated = repo.orders.update(order.id, {
-          status: "refunded",
-          paypalTransaction: updatedTransaction as any,
-          returnInfo: {
-            ...(order.returnInfo || { reason: "Refund processed", requestedAt: new Date().toISOString() }),
-            refundedAt: new Date().toISOString(),
-            refundAmount: refundAmountValue,
-          },
-          statusHistory: [
-            ...(order.statusHistory || []),
-            { status: "refunded", timestamp: new Date().toISOString(), note: body.note || "Refund processed via PayPal" },
-          ],
-        })
-
-        return NextResponse.json({ success: true, refund: refundData, order: updated })
-      } else {
-        return NextResponse.json(
-          { error: refundData.message || "Refund failed", details: refundData },
-          { status: response.status }
-        )
-      }
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 })

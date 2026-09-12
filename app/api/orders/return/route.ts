@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getRepository } from "@/lib/repository"
 import { requirePermission, requireUser } from "@/lib/auth"
+import { refundPayPalOrder } from "@/lib/paypal-refund"
 import { OrderStatus } from "@/lib/orders"
 
 export async function POST(req: NextRequest) {
@@ -109,12 +110,45 @@ export async function PUT(req: NextRequest) {
         returnUpdate.deliveredAt = now
         if (notes) returnUpdate.notes = notes
         break
-      case "refund":
-        newStatus = "refunded"
-        returnUpdate.refundedAt = now
-        returnUpdate.refundAmount = refundAmount || order.total
-        if (notes) returnUpdate.notes = notes
-        break
+      case "refund": {
+        // 修复 S7: 旧代码只把订单标成 refunded、写一个 refundAmount 数字，
+        // 从未调用 PayPal —— 运营点一次「退款」就会以为钱已经退给客户了。
+        // 现在统一走 lib/paypal-refund（有 PayPal 交易就走 API 真退，
+        // 没有则如实记为线下人工退款）。
+        const refundResult = await refundPayPalOrder(orderId, refundAmount, notes)
+        if (!refundResult.ok) {
+          return NextResponse.json({ error: refundResult.error || "Refund failed" }, { status: 400 })
+        }
+        const fresh = repo.orders.getById(orderId)!
+        const newHistory = [
+          ...(fresh.statusHistory || []),
+          {
+            status: fresh.status,
+            timestamp: new Date().toISOString(),
+            note: `${refundResult.viaPayPal ? 'PayPal' : '线下'}退款完成：本次 USD ${(refundResult.refundedAmount || 0).toFixed(2)}，累计 USD ${(refundResult.totalRefunded || 0).toFixed(2)}${refundResult.fullyRefunded ? '（已退清）' : '（部分退款）'}`,
+          },
+        ]
+        const afterRefund = repo.orders.update(orderId, { statusHistory: newHistory })
+        repo.workLogs.add({
+          operatorId: auth.user.id || "system",
+          operatorName: auth.user.name || "System",
+          operatorRole: auth.user.role || "system",
+          action: "order_return_refund",
+          details: `${refundResult.viaPayPal ? 'PayPal' : '线下'}退款 USD ${(refundResult.refundedAmount || 0).toFixed(2)}，累计 USD ${(refundResult.totalRefunded || 0).toFixed(2)}（订单 ${orderId}）${refundResult.fullyRefunded ? '已退清' : '部分退款'}`,
+          orderId,
+          category: "order",
+        })
+        return NextResponse.json({
+          ...(afterRefund || fresh),
+          refund: {
+            viaPayPal: refundResult.viaPayPal,
+            refundId: refundResult.refundId,
+            refundedAmount: refundResult.refundedAmount,
+            totalRefunded: refundResult.totalRefunded,
+            fullyRefunded: refundResult.fullyRefunded,
+          },
+        })
+      }
       case "update_notes":
         if (notes) returnUpdate.notes = notes
         break
