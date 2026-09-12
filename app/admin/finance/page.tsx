@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DollarSign, TrendingUp, ArrowUp, ArrowDown, Wallet, RotateCcw, X, PackageCheck, RefreshCw, ExternalLink, Settings, Eye, EyeOff, Download, Calendar, Search, Filter } from 'lucide-react'
@@ -223,6 +223,9 @@ export default function AdminFinancePage() {
         body: JSON.stringify({
           action: 'refund',
           orderId: refundModal.orderId,
+          // 一并带上 captureId：历史交易记录的 orderId 常为空，
+          // 后端会用 captureId 反查站内订单，避免报 Order not found
+          captureId: refundModal.transactionId || refundModal.captureId || '',
           amount,
         }),
       })

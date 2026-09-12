@@ -83,11 +83,30 @@ export interface RefundResult {
 export async function refundPayPalOrder(
   orderId: string,
   amount?: number,
-  note?: string
+  note?: string,
+  captureIdHint?: string
 ): Promise<RefundResult> {
   const repo = getRepository()
-  const order = repo.orders.getById(orderId)
-  if (!order) return { ok: false, error: 'Order not found', viaPayPal: false, orderTotal: 0 }
+  let order = orderId ? repo.orders.getById(orderId) : undefined
+
+  // 兜底：财务页是按 PayPal 交易记录退款的，而历史同步下来的记录里
+  // orderId 往往是空的（老数据没有 custom_id）。这种情况下改用该笔交易的
+  // captureId 反查站内订单，退款就不用再依赖交易记录的 orderId 字段了。
+  if (!order && captureIdHint) {
+    order = (repo.orders.list() as any[]).find(
+      (o) => o?.paypalTransaction?.captureId && String(o.paypalTransaction.captureId) === String(captureIdHint)
+    )
+  }
+  if (!order) {
+    return {
+      ok: false,
+      error: captureIdHint
+        ? `找不到与该笔 PayPal 交易对应的站内订单（capture ${captureIdHint}）。如果是早期订单，请直接在 PayPal 后台退款。`
+        : 'Order not found',
+      viaPayPal: false,
+      orderTotal: 0,
+    }
+  }
 
   const orderTotal = Number(order.total) || 0
   const txn: any = order.paypalTransaction || {}

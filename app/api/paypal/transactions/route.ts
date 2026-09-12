@@ -661,7 +661,13 @@ export async function POST(req: NextRequest) {
 
       // 统一走 lib/paypal-refund：与后台「退货 → 退款」同一套实现，
       // 部分退款如实记账（不再一律标成全退），幂等键固定避免重复退款。
-      const result = await refundPayPalOrder(body.orderId, body.amount, body.note)
+      // 传入 captureId 兜底：历史交易记录里 orderId 可能为空。
+      const result = await refundPayPalOrder(
+        body.orderId,
+        body.amount,
+        body.note,
+        body.captureId || body.transactionId
+      )
       if (!result.ok) {
         return NextResponse.json({ error: result.error || "Refund failed" }, { status: 400 })
       }
