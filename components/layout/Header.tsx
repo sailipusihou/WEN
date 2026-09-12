@@ -9,13 +9,16 @@ import { useCart } from '@/context/CartContext'
 import SearchBox from '@/components/ui/SearchBox'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 
+// 修复：此前 6 个入口全部指向不存在的 slug（cultural-gifts / home-decor /
+// creative-gifts），点进去一律 "Collection not found"，列表页分类筛选也恒为 0 结果。
+// 现在只保留真实存在的分类，其余导向商品总览页，保证不再有死链。
 const collections = [
-  { label: 'Tea Ceremony', href: '/category/cultural-gifts', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80', desc: 'Celadon, Yixing ware, and the art of tea' },
-  { label: 'Ceramic Living', href: '/category/home-decor', image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&q=80', desc: 'Hand-thrown vessels for daily rituals' },
-  { label: 'Silk & Embroidery', href: '/category/cultural-gifts', image: 'https://images.unsplash.com/photo-1607532941432-5e0d3cba768b?w=400&q=80', desc: 'Suzhou double-sided embroidery' },
-  { label: 'Bamboo Craft', href: '/category/home-decor', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&q=80', desc: 'Sustainable bamboo weaving' },
-  { label: 'Natural Incense', href: '/category/creative-gifts', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80', desc: 'Agarwood, sandalwood, ritual scents' },
-  { label: "Scholar's Desk", href: '/category/creative-gifts', image: 'https://images.unsplash.com/photo-1496096265110-f83ad7f96608?w=400&q=80', desc: 'Brush pots, ink stones, writing sets' },
+  { label: 'Tea Ceremony', href: '/category/tea-ceremony', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80', desc: 'Celadon, Yixing ware, and the art of tea' },
+  { label: 'Ceramic Living', href: '/category/ceramic-art', image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&q=80', desc: 'Hand-thrown vessels for daily rituals' },
+  { label: 'Silk & Embroidery', href: '/products', image: 'https://images.unsplash.com/photo-1607532941432-5e0d3cba768b?w=400&q=80', desc: 'Suzhou double-sided embroidery' },
+  { label: 'Bamboo Craft', href: '/products', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&q=80', desc: 'Sustainable bamboo weaving' },
+  { label: 'Natural Incense', href: '/category/incense-rituals', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80', desc: 'Agarwood, sandalwood, ritual scents' },
+  { label: "Scholar's Desk", href: '/products', image: 'https://images.unsplash.com/photo-1496096265110-f83ad7f96608?w=400&q=80', desc: 'Brush pots, ink stones, writing sets' },
 ]
 
 const navItems = [

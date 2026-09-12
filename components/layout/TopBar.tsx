@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 
@@ -17,7 +17,7 @@ export default function TopBar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <p>
           <span className="text-[#8BA8A0]">◈</span>
-          {' '}Complimentary worldwide shipping on orders over $200
+          {' '}Handcrafted in small batches · Shipped worldwide
         </p>
         <button
           onClick={() => { setVisible(false); localStorage.setItem('otm_topbar_dismissed', 'true') }}
