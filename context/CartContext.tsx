@@ -29,10 +29,13 @@ function loadCart(): CartItem[] {
   } catch { return [] }
 }
 
-// 登录态：顾客登录后后端写入 user_token cookie
-function hasUserToken(): boolean {
-  if (typeof document === 'undefined') return false
-  return /(?:^|;\s*)user_token=/.test(document.cookie)
+// 登录态：user_token 是 httpOnly cookie，document.cookie 读不到，
+// 只能由服务端 /api/auth/user 判定（200 = 已登录）。
+function fetchIsLoggedIn(): Promise<boolean> {
+  if (typeof window === 'undefined') return Promise.resolve(false)
+  return fetch('/api/auth/user', { credentials: 'same-origin' })
+    .then(r => r.ok)
+    .catch(() => false)
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -44,7 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setItems(loadCart())
-    setIsLoggedIn(hasUserToken())
+    fetchIsLoggedIn().then(setIsLoggedIn)
   }, [])
 
   // ESC 关闭提示
@@ -58,7 +61,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // 任何人都可以加入购物车；下单环节再要求登录
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
-    setIsLoggedIn(hasUserToken())
+    fetchIsLoggedIn().then(setIsLoggedIn)
     setItems(prev => {
       const existing = prev.find(i => i.id === item.id)
       let updated: CartItem[]

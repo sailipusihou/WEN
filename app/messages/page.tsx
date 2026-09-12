@@ -59,12 +59,8 @@ function MessagesPage() {
   const productPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // 无登录 cookie 直接跳登录页, 避免匿名 401 噪音
-    if (!document.cookie.includes('user_token=')) {
-      router.push("/login")
-      setLoading(false)
-      return
-    }
+    // 登录态必须由服务端判定：user_token 是 httpOnly cookie，document.cookie 读不到，
+    // 用 cookie 字符串判断会把已登录用户误判为未登录并踢回登录页。
     fetch("/api/auth/user").then(r => r.ok ? r.json() : Promise.reject()).then(d => { setUser(d.user); setLoading(false) }).catch(() => { router.push("/login"); setLoading(false) })
   }, [router])
 

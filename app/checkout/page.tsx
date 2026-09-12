@@ -60,13 +60,20 @@ export default function CheckoutPage() {
   const [couponAppliedCode, setCouponAppliedCode] = useState('')
 
   useEffect(() => {
-    // 结算需登录：先判断登录态，未登录时展示登录引导卡片
-    const loggedIn = document.cookie.includes('user_token=')
-    setIsLoggedIn(loggedIn)
-    setAuthChecked(true)
-    if (loggedIn) {
-      fetch('/api/auth/user').then(r => r.ok ? r.json() : null).then(d => { if (d?.user?.email) setUserEmail(d.user.email) }).catch(() => {})
-    }
+    // 结算需登录：未登录时展示登录引导卡片。
+    // 注意：user_token 是 httpOnly cookie，document.cookie 读不到，
+    // 必须由服务端接口 /api/auth/user 判定登录态（200 = 已登录，401 = 未登录）。
+    let cancelled = false
+    fetch('/api/auth/user')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (cancelled) return
+        setIsLoggedIn(!!d?.user)
+        if (d?.user?.email) setUserEmail(d.user.email)
+      })
+      .catch(() => { if (!cancelled) setIsLoggedIn(false) })
+      .finally(() => { if (!cancelled) setAuthChecked(true) })
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {

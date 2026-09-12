@@ -45,11 +45,10 @@ export default function Header() {
   useEffect(() => {
     const stored = localStorage.getItem("otm_user")
     if (stored) { setLoggedIn(true) }
-    else if (document.cookie.includes('user_token=')) {
-      // 修复 M16: 无登录 cookie 时不再发起请求, 消除公开页 401 控制台噪音
+    else {
+      // user_token 是 httpOnly cookie，document.cookie 读不到；
+      // 只能由服务端 /api/auth/user 判定（200 = 已登录）。
       fetch('/api/auth/user').then(r => setLoggedIn(r.ok)).catch(() => setLoggedIn(false))
-    } else {
-      setLoggedIn(false)
     }
   }, [])
 

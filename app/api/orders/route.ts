@@ -429,7 +429,10 @@ export async function POST(req: NextRequest) {
     const activePromotions = getActivePromotions()
 
     for (const item of rawItems) {
-      if (!item.id || !item.productId) {
+      // 前端购物车项（lib/cart-types.ts CartItem）只有 id、没有 productId，
+      // 下一行用 `item.productId || item.id` 兜底，因此两者有其一即可。
+      // 旧写法 `!item.id || !item.productId` 会让所有正常下单请求恒 400。
+      if (!item.id && !item.productId) {
         return NextResponse.json({ error: 'Invalid item: missing product ID' }, { status: 400 })
       }
       const productId = item.productId || item.id
