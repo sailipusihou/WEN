@@ -157,8 +157,19 @@ export async function POST(req: NextRequest) {
   let rawBody = ''
   try {
     rawBody = await req.text()
-    const settings = getSettings() as any
-    const webhookId = String(settings.paypalWebhookId || process.env.PAYPAL_WEBHOOK_ID || '').trim()
+    // 直接读仓储层，绕开 getSettings() 的进程内缓存：
+    // 后台刚保存 Webhook ID 后必须立刻生效，否则 PayPal 的推送会一直被拒。
+    let webhookId = ''
+    try {
+      const fresh = getRepository().settings.get() as any
+      webhookId = String(fresh?.paypalWebhookId || '').trim()
+    } catch {
+      webhookId = ''
+    }
+    if (!webhookId) {
+      const settings = getSettings() as any
+      webhookId = String(settings.paypalWebhookId || process.env.PAYPAL_WEBHOOK_ID || '').trim()
+    }
 
     if (!webhookId) {
       console.warn('[PayPal Webhook] 尚未配置 Webhook ID，按安全默认值拒绝该事件')
