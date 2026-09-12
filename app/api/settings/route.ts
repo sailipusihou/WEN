@@ -12,7 +12,7 @@ function maskSecret(s: string | undefined): string {
 function sanitizeSettingsForAdmin(s: SiteSettings) {
   // 安全修复 H2: 全部支付/社媒/Webhook/AI 密钥与员工密码哈希一律不返回, 仅返回 has* 标志与掩码预览
   const {
-    adminPassword, smtpPass, paypalClientSecret, payoneerClientSecret,
+    adminPassword, smtpPass, paypalClientSecret, paypalWebhookId, payoneerClientSecret,
     aiApiKey, aiCopyApiKey, aiImageApiKey, aiImageRefApiKey, aiVideoApiKey, aiAudioApiKey,
     xApiSecret, xAccessToken, xAccessTokenSecret,
     fbClientSecret, fbPageAccessToken,
@@ -34,6 +34,8 @@ function sanitizeSettingsForAdmin(s: SiteSettings) {
     hasAdminPassword: !!(s.adminPasswordHash || s.adminPassword),
     hasSmtpPass: !!smtpPass,
     hasPaypalSecret: !!paypalClientSecret,
+    // Webhook ID 与密钥同等对待：只回报是否已配置，不回传明文
+    hasPaypalWebhook: !!paypalWebhookId,
     hasPayoneerSecret: !!payoneerClientSecret,
     hasAiApiKey: !!aiApiKey,
     hasAiCopyApiKey: !!aiCopyApiKey,
@@ -163,6 +165,7 @@ const STRING_FIELDS: Record<string, number> = {
   trackingUrlTemplate: 500,
   paypalClientId: 200,
   paypalClientSecret: 200,
+  paypalWebhookId: 100,
   paypalEnv: 20,
   payoneerClientId: 200,
   payoneerClientSecret: 200,

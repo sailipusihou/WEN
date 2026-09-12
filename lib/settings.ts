@@ -256,6 +256,8 @@ export interface SiteSettings {
   paypalEnv: "sandbox" | "production"
   paypalClientId: string
   paypalClientSecret: string
+  /** PayPal 后台创建 Webhook 后生成的 Webhook ID，用于校验推送签名 */
+  paypalWebhookId: string
   payoneerEnabled: boolean
   payoneerEnv: "sandbox" | "production"
   payoneerClientId: string
@@ -553,6 +555,7 @@ export const DEFAULTS: SiteSettings = {
   paypalEnv: "sandbox",
   paypalClientId: "",
   paypalClientSecret: "",
+  paypalWebhookId: "",
   payoneerEnabled: false,
   payoneerEnv: "sandbox",
   payoneerClientId: "",
