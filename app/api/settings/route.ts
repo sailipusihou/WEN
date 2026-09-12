@@ -176,6 +176,7 @@ const STRING_FIELDS: Record<string, number> = {
   smtpHost: 200,
   smtpUser: 200,
   smtpFromEmail: 200,
+  smtpReplyTo: 200,
   aiProvider: 50,
   aiApiKey: 500,
   aiModel: 100,
@@ -401,7 +402,7 @@ export async function PUT(req: NextRequest) {
 
     const stringFields = [
       'siteLogo', 'adminUsername', 'smtpHost', 'smtpUser',
-      'smtpFromEmail', 'autoAssignStrategy', 'autoAssignTargetStaff',
+      'smtpFromEmail', 'smtpReplyTo', 'autoAssignStrategy', 'autoAssignTargetStaff',
       'smtpPass',
     ]
     for (const field of stringFields) {

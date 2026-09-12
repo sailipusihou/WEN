@@ -2479,6 +2479,7 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
               <Field label="Username"><Input value={settings.smtpUser || ""} onChange={v => update("smtpUser", v)} /></Field>
               <Field label="Password"><Input type="text" value={settings.smtpPass || ""} onChange={v => update("smtpPass", v)} /></Field>
               <Field label="From Email"><Input value={settings.smtpFromEmail || ""} onChange={v => update("smtpFromEmail", v)} /></Field>
+              <Field label="Reply-To Email"><Input value={settings.smtpReplyTo || ""} onChange={v => update("smtpReplyTo", v)} /></Field>
               <Field label="Footer Email"><Input value={settings.footerEmail || ""} onChange={v => update("footerEmail", v)} /></Field>
               <Field label="Footer Phone"><Input value={settings.footerPhone || ""} onChange={v => update("footerPhone", v)} /></Field>
             </div>

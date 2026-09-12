@@ -183,8 +183,19 @@ function MessagesPage() {
     if (!file) return
     if (file.size > 5 * 1024 * 1024) return alert("File too large (max 5MB)")
     const fd = new FormData(); fd.append("file", file)
-    const res = await fetch("/api/upload", { method: "POST", body: fd })
-    if (res.ok) { const d = await res.json(); sendMsg("", { attachments: [{ type, url: d.url, name: file.name }] }) }
+    try {
+      // 走客户专用上传接口 (已登录客户即可上传); 走 /api/upload 会被管理员鉴权拦成 401
+      const res = await fetch("/api/messages/upload", { method: "POST", body: fd, credentials: "include" })
+      if (res.ok) {
+        const d = await res.json()
+        sendMsg("", { attachments: [{ type: d.kind === "image" ? "image" : "file", url: d.url, name: d.name || file.name }] })
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error || "Upload failed")
+      }
+    } catch {
+      alert("Upload failed, please try again")
+    }
     e.target.value = ""
   }
 
@@ -404,7 +415,7 @@ function MessagesPage() {
                 <button onClick={() => imgRef.current?.click()} className="p-2 text-otb-ink/30 hover:text-otb-terracotta transition-colors" title="Send image"><ImageIcon size={16} /></button>
                 <button onClick={() => fileRef.current?.click()} className="p-2 text-otb-ink/30 hover:text-otb-terracotta transition-colors" title="Send file"><Paperclip size={16} /></button>
                 <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, "image")} />
-                <input ref={fileRef} type="file" className="hidden" onChange={e => handleFileUpload(e, "file")} />
+                <input ref={fileRef} type="file" accept=".pdf,.txt,application/pdf,text/plain" className="hidden" onChange={e => handleFileUpload(e, "file")} />
                 <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg(text)} placeholder="Type a message..." className="flex-1 px-3 py-2 border border-otb-sand/50 rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
                 <button onClick={() => sendMsg(text)} disabled={sending} className="px-4 py-2 bg-otb-terracotta text-white text-sm font-serif rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors flex items-center gap-1.5">{sending ? "..." : <><Send size={14} /> Send</>}</button>
               </div>

@@ -496,6 +496,18 @@ export function initDatabase() {
   addMsgCol('toName', 'TEXT')
   addMsgCol('orderRef', 'TEXT')
 
+  // 迁移: 给 shipments 表添加「发货通知」记录列 (后台手动通知客户后留痕)
+  const shipmentColumns = db.prepare("PRAGMA table_info(shipments)").all() as any[]
+  const shipmentColNames = new Set(shipmentColumns.map(c => c.name))
+  const addShipmentCol = (col: string, def: string) => {
+    if (!shipmentColNames.has(col)) {
+      try { db.exec(`ALTER TABLE shipments ADD COLUMN ${col} ${def}`) } catch {}
+    }
+  }
+  addShipmentCol('notifiedAt', 'TEXT')
+  addShipmentCol('notifiedChannel', 'TEXT')
+  addShipmentCol('notifiedTo', 'TEXT')
+
   // 迁移: 给 reviews 表添加缺失的列（订单关联 + 审核/隐藏/删除状态）
   const reviewColumns = db.prepare("PRAGMA table_info(reviews)").all() as any[]
   const reviewColNames = new Set(reviewColumns.map(c => c.name))

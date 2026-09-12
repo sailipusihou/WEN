@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState, useEffect, useCallback } from "react"
 import {
   Truck, Search, Plus, ExternalLink, MapPin, Clock, Package, CheckCircle,
@@ -56,6 +56,8 @@ export default function AdminShippingPage() {
   const [syncing, setSyncing] = useState(false)
   const [testTrackingInput, setTestTrackingInput] = useState('')
   const [testTrackingLoading, setTestTrackingLoading] = useState(false)
+  // 发货通知客户 (手动点击发送: 邮件 / 站内消息)
+  const [notifyShipment, setNotifyShipment] = useState<any>(null)
 
   // 创建发货表单
   const [orders, setOrders] = useState<any[]>([])
@@ -699,6 +701,7 @@ export default function AdminShippingPage() {
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--adm-text-secondary)', width: '160px' }}>Tracking #</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--adm-text-secondary)', width: '110px' }}>Status</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--adm-text-secondary)', width: '120px' }}>Shipped</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--adm-text-secondary)', width: '150px' }}>Customer Notify</th>
                   <th className="text-right px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--adm-text-secondary)', width: '80px' }}>Action</th>
                 </tr>
               </thead>
@@ -761,6 +764,29 @@ export default function AdminShippingPage() {
                       </td>
                       <td className="px-4 py-3" style={{ width: '120px' }}>
                         <span className="text-xs" style={{ color: 'var(--adm-text-secondary)' }}>{fmtDate(s.shippedAt)}</span>
+                      </td>
+                      <td className="px-4 py-3" style={{ width: '150px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setNotifyShipment(s) }}
+                          className="text-left w-full"
+                          title={order?.customerEmail ? `Notify ${order.customerEmail}` : 'This order has no customer email'}
+                        >
+                          {s.notifiedAt ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: '#22c55e' }}>
+                              <CheckCircle size={11} />
+                              {s.notifiedChannel === 'email' ? 'Emailed' : 'In-site'} · {fmtDate(s.notifiedAt)}
+                            </span>
+                          ) : order?.customerEmail ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--adm-accent)' }}>
+                              <Send size={11} /> Notify customer
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: '#f59e0b' }}>
+                              <AlertCircle size={11} /> No email
+                            </span>
+                          )}
+                        </button>
                       </td>
                       <td className="px-3 py-3 text-right" style={{ width: '80px' }}>
                         <button
@@ -974,6 +1000,16 @@ export default function AdminShippingPage() {
         >
           <OrderDetailPanel shipment={orderDetailShipment} fmtDate={fmtDate} fmtMoney={fmtMoney} />
         </Modal>
+      )}
+
+      {/* 发货通知客户弹窗 */}
+      {notifyShipment && (
+        <NotifyCustomerModal
+          shipment={notifyShipment}
+          fmtDate={fmtDate}
+          onClose={() => setNotifyShipment(null)}
+          onSent={() => { fetchShipments() }}
+        />
       )}
 
       {/* 物流商配置面板 */}
@@ -1936,6 +1972,139 @@ function OrderDetailPanel({ shipment, fmtDate, fmtMoney }: { shipment: any; fmtD
         </a>
       </div>
     </div>
+  )
+}
+
+// 发货通知客户弹窗
+// 需求: 只有订单已发货才通知; 手动点击发送 (邮件 / 站内消息);
+//       后台要明确显示「有邮箱 / 无邮箱 / 已发送·时间」。
+function NotifyCustomerModal({
+  shipment, fmtDate, onClose, onSent,
+}: { shipment: any; fmtDate: (s: string) => string; onClose: () => void; onSent: () => void }) {
+  const order = shipment._orderInfo
+  const email: string = order?.customerEmail || ''
+  const [sending, setSending] = useState<'' | 'email' | 'message'>('')
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const alreadySent = !!shipment.notifiedAt
+  const channelLabel = shipment.notifiedChannel === 'email' ? 'Email' : shipment.notifiedChannel === 'message' ? 'In-site message' : ''
+
+  const send = async (channel: 'email' | 'message') => {
+    if (alreadySent && !confirm(`This shipment was already notified via ${channelLabel} at ${fmtDate(shipment.notifiedAt)}.\n\nSend again?`)) return
+    setSending(channel)
+    setResult(null)
+    try {
+      const r = await fetch('/api/shipments/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shipmentId: shipment.id, channel }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok) {
+        setResult({ ok: true, text: channel === 'email' ? `Email sent to ${d.sentTo}` : `In-site message delivered to ${d.sentTo}` })
+        onSent()
+      } else {
+        setResult({ ok: false, text: d.error || 'Failed to notify customer' })
+      }
+    } catch (e: any) {
+      setResult({ ok: false, text: e?.message || 'Failed to notify customer' })
+    } finally {
+      setSending('')
+    }
+  }
+
+  return (
+    <Modal title="Notify Customer" onClose={onClose} wide>
+      <div className="space-y-4">
+        {/* 当前通知状态 */}
+        <div className="rounded-lg border p-4" style={{ borderColor: 'var(--adm-border)', backgroundColor: 'var(--adm-card)' }}>
+          <h4 className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: 'var(--adm-text)' }}>
+            <Send size={13} className="adm-accent" /> Notification Status
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--adm-input)' }}>
+              <p className="text-[10px] font-medium" style={{ color: 'var(--adm-text-secondary)' }}>Customer Email</p>
+              {email ? (
+                <p className="text-xs mt-0.5 font-mono break-all" style={{ color: 'var(--adm-text)' }}>{email}</p>
+              ) : (
+                <p className="text-xs mt-0.5 font-medium flex items-center gap-1" style={{ color: '#f59e0b' }}>
+                  <AlertCircle size={11} /> No email on this order
+                </p>
+              )}
+            </div>
+            <div className="px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--adm-input)' }}>
+              <p className="text-[10px] font-medium" style={{ color: 'var(--adm-text-secondary)' }}>Last Notified</p>
+              {alreadySent ? (
+                <p className="text-xs mt-0.5 font-medium flex items-center gap-1" style={{ color: '#22c55e' }}>
+                  <CheckCircle size={11} /> {channelLabel} · {fmtDate(shipment.notifiedAt)}
+                </p>
+              ) : (
+                <p className="text-xs mt-0.5" style={{ color: 'var(--adm-text-secondary)' }}>Not notified yet</p>
+              )}
+            </div>
+          </div>
+          {alreadySent && shipment.notifiedTo && (
+            <p className="text-[10px] mt-2" style={{ color: 'var(--adm-text-secondary)' }}>Sent to: {shipment.notifiedTo}</p>
+          )}
+        </div>
+
+        {/* 发货信息预览 */}
+        <div className="rounded-lg border p-4" style={{ borderColor: 'var(--adm-border)', backgroundColor: 'var(--adm-card)' }}>
+          <h4 className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: 'var(--adm-text)' }}>
+            <Truck size={13} className="adm-accent" /> What the customer will receive
+          </h4>
+          <div className="text-[11px] space-y-1 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--adm-input)', color: 'var(--adm-text)' }}>
+            <p>Order #{order?.orderNo || shipment.orderNo || shipment.orderId}</p>
+            <p>Carrier: {shipment.carrierName || shipment.carrierCode || '-'}</p>
+            <p className="font-mono">Tracking: {shipment.trackingNumber}</p>
+            {shipment.estimatedDelivery && <p>Estimated delivery: {shipment.estimatedDelivery}</p>}
+          </div>
+        </div>
+
+        {!email && (
+          <div className="px-3 py-2 rounded-lg text-xs flex items-start gap-2" style={{ backgroundColor: 'rgba(245,158,11,0.1)', color: '#b45309' }}>
+            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+            <span>
+              This order has no customer email, so neither an email nor an in-site message can be delivered.
+              Please contact the customer by phone or another channel.
+            </span>
+          </div>
+        )}
+
+        {result && (
+          <div className="px-3 py-2 rounded-lg text-xs flex items-center gap-2"
+            style={{ backgroundColor: result.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: result.ok ? '#16a34a' : '#ef4444' }}>
+            {result.ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />} {result.text}
+          </div>
+        )}
+
+        {/* 操作按钮 */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={!email || sending !== ''}
+            onClick={() => send('email')}
+            className="text-xs px-4 py-2 rounded-lg font-medium inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: 'var(--adm-accent)', color: '#fff' }}
+          >
+            <Send size={13} /> {sending === 'email' ? 'Sending…' : 'Send Shipping Email'}
+          </button>
+          <button
+            type="button"
+            disabled={!email || sending !== ''}
+            onClick={() => send('message')}
+            className="text-xs px-4 py-2 rounded-lg font-medium inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ color: 'var(--adm-accent)', border: '1px solid var(--adm-border)' }}
+          >
+            <Package size={13} /> {sending === 'message' ? 'Sending…' : 'Send In-site Message'}
+          </button>
+        </div>
+        <p className="text-[10px]" style={{ color: 'var(--adm-text-secondary)' }}>
+          Emails are sent through the SMTP account configured in Settings → Email. The in-site message appears in the
+          customer&apos;s Messages page when they sign in.
+        </p>
+      </div>
+    </Modal>
   )
 }
 

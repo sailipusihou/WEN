@@ -248,6 +248,8 @@ export interface SiteSettings {
   smtpUser: string
   smtpPass: string
   smtpFromEmail: string
+  /** 回复地址 (客户直接回信时收到的邮箱, 如 hello@lowflame.store); 留空则回退到 smtpFromEmail */
+  smtpReplyTo: string
   defaultShippingDays: number
   shippingZones: ShippingZone[]
   defaultCarrier: string
@@ -538,6 +540,7 @@ export const DEFAULTS: SiteSettings = {
   smtpUser: "",
   smtpPass: "",
   smtpFromEmail: "",
+  smtpReplyTo: "",
   socialFacebook: "https://facebook.com",
   socialX: "https://x.com",
   socialInstagram: "https://instagram.com",

@@ -16,6 +16,8 @@ const publicUserApiPaths = ['/api/auth/user-login', '/api/auth/register']
 // 公开写路径豁免: 路由内部自行处理鉴权/签名/限频, 中间件不拦截
 const publicWritePaths: { path: string; methods?: string[] }[] = [
   { path: '/api/messages', methods: ['POST'] },      // 客户咨询留言 (公开)
+  // 客户聊天附件上传: 路由内部自己校验 (已登录客户或管理员), 否则客户上传会被这里 401
+  { path: '/api/messages/upload', methods: ['POST'] },
   { path: '/api/coupons', methods: ['POST'] },       // 优惠券 apply (公开; 管理端创建由路由校验)
   { path: '/api/marketing/webhook' },                // 平台 webhook 回调 (签名校验在路由内, 平台无 cookie)
   // PayPal Webhook: 由 PayPal 服务端推送, 不带任何 cookie。若被中间件拦住会 401,

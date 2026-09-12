@@ -796,9 +796,12 @@ export const userRepo = {
 
   add(user: User): User {
     const db = getDb()
+    // 修复: 原 INSERT 漏掉了 token / tokenExpiresAt —— 注册接口是「先写库再发 cookie」,
+    // 于是新注册用户浏览器里虽然拿到了 cookie, 但库里 token 为 NULL,
+    // /api/auth/user 查不到人 → 直接被踢回登录页 (注册即掉线)。
     db.prepare(`
-      INSERT INTO users (id, email, passwordHash, salt, firstName, lastName, phone, avatar, dob, gender, bio, preferredCurrency, coupons, role, createdAt, updatedAt)
-      VALUES (@id, @email, @passwordHash, @salt, @firstName, @lastName, @phone, @avatar, @dob, @gender, @bio, @preferredCurrency, @coupons, @role, @createdAt, @updatedAt)
+      INSERT INTO users (id, email, passwordHash, salt, firstName, lastName, phone, avatar, dob, gender, bio, preferredCurrency, coupons, role, token, tokenExpiresAt, createdAt, updatedAt)
+      VALUES (@id, @email, @passwordHash, @salt, @firstName, @lastName, @phone, @avatar, @dob, @gender, @bio, @preferredCurrency, @coupons, @role, @token, @tokenExpiresAt, @createdAt, @updatedAt)
     `).run({
       id: user.id, email: user.email, passwordHash: user.passwordHash, salt: user.salt,
       firstName: user.firstName || '', lastName: user.lastName || '', phone: user.phone || '',
@@ -806,6 +809,7 @@ export const userRepo = {
       bio: user.bio || null, preferredCurrency: user.preferredCurrency || 'USD',
       coupons: user.coupons && user.coupons.length ? JSON.stringify(user.coupons) : null,
       role: user.role || 'customer',
+      token: user.token || null, tokenExpiresAt: user.tokenExpiresAt || null,
       createdAt: user.createdAt, updatedAt: user.updatedAt || user.createdAt,
     })
     // 保存 addresses
@@ -1628,6 +1632,10 @@ function rowToShipment(row: any): any {
     events: row.events ? JSON.parse(row.events) : [],
     notes: row.notes || '',
     createdBy: row.createdBy || '',
+    // 发货通知记录 (后台 "通知客户" 用): 渠道 email | message, 发送时间与目标
+    notifiedAt: row.notifiedAt || '',
+    notifiedChannel: row.notifiedChannel || '',
+    notifiedTo: row.notifiedTo || '',
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
@@ -1710,6 +1718,9 @@ export const shipmentRepo = {
     setField('estimatedDelivery', updates.estimatedDelivery)
     setField('deliveredAt', updates.deliveredAt)
     setField('notes', updates.notes)
+    setField('notifiedAt', updates.notifiedAt)
+    setField('notifiedChannel', updates.notifiedChannel)
+    setField('notifiedTo', updates.notifiedTo)
     if (updates.events !== undefined) {
       fields.push('events = ?')
       values.push(JSON.stringify(updates.events))

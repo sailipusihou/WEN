@@ -10,6 +10,8 @@ const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"])
 const VIDEO_EXTS = new Set([".mp4", ".webm", ".mov", ".ogg", ".ogv"])
 // 修复 L15: 补充音频扩展名 (AI 生成音频此前上传后无法回读)
 const AUDIO_EXTS = new Set([".mp3", ".wav", ".m4a", ".aac", ".flac"])
+// 客户聊天附件: PDF / TXT (仅这两种非媒体文档, 不会被浏览器当作可执行内容渲染)
+const DOC_EXTS = new Set([".pdf", ".txt"])
 
 const MIME: Record<string, string> = {
   ".png": "image/png",
@@ -27,6 +29,8 @@ const MIME: Record<string, string> = {
   ".m4a": "audio/mp4",
   ".aac": "audio/aac",
   ".flac": "audio/flac",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain; charset=utf-8",
 }
 
 export async function GET(req: NextRequest) {
@@ -39,7 +43,8 @@ export async function GET(req: NextRequest) {
     const isImage = IMAGE_EXTS.has(ext)
     const isVideo = VIDEO_EXTS.has(ext)
     const isAudio = AUDIO_EXTS.has(ext)
-    if (!isImage && !isVideo && !isAudio) {
+    const isDoc = DOC_EXTS.has(ext)
+    if (!isImage && !isVideo && !isAudio && !isDoc) {
       return NextResponse.json({ error: "Unsupported file type" }, { status: 400 })
     }
 
@@ -139,6 +144,25 @@ export async function GET(req: NextRequest) {
           "Content-Type": contentType,
           "Content-Length": String(fileSize),
           "Accept-Ranges": "bytes",
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "x-robots-tag": "noindex",
+          "Access-Control-Allow-Origin": "null",
+          "X-Content-Type-Options": "nosniff",
+        },
+      })
+    }
+
+    // 文档分支 (客户聊天附件: PDF / TXT)
+    if (isDoc) {
+      const buffer = fs.readFileSync(filepath)
+      return new NextResponse(buffer, {
+        status: 200,
+        statusText: "OK",
+        headers: {
+          "Content-Type": contentType,
+          "Content-Length": String(buffer.length),
+          // 附件名由服务端生成, 只可能是 .pdf/.txt; nosniff 防止浏览器按 HTML 解析
+          "Content-Disposition": `inline; filename="${safeName}"`,
           "Cache-Control": "public, max-age=31536000, immutable",
           "x-robots-tag": "noindex",
           "Access-Control-Allow-Origin": "null",
