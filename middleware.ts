@@ -18,6 +18,10 @@ const publicWritePaths: { path: string; methods?: string[] }[] = [
   { path: '/api/messages', methods: ['POST'] },      // 客户咨询留言 (公开)
   { path: '/api/coupons', methods: ['POST'] },       // 优惠券 apply (公开; 管理端创建由路由校验)
   { path: '/api/marketing/webhook' },                // 平台 webhook 回调 (签名校验在路由内, 平台无 cookie)
+  // PayPal Webhook: 由 PayPal 服务端推送, 不带任何 cookie。若被中间件拦住会 401,
+  // 导致「用户付款后没跳回本站」的订单永远无法补记为已支付。
+  // 该路由内部用 PayPal 官方 verify-webhook-signature 验签, 未配置 Webhook ID 时一律拒绝。
+  { path: '/api/paypal/webhook' },
 ]
 
 export function middleware(request: NextRequest) {
