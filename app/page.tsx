@@ -32,7 +32,7 @@ export default async function HomePage() {
     description: 'Low Flame — handcrafted objects with quiet character.',
     url: getSiteBaseUrl(),
     logo: '/images/low-flame-logo.png',
-    email: settings.footerEmail || 'hello@lowflame.com',
+    email: settings.footerEmail || 'hello@lowflame.store',
     telephone: settings.footerPhone,
     address: settings.footerAddress ? {
       '@type': 'PostalAddress',

@@ -46,7 +46,7 @@ export default function ContactPage() {
             </p>
             <div className="space-y-3 mt-8">
               <div className="flex items-center gap-3 text-sm font-sans text-[#6B6B6B]/60">
-                <Mail size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> hello@lowflame.com
+                <Mail size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> hello@lowflame.store
               </div>
               <div className="flex items-center gap-3 text-sm font-sans text-[#6B6B6B]/60">
                 <MapPin size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> Shanghai, China

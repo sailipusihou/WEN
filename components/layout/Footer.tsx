@@ -37,7 +37,7 @@ export default function Footer() {
     { label: "Contact", href: "/contact" },
   ]
   const contacts = footer.contacts || [
-    { label: "Email", value: "hello@lowflame.com" },
+    { label: "Email", value: "hello@lowflame.store" },
     { label: "Phone", value: "+86 400-888-8888" },
     { label: "Hours", value: "Mon-Sat 9:00-18:00 (CST)" },
   ]

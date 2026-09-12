@@ -118,23 +118,36 @@ function main() {
   }
   const corpus = buildPhrase()
 
-  const files = fs.readdirSync(UPLOAD_DIR)
-    .map(name => {
-      const p = path.join(UPLOAD_DIR, name)
+  // 递归收集 (包含 uploads/ai 等子目录)
+  const files = []
+  ;(function walk(dir, rel) {
+    let entries = []
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return }
+    for (const e of entries) {
+      const p = path.join(dir, e.name)
+      const relPath = rel ? rel + '/' + e.name : e.name
+      if (e.isDirectory()) { walk(p, relPath); continue }
       let st
-      try { st = fs.statSync(p) } catch { return null }
-      if (!st.isFile()) return null
-      return { name, size: st.size, mtime: st.mtimeMs, full: p }
-    })
-    .filter(Boolean)
+      try { st = fs.statSync(p) } catch { continue }
+      if (!st.isFile()) continue
+      files.push({ name: relPath, size: st.size, mtime: st.mtimeMs, full: p })
+    }
+  })(UPLOAD_DIR, '')
 
   const now = Date.now()
   const orphans = []
   const kept = []
   const recent = []
 
+  // 保守判定: 相对路径 (ai/xxx.png) 或纯文件名 (xxx.png) 任一被引用就保留,
+  // 避免数据里只存了 basename 时误判为孤儿。
+  const isReferenced = (f) => {
+    const base = path.basename(f.name)
+    return corpus.includes(f.name) || (base !== f.name && corpus.includes(base))
+  }
+
   for (const f of files) {
-    if (corpus.includes(f.name)) { kept.push(f); continue }
+    if (isReferenced(f)) { kept.push(f); continue }
     if (now - f.mtime < MIN_AGE_MS) { recent.push(f); continue }
     orphans.push(f)
   }

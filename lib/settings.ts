@@ -480,7 +480,7 @@ const DEFAULT_FRONTEND: FrontendContent = {
       { label: "Returns", href: "/contact" },
     ],
     contacts: [
-      { label: "Email", value: "hello@lowflame.com" },
+      { label: "Email", value: "hello@lowflame.store" },
       { label: "Phone", value: "+86 400-888-8888" },
       { label: "Hours", value: "Mon-Sat 9:00-18:00 (CST)" },
     ],
@@ -528,7 +528,7 @@ export const DEFAULTS: SiteSettings = {
   accentColor: "#8BA8A0",
   featuredProductIds: [],
   aboutText: "Low Flame — contemporary craftsmanship with quiet character.",
-  footerEmail: "hello@lowflame.com",
+  footerEmail: "hello@lowflame.store",
   footerPhone: "+86 400-888-8888",
   currency: "USD",
   shippingFreeThreshold: 416.67,
