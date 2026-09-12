@@ -142,8 +142,27 @@ if [ "$APP_STOPPED" = "0" ]; then
   APP_STOPPED=1
 fi
 
+# ---- 独立看门狗 ----
+# 事故记录：这台 2GB 机器在 next build 结束后，主脚本进程曾两次被内核直接
+# 杀掉（SIGKILL，trap 无法执行），结果是构建成功、但服务永远停在 stopped，
+# 网站 502。看门狗是一个脱离本脚本进程组的独立进程：它等构建结束标记，
+# 然后只在服务确实没运行时兜底拉起，确保「无论主脚本怎么死，站点都会回来」。
+BUILD_DONE="/tmp/lowflame-build-done"
+rm -f "$BUILD_DONE"
+setsid bash -c "
+  for i in \$(seq 1 240); do [ -f '$BUILD_DONE' ] && break; sleep 5; done
+  sleep 10
+  PID=\$(pm2 pid '$APP_NAME' 2>/dev/null || echo 0)
+  if [ -z \"\$PID\" ] || [ \"\$PID\" = \"0\" ]; then
+    pm2 start '$APP_NAME' >/dev/null 2>&1 || true
+  fi
+" >/dev/null 2>&1 < /dev/null &
+WATCHDOG_PID=$!
+echo "    已启动看门狗（pid $WATCHDOG_PID），保证构建后服务必定被拉起"
+
 echo "==> 4/6 生产构建（内存上限 ${BUILD_MEM}MB，约 1-3 分钟）..."
 if ! NODE_OPTIONS="--max-old-space-size=$BUILD_MEM" npm run build; then
+  touch "$BUILD_DONE"   # 通知看门狗放行
   echo ""
   echo "❌ 构建失败！正在恢复旧版本服务..."
   pm2 start "$APP_NAME" 2>/dev/null || true
@@ -151,9 +170,10 @@ if ! NODE_OPTIONS="--max-old-space-size=$BUILD_MEM" npm run build; then
   echo "   网站已恢复运行（仍是旧版本 $PREV_COMMIT）"
   exit 1
 fi
+touch "$BUILD_DONE"     # 构建成功，通知看门狗
 
 echo "==> 5/6 启动服务..."
-pm2 restart "$APP_NAME" 2>/dev/null || pm2 start npm --name "$APP_NAME" -- start
+pm2 restart "$APP_NAME" 2>/dev/null || pm2 start "$APP_NAME" 2>/dev/null || pm2 start npm --name "$APP_NAME" -- start
 APP_STOPPED=0   # 服务已由本脚本正常拉起，trap 不再接管
 
 echo "==> 6/6 检查状态..."
