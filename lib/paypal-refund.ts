@@ -9,6 +9,7 @@
 //
 // 现在两条路径都走这里的 refundPayPalOrder()。
 import { getRepository } from '@/lib/repository'
+import { restoreStockForOrder } from '@/lib/stock'
 
 export function getPayPalConfig() {
   try {
@@ -243,5 +244,23 @@ function applyRefundRecord(
     ],
   } as any)
 
-  return { totalRefunded, fullyRefunded }
+  // 修复 #8: 全额退清时把库存加回去（旧代码只有扣减没有回补，退款会造成库存虚耗）。
+  // 用 returnInfo.stockRestored 标记，保证只回补一次。
+  let stockNote = ''
+  if (fullyRefunded && !(order.returnInfo as any)?.stockRestored) {
+    try {
+      const { deducted } = restoreStockForOrder(order)
+      repo.orders.update(orderId, {
+        returnInfo: {
+          ...((repo.orders.getById(orderId)?.returnInfo) || {}),
+          stockRestored: true,
+        },
+      } as any)
+      stockNote = `，已回补库存 ${deducted} 件`
+    } catch (e) {
+      console.warn('[Refund] 回补库存失败:', e)
+    }
+  }
+
+  return { totalRefunded, fullyRefunded, stockNote }
 }
