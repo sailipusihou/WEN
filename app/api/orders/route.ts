@@ -15,7 +15,7 @@ import { type Shipment } from "@/lib/shipping"
 import { getActivePromotions, computePromotionForProduct, getCouponByCode, validateCouponForSubtotal, incrementCouponUsed } from "@/lib/promotions"
 
 // 服务端向 PayPal 验证 capture 真实性 (修复 C1/C2: 订单创建不再信任客户端声明的支付状态)
-async function verifyPayPalCapture(captureId: string): Promise<{ verified: boolean; status?: string; amount?: number }> {
+async function verifyPayPalCapture(captureId: string): Promise<{ verified: boolean; status?: string; amount?: number; currency?: string }> {
   const repo = getRepository()
   const settings = repo.settings.get()
   const clientId = settings.paypalClientId || process.env.PAYPAL_CLIENT_ID || ''
@@ -49,10 +49,24 @@ async function verifyPayPalCapture(captureId: string): Promise<{ verified: boole
       verified: cap.status === 'COMPLETED',
       status: cap.status,
       amount: parseFloat(cap.amount?.value || '0'),
+      currency: (cap.amount?.currency_code || '').toUpperCase(),
     }
   } catch {
     // 网络不可达/超时等: 视为无法验证, 订单标记为待人工核验而不是已支付
     return { verified: false }
+  }
+}
+
+// 同一笔 PayPal capture 只能核销一张订单。
+// 修复 S2: 旧逻辑不记录 captureId 的使用情况，攻击者可拿同一笔真实付款反复下单，
+// 每次都能得到一张 paid 订单（并重复扣库存、核销优惠券）。
+function findOrderByCaptureId(captureId: string): Order | undefined {
+  try {
+    return (getRepository().orders.list() as any[]).find(
+      (o) => o?.paypalTransaction?.captureId && String(o.paypalTransaction.captureId) === String(captureId)
+    )
+  } catch {
+    return undefined
   }
 }
 
@@ -559,9 +573,41 @@ export async function POST(req: NextRequest) {
       }
       // 服务端向 PayPal 验证 capture 真实性; 失败/网络不可达 → 标记待人工核验, 不视为已支付
       const verification = await verifyPayPalCapture(claimedTxn.captureId)
+
+      // ---- 修复 S1: 以 PayPal 返回的「真实扣款金额与币种」为准 ----
+      // 旧逻辑只用客户端传来的 claimedTxn.amount 比对总额（上一个 if 已经做过），
+      // 而 verifyPayPalCapture 返回的真实金额从未被使用。攻击者只需拿一笔 1 美元的真实
+      // capture，配上任意大的 claimedAmount，就能换来高价订单。
+      if (verification.verified) {
+        const realAmount = Number(verification.amount)
+        const realCurrency = (verification.currency || '').toUpperCase()
+        if (!Number.isFinite(realAmount) || realCurrency !== 'USD' || Math.abs(realAmount - orderTotalUsd) > 0.01) {
+          console.warn(
+            `[Orders] 金额校验失败 order=${id} 订单要求=${orderTotalUsd} USD, PayPal 实际=${verification.amount} ${verification.currency}`
+          )
+          return NextResponse.json(
+            {
+              error: `Payment verification failed: PayPal shows ${verification.currency || '?'} ${verification.amount}, but this order requires USD ${orderTotalUsd}`,
+            },
+            { status: 400 }
+          )
+        }
+      }
+
+      // ---- 修复 S2: 一笔 capture 只能核销一张订单 ----
+      if (findOrderByCaptureId(claimedTxn.captureId)) {
+        console.warn(`[Orders] captureId 已被使用: ${claimedTxn.captureId}`)
+        return NextResponse.json({ error: 'This payment has already been used for another order' }, { status: 400 })
+      }
+
       paymentVerified = verification.verified
       paymentStatus = paymentVerified ? 'paid' : 'pending_verification'
-      order.paypalTransaction = { ...claimedTxn, verified: paymentVerified }
+      order.paypalTransaction = {
+        ...claimedTxn,
+        verified: paymentVerified,
+        verifiedAmount: verification.amount,
+        verifiedCurrency: verification.currency,
+      }
     } else if (claimedTxn) {
       order.paypalTransaction = claimedTxn
     }
@@ -571,6 +617,15 @@ export async function POST(req: NextRequest) {
     const shouldMarkConversion = paymentVerified && !!order.referralCode
     if (shouldMarkConversion) {
       maybeMarkOrderReferralConversion(order, order.referralVisitorId, settings)
+    }
+
+    // 并发场景下再查一次（把竞态窗口缩到最小：PayPal 校验耗时期间可能有另一请求落库）
+    if (
+      paymentVerified &&
+      order.paypalTransaction?.captureId &&
+      findOrderByCaptureId(order.paypalTransaction.captureId)
+    ) {
+      return NextResponse.json({ error: 'This payment has already been used for another order' }, { status: 409 })
     }
 
     repo.orders.add(order)
