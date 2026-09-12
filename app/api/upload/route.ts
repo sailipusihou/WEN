@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
-import { requireAdmin } from "@/lib/auth"
+import { requireAdmin, requirePermission } from "@/lib/auth"
 import { getRepository } from "@/lib/repository"
 
 // 允许的扩展名 (不含 .)
@@ -88,6 +88,22 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 })
 
     const type = (formData.get("type") as string) || "general"
+
+    // 修复 S3: 此前只校验「是否登录」，任何管理员账号（含 order_processor 等
+    // 低权限员工）都能上传。而 type 完全由客户端控制，传 type=hero 就会以固定
+    // 文件名覆盖首页大图并直接改写站点设置——低权限员工可以改首页。
+    // 涉及站点外观素材的类型统一要求 settings_manage 权限。
+    const siteAssetTypes = new Set(['hero', 'hero-video', 'video', 'audio'])
+    if (siteAssetTypes.has(type)) {
+      const perm = requirePermission(req, 'settings_manage')
+      if ('error' in perm) {
+        return NextResponse.json(
+          { error: 'Forbidden: managing site media requires settings permission' },
+          { status: 403 }
+        )
+      }
+    }
+
     const isVideoUpload = type === "video" || type === "hero-video"
 
     // 音频分支: 支持 mp3/wav/m4a/aac/ogg/flac，供营销页音频库与视频配音使用
