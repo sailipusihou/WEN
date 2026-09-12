@@ -1088,6 +1088,18 @@ export const settingsRepo = {
       INSERT OR REPLACE INTO settings (key, value, updatedAt)
       VALUES (?, ?, datetime('now'))
     `).run(DEFAULT_SETTINGS_KEY, JSON.stringify(merged))
+
+    // 关键：清掉 getSettings() 的进程内缓存。
+    // getSettings() 用 lib/cache 缓存 settings（TTL 60 秒，且只在 JSON 写入路径
+    // saveSettings() 里才失效）。后台保存设置走的是这里，不失效的话
+    // 后台改了配置最长 60 秒才生效，表现为「明明改了却没反应」。
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require('@/lib/cache').invalidateCache('settings')
+    } catch {
+      // 缓存模块不可用不应影响设置保存本身
+    }
+
     return merged
   },
 }
