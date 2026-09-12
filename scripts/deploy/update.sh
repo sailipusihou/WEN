@@ -5,35 +5,60 @@
 # 流程：本地改代码并 git push -> 服务器执行本脚本
 # 数据（data/ 与 public/uploads/）不在 git 中，不会被覆盖
 #
-# 用法：bash /var/www/lowflame/scripts/deploy/update.sh
+# 用法：bash /var/www/lowflame/scripts/deploy/update.sh [--force] [--reinstall]
+#   --force      即使代码版本没变，也强制重新构建（不重装依赖）
+#   --reinstall  强制重跑 npm ci（很吃内存，非必要不用）
 #
-# 注意：本脚本在构建前会暂停 Node 服务，避免 2GB 内存的服务器
-#       因「构建 + 生产服务」同时占用内存而卡死（swap 抖动）。
-#       构建期间网站会短暂不可用（约 1-3 分钟）。
+# ------------------------------------------------------------
+# 2GB 内存服务器的安全策略（重要）
+#   这台服务器只有 2GB 内存 + 2GB swap。之前出现过「npm ci 期间
+#   内存耗尽导致整机 swap 抖动、SSH 与网站全部无响应、只能从云控制台
+#   重启」的严重事故。为此本脚本做了以下防护：
+#
+#   1) 先停服务再装依赖：pm2 停掉后能多出 200-400MB 内存；
+#   2) 只在 package-lock.json 变化时才执行 npm ci：
+#      纯代码改动直接跳过安装（这是最耗时也最吃内存的一步）；
+#   3) npm ci 限制内存与并发：--max-old-space-size=512 --maxsockets 4；
+#   4) 原生模块仅在真正加载失败时才重建，不做无谓编译；
+#   5) trap 兜底：脚本中途异常退出/被 kill 时自动把服务拉起来。
+#
+#   构建期间网站会短暂不可用（约 1-3 分钟），这是刻意的取舍。
 # ============================================================
 set -e
 
-# 用法：bash scripts/deploy/update.sh [--force]
-#   --force  即使代码版本没变也强制重新安装依赖并构建
-#            （用于手动 git reset 后，或需要重建产物时）
 FORCE=0
+REINSTALL=0
 for arg in "$@"; do
   case "$arg" in
     --force|-f) FORCE=1 ;;
+    --reinstall) REINSTALL=1 ;;
   esac
 done
 
 APP_DIR="/var/www/lowflame"
 APP_NAME="lowflame"
-NODE_MEM="1024"   # 构建进程内存上限（MB），2GB 服务器建议 1024
+BUILD_MEM="1024"    # next build 内存上限（MB）
+INSTALL_MEM="512"   # npm ci 内存上限（MB），刻意压低避免撑爆 2GB 机器
+LOCK_HASH_FILE="$APP_DIR/.deploy-lock-hash"
 
 cd "$APP_DIR"
+
+# ---- 兜底：无论怎么退出，只要服务被本脚本停过，就把它拉起来 ----
+APP_STOPPED=0
+restore_on_exit() {
+  local code=$?
+  if [ "$APP_STOPPED" = "1" ]; then
+    echo ""
+    echo "⚠️  脚本异常退出（code $code），正在恢复服务..."
+    pm2 start "$APP_NAME" 2>/dev/null || pm2 restart "$APP_NAME" 2>/dev/null || true
+  fi
+}
+trap restore_on_exit EXIT
 
 echo "=========================================="
 echo "  更新 Low Flame（$(date '+%Y-%m-%d %H:%M:%S')）"
 echo "=========================================="
 
-# 记录当前版本，便于回滚
 PREV_COMMIT=$(git rev-parse --short HEAD)
 echo "==> 当前版本: $PREV_COMMIT"
 
@@ -59,33 +84,77 @@ if [ "$PREV_COMMIT" = "$NEW_COMMIT" ]; then
 fi
 echo "    新版本: $NEW_COMMIT"
 
-echo "==> 2/6 安装依赖..."
-NODE_OPTIONS="--max-old-space-size=$NODE_MEM" npm ci --no-audit --no-fund
-
-echo "==> 2.5/6 重建原生模块（better-sqlite3，防止中断导致绑定缺失）..."
-npm rebuild better-sqlite3 2>&1 | tail -2
-
-# 验证 SQLite 可用，否则中止更新（避免网站起来但数据库不可用）
-if ! node -e "require('better-sqlite3')" 2>/dev/null; then
-  echo "❌ better-sqlite3 加载失败，中止更新以防服务不可用"
-  exit 1
+# ---- 判断是否需要重装依赖 ----
+# 默认策略：node_modules 已存在就跳过 npm ci（纯代码改动最常见，也最安全）；
+# 只有 lockfile 相对上次安装发生变化、或依赖目录缺失、或显式 --reinstall 才重装。
+CUR_LOCK_HASH=$(md5sum package-lock.json 2>/dev/null | cut -d' ' -f1)
+NEED_INSTALL=0
+if [ "$REINSTALL" = "1" ]; then
+  NEED_INSTALL=1
+elif [ ! -d node_modules/next ]; then
+  echo "    node_modules 缺失，需要安装依赖"
+  NEED_INSTALL=1
+elif [ -f "$LOCK_HASH_FILE" ] && [ "$CUR_LOCK_HASH" != "$(cat "$LOCK_HASH_FILE" 2>/dev/null)" ]; then
+  echo "    package-lock.json 有变化，需要安装依赖"
+  NEED_INSTALL=1
 fi
-echo "    SQLite 模块正常 ✓"
 
-echo "==> 3/6 暂停服务（释放内存给构建，避免 OOM 卡死）..."
-pm2 stop "$APP_NAME" 2>/dev/null || true
+if [ "$NEED_INSTALL" = "1" ]; then
+  echo "==> 2/6 依赖有变化，先停服务再安装（释放内存，避免 OOM 卡死）..."
+  pm2 stop "$APP_NAME" 2>/dev/null || true
+  APP_STOPPED=1
+  echo "    可用内存：$(free -m | awk '/^Mem:/{print $7"MB"}')；swap：$(free -m | awk '/^Swap:/{print $3"/"$2"MB"}')"
+  echo "    安装中（内存上限 ${INSTALL_MEM}MB，并发 4）..."
+  if ! NODE_OPTIONS="--max-old-space-size=$INSTALL_MEM" npm ci --no-audit --no-fund --maxsockets 4; then
+    echo "❌ 依赖安装失败，正在恢复旧版本服务..."
+    pm2 start "$APP_NAME" 2>/dev/null || true
+    APP_STOPPED=0
+    exit 1
+  fi
+  echo "$CUR_LOCK_HASH" > "$LOCK_HASH_FILE"
+else
+  echo "==> 2/6 依赖已就绪，跳过 npm ci（最省内存的一步）✓"
+  # 记录当前 lockfile 指纹作为基线，之后它一变就会自动重装
+  echo "$CUR_LOCK_HASH" > "$LOCK_HASH_FILE"
+fi
 
-echo "==> 4/6 生产构建（内存上限 ${NODE_MEM}MB，约 1-3 分钟）..."
-if ! NODE_OPTIONS="--max-old-space-size=$NODE_MEM" npm run build; then
+# ---- 原生模块只在真正不可用时才重建（重建要编译，很吃内存）----
+if ! node -e "require('better-sqlite3')" 2>/dev/null; then
+  echo "==> 2.5/6 better-sqlite3 不可用，重建原生模块..."
+  if [ "$APP_STOPPED" = "0" ]; then
+    pm2 stop "$APP_NAME" 2>/dev/null || true
+    APP_STOPPED=1
+  fi
+  NODE_OPTIONS="--max-old-space-size=$INSTALL_MEM" npm rebuild better-sqlite3 2>&1 | tail -2
+  if ! node -e "require('better-sqlite3')" 2>/dev/null; then
+    echo "❌ better-sqlite3 仍然不可用，中止更新以防数据库不可用"
+    exit 1
+  fi
+  echo "    SQLite 模块已修复 ✓"
+else
+  echo "==> 2.5/6 SQLite 模块正常 ✓"
+fi
+
+# ---- 构建：必须先停服务，否则 2GB 内存装不下「构建 + 生产服务」----
+if [ "$APP_STOPPED" = "0" ]; then
+  echo "==> 3/6 暂停服务（释放内存给构建，避免 OOM 卡死）..."
+  pm2 stop "$APP_NAME" 2>/dev/null || true
+  APP_STOPPED=1
+fi
+
+echo "==> 4/6 生产构建（内存上限 ${BUILD_MEM}MB，约 1-3 分钟）..."
+if ! NODE_OPTIONS="--max-old-space-size=$BUILD_MEM" npm run build; then
   echo ""
   echo "❌ 构建失败！正在恢复旧版本服务..."
   pm2 start "$APP_NAME" 2>/dev/null || true
+  APP_STOPPED=0
   echo "   网站已恢复运行（仍是旧版本 $PREV_COMMIT）"
   exit 1
 fi
 
 echo "==> 5/6 启动服务..."
 pm2 restart "$APP_NAME" 2>/dev/null || pm2 start npm --name "$APP_NAME" -- start
+APP_STOPPED=0   # 服务已由本脚本正常拉起，trap 不再接管
 
 echo "==> 6/6 检查状态..."
 sleep 5
@@ -98,5 +167,5 @@ echo ""
 echo "=========================================="
 echo "✅ 更新完成！$PREV_COMMIT -> $NEW_COMMIT"
 echo "=========================================="
-echo "  如需回滚： cd $APP_DIR && git checkout $PREV_COMMIT && bash $APP_DIR/scripts/deploy/update.sh"
+echo "  如需回滚： cd $APP_DIR && git checkout $PREV_COMMIT && bash $APP_DIR/scripts/deploy/update.sh --force"
 echo ""
