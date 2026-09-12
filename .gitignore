@@ -44,10 +44,15 @@ next-env.d.ts
 # dev server pid file
 *.pid
 
-# newly uploaded runtime media (商品图/语音等运行期文件不纳入版本控制;
-# 历史已跟踪文件保持不变, 部署时用 scp/rsync 同步 public/uploads/)
-/public/uploads/aud-*
-/public/uploads/voice-*
+# 运行期上传的素材（商品图 / 视频 / 语音 / AI 生成图）一律不进版本库。
+#
+# 此前只忽略了 aud-* / voice-*，导致 img-* / vid-* / hero-* / ai/* 仍会被
+# `git add -A` 提交，服务器 `git pull` 时反复出现同名未跟踪文件冲突。
+#
+# 注意：这里刻意不去动「已经被跟踪」的历史文件（不做 git rm --cached）——
+# 因为提交删除后，服务器执行 git pull 会把这些真实上传文件从工作区删掉，
+# 导致线上图片 404。历史文件保持原样，新文件从此不再进入版本库。
+/public/uploads/
 
 # logs
 *.log
