@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -43,6 +43,14 @@ export default function CartPage() {
 
   // 底部商品推荐（与详情页同款逻辑）：排除已在购物车里的商品
   const [related, setRelated] = useState<Product[]>([])
+  // 免邮门槛（后台系统设置）
+  const [freeThreshold, setFreeThreshold] = useState(416.67)
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => (r.ok ? r.json() : null))
+      .then(s => { if (s && Number(s.shippingFreeThreshold) > 0) setFreeThreshold(Number(s.shippingFreeThreshold)) })
+      .catch(() => {})
+  }, [])
   useEffect(() => {
     let alive = true
     fetch('/api/products?activeOnly=true')
@@ -139,8 +147,25 @@ export default function CartPage() {
                   <span>Shipping</span>
                   <span className="text-[#2C2C2C]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
-                {shipping > 0 && (
-                  <p className="font-sans text-[10px] text-[#6B6B6B]/40">Free shipping on orders over {formatPrice(convertPrice(416.67, currency), currency)}</p>
+                {shipping > 0 ? (
+                  <div className="pt-1">
+                    <p className="font-sans text-[11px] text-[#6B6B6B]/70 mb-2">
+                      Add <strong className="text-[#2C2C2C]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
+                    </p>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, Math.round((subtotal / freeThreshold) * 100))}%`,
+                          backgroundColor: '#8BA8A0',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="font-sans text-[11px] font-medium text-green-600 flex items-center gap-1.5">
+                    <Check size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
+                  </p>
                 )}
                 <div className="border-t border-[#EDE8DC]/60 pt-3 flex justify-between font-medium text-[#2C2C2C]">
                   <span className="font-sans text-sm">Total</span>

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown } from 'lucide-react'
+import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown, Lock, Truck, RotateCcw } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -121,6 +121,25 @@ export default function CheckoutPage() {
   }, [shipping.country, discountedSubtotal])
 
   const totalPrice = Math.round((discountedSubtotal - couponDiscount + shippingCost) * 100) / 100
+
+  // 免邮门槛（后台系统设置）：用于订单摘要里的免邮进度条
+  const [freeThreshold, setFreeThreshold] = useState(0)
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => (r.ok ? r.json() : null))
+      .then(s => { if (s) setFreeThreshold(Number(s.shippingFreeThreshold) || 0) })
+      .catch(() => {})
+  }, [])
+
+  // estimatedDays 是字符串（形如 "14-21"），这里解析出下限/上限算具体到达日期
+  const checkoutEta = (() => {
+    const nums = String(estimatedDays).match(/\d+/g)
+    if (!nums || !nums.length) return ''
+    const min = Number(nums[0])
+    const max = nums.length > 1 ? Number(nums[1]) : min + 7
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return `${fmt(new Date(Date.now() + min * 86400000))} – ${fmt(new Date(Date.now() + max * 86400000))}`
+  })()
 
   // 修复 H5: PayPal 按钮回调闭包只捕获首次渲染的值, 用 ref 始终读取最新金额
   const totalPriceRef = useRef(totalPrice)
@@ -484,7 +503,37 @@ export default function CheckoutPage() {
         <Link href="/cart" className="inline-flex items-center gap-1 font-sans text-xs text-[#6B6B6B]/50 hover:text-[#2C2C2C] transition-colors mb-8 tracking-wider uppercase">
           <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Cart
         </Link>
-        <h1 className="font-en text-3xl md:text-4xl text-[#2C2C2C] font-semibold tracking-tight mb-10">Checkout</h1>
+        <h1 className="font-en text-3xl md:text-4xl text-[#2C2C2C] font-semibold tracking-tight mb-6">Checkout</h1>
+
+        {/* 进度指示：让用户知道还剩几步，降低中途放弃 */}
+        <ol className="flex items-center gap-2 sm:gap-4 mb-10 font-sans text-[11px] tracking-[0.08em] uppercase">
+          {[
+            { n: 'Cart', done: true },
+            { n: 'Details', done: false, active: true },
+            { n: 'Payment', done: false },
+          ].map((s, i) => (
+            <li key={s.n} className="flex items-center gap-2 sm:gap-4">
+              <span className="flex items-center gap-2">
+                <span
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold"
+                  style={
+                    s.done
+                      ? { backgroundColor: '#8BA8A0', color: '#fff' }
+                      : s.active
+                        ? { backgroundColor: '#231F1C', color: '#fff' }
+                        : { backgroundColor: 'rgba(35,31,28,0.08)', color: 'rgba(35,31,28,0.45)' }
+                  }
+                >
+                  {s.done ? '✓' : i + 1}
+                </span>
+                <span style={{ color: s.active ? '#231F1C' : 'rgba(35,31,28,0.45)', fontWeight: s.active ? 600 : 400 }}>
+                  {s.n}
+                </span>
+              </span>
+              {i < 2 && <span className="w-8 sm:w-12 h-px" style={{ backgroundColor: 'rgba(35,31,28,0.14)' }} />}
+            </li>
+          ))}
+        </ol>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {referralInfo && (
@@ -610,6 +659,51 @@ export default function CheckoutPage() {
               <p className="text-[10px] text-[#6B6B6B]/40 mt-3 font-sans">
                 Secure payment processing by PayPal. You can pay with PayPal account, Visa, MasterCard, American Express, Discover, or debit card.
               </p>
+
+              {/* 可接受的支付方式图标（凭据感 / 降低支付页弃单） */}
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                {[
+                  { label: 'VISA', bg: '#1A1F71', fg: '#fff', text: 'VISA' },
+                  { label: 'Mastercard', bg: '#fff', fg: '#EB001B', circles: true },
+                  { label: 'AMEX', bg: '#006FCF', fg: '#fff', text: 'AMEX' },
+                  { label: 'Discover', bg: '#fff', fg: '#F76B1C', text: 'DISCOVER', border: true },
+                  { label: 'PayPal', bg: '#fff', fg: '#003087', text: 'PayPal', border: true },
+                ].map(c => (
+                  <span
+                    key={c.label}
+                    title={c.label}
+                    aria-label={c.label}
+                    className="inline-flex items-center justify-center font-sans font-bold"
+                    style={{
+                      width: 46, height: 30, borderRadius: 4,
+                      backgroundColor: c.bg, color: c.fg,
+                      fontSize: c.text && c.text.length > 5 ? 7 : 9,
+                      letterSpacing: '0.04em',
+                      border: c.border ? '1px solid rgba(35,31,28,0.14)' : c.bg === '#fff' ? '1px solid rgba(35,31,28,0.10)' : 'none',
+                    }}
+                  >
+                    {c.circles ? (
+                      <span className="flex items-center">
+                        <span style={{ width: 13, height: 13, borderRadius: 999, backgroundColor: '#EB001B', display: 'inline-block' }} />
+                        <span style={{ width: 13, height: 13, borderRadius: 999, backgroundColor: '#F79E1B', display: 'inline-block', marginLeft: -5, opacity: 0.9 }} />
+                      </span>
+                    ) : c.text}
+                  </span>
+                ))}
+              </div>
+
+              {/* 结算信任行——跨境订单最关心的三件事 */}
+              <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 pt-4" style={{ borderTop: '1px solid rgba(35,31,28,0.10)' }}>
+                {[
+                  { icon: Lock, text: 'Secure 256-bit checkout' },
+                  { icon: Truck, text: 'Tracked worldwide shipping' },
+                  { icon: RotateCcw, text: '30-day money back' },
+                ].map(t => (
+                  <span key={t.text} className="inline-flex items-center gap-1.5 font-sans text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'rgba(35,31,28,0.55)' }}>
+                    <t.icon size={12} strokeWidth={1.8} style={{ color: '#8B7D5C' }} /> {t.text}
+                  </span>
+                ))}
+              </div>
               
               {paymentMethod === 'paypal' && (
                 <div className="mt-4">
@@ -685,6 +779,45 @@ export default function CheckoutPage() {
                   <span className="text-[#2C2C2C]">Total</span>
                   <span className="font-en text-lg font-semibold text-[#2C2C2C]">{formatPrice(convertPrice(totalPrice, currency), currency)}</span>
                 </div>
+
+                {/* 预计到达日：跨境订单最大的疑虑就是「多久到」，这里给明确日期 */}
+                {!!checkoutEta && (
+                  <div className="border-t border-[#EDE8DC]/50 pt-3 space-y-1.5">
+                    <div className="flex items-start gap-2 font-sans text-[11px] text-[#2C2C2C]">
+                      <Truck size={13} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: '#8B7D5C' }} />
+                      <span>
+                        Arrives <strong className="font-semibold">{checkoutEta}</strong>
+                        <span className="text-[#6B6B6B]/50"> · {estimatedDays} business days</span>
+                      </span>
+                    </div>
+                    <p className="font-sans text-[10px] text-[#6B6B6B]/50 pl-[21px]">
+                      Tracked shipping from the workshop · dispatched within 1–2 business days
+                    </p>
+                  </div>
+                )}
+
+                {/* 免邮进度：告诉客户还差多少，直接拉高客单价 */}
+                {freeThreshold > 0 && (
+                  <div className="border-t border-[#EDE8DC]/50 pt-3">
+                    {shippingCost === 0 ? (
+                      <p className="font-sans text-[11px] font-medium text-green-600 flex items-center gap-1.5">
+                        <CheckCircle size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
+                      </p>
+                    ) : (
+                      <>
+                        <p className="font-sans text-[11px] text-[#6B6B6B]/70 mb-2">
+                          Add <strong className="text-[#2C2C2C]">{formatPrice(convertPrice(freeThreshold - discountedSubtotal, currency), currency)}</strong> more for free shipping
+                        </p>
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.round((discountedSubtotal / freeThreshold) * 100))}%`, backgroundColor: '#8BA8A0' }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
