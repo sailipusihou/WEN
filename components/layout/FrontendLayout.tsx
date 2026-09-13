@@ -4,6 +4,7 @@ import TopBar from "@/components/layout/TopBar"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import ChatWidget from "@/components/chat/ChatWidget"
+import GlobalCartBar from "@/components/layout/GlobalCartBar"
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -22,6 +23,8 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
       <Header />
       <main id="main-content" className="flex-1">{children}</main>
       <Footer />
+      {/* 全站底部购物车条：购物车非空时在所有前台页面常驻（可手动关闭） */}
+      <GlobalCartBar />
       <ChatWidget />
     </div>
   )

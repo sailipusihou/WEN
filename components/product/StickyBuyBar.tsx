@@ -17,7 +17,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Minus, Plus, Check, Zap } from 'lucide-react'
+import { ShoppingBag, Minus, Plus, Zap } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -40,7 +40,6 @@ export default function StickyBuyBar({
   const { currency } = useCurrency()
   const router = useRouter()
   const [qty, setQty] = useState(1)
-  const [added, setAdded] = useState(false)
 
   // 用户在上面改过数量后，吸底栏跟随（体验一致）
   useEffect(() => {
@@ -65,8 +64,8 @@ export default function StickyBuyBar({
 
   const handleAdd = () => {
     push()
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1800)
+    // 需求：加购后直接进入购物车页（不停留、不弹提示）
+    router.push('/cart')
   }
 
   const handleBuyNow = () => {
@@ -146,9 +145,9 @@ export default function StickyBuyBar({
               type="button"
               onClick={handleAdd}
               className="pdp-btn hidden sm:flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.16em] uppercase transition-all duration-300"
-              style={{ backgroundColor: added ? GOLD : INK, color: '#fff', borderRadius: 2, minWidth: 148 }}
+              style={{ backgroundColor: INK, color: '#fff', borderRadius: 2, minWidth: 148 }}
             >
-              {added ? <><Check size={14} strokeWidth={2.2} /> Added</> : <><ShoppingBag size={14} strokeWidth={2.2} /> Add to cart</>}
+              <ShoppingBag size={14} strokeWidth={2.2} /> Add to cart
             </button>
             <button
               type="button"

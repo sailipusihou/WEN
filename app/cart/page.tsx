@@ -8,6 +8,8 @@ import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import OptimizedImage from '@/components/ui/OptimizedImage'
+import ProductCard from '@/components/product/ProductCard'
+import type { Product } from '@/lib/products'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 
@@ -38,6 +40,24 @@ export default function CartPage() {
   const shippingConverted = convertPrice(shipping, currency)
   const subtotalConverted = convertPrice(subtotal, currency)
   const totalConverted = subtotalConverted + shippingConverted
+
+  // 底部商品推荐（与详情页同款逻辑）：排除已在购物车里的商品
+  const [related, setRelated] = useState<Product[]>([])
+  useEffect(() => {
+    let alive = true
+    fetch('/api/products?activeOnly=true')
+      .then(r => (r.ok ? r.json() : { items: [] }))
+      .then(d => {
+        if (!alive) return
+        const all: Product[] = Array.isArray(d) ? d : (d.items || [])
+        const inCart = new Set(items.map(i => i.id))
+        const pool = all.filter(p => !inCart.has(p.id))
+        const featured = [...pool].sort((a, b) => Number(b.featured) - Number(a.featured))
+        setRelated(featured.slice(0, 4))
+      })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [items])
 
   if (items.length === 0) {
     return (
@@ -136,6 +156,60 @@ export default function CartPage() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* ============ 商品推荐（与详情页同款） ============ */}
+        {related.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-20 md:mt-28"
+          >
+            <div className="flex items-end justify-between mb-8">
+              <h2 className="font-en text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: '#231F1C' }}>You May Also Like</h2>
+              <Link href="/products" className="font-sans text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: '#8B7D5C' }}>
+                View all →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
+              {related.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* ============ 吸底：商品 + 右侧去结算 ============
+          需求：购物车里也要有「商品与右侧点击可购买」这样一条详情栏，
+          不用滚回订单摘要才能结算。 */}
+      <div
+        data-cart-bottom-bar="1"
+        className="fixed left-0 right-0 bottom-0 z-[101]"
+        style={{ backgroundColor: '#FAFAFA', borderTop: '1px solid rgba(35,31,28,0.10)', boxShadow: 'rgba(35,31,28,0.10) 0 0 14px' }}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4">
+          <div className="flex items-center shrink-0">
+            {discountedItems.slice(0, 3).map((it, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={it.id + i} src={it.image} alt="" className="w-11 h-11 object-cover"
+                style={{ border: '2px solid #FAFAFA', borderRadius: 2, marginLeft: i === 0 ? 0 : -12, backgroundColor: '#F2EAE0', zIndex: 10 - i }} />
+            ))}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-sans text-[13px] font-semibold leading-tight" style={{ color: '#231F1C' }}>
+              {items.length} {items.length === 1 ? 'piece' : 'pieces'} · {formatPrice(totalConverted, currency)}
+            </p>
+            <p className="font-sans text-[12px] leading-tight mt-0.5 hidden sm:block" style={{ color: 'rgba(35,31,28,0.55)' }}>
+              Total includes {shipping === 0 ? 'free shipping' : `shipping ${formatPrice(shippingConverted, currency)}`}
+            </p>
+          </div>
+          <Link
+            href="/checkout"
+            className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 font-sans text-[11px] font-bold tracking-[0.16em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
+            style={{ backgroundColor: '#231F1C', borderRadius: 2 }}
+          >
+            Checkout <ArrowRight size={14} strokeWidth={2.2} />
+          </Link>
         </div>
       </div>
     </div>
