@@ -156,7 +156,7 @@ export default function Header() {
                   {siteSettings?.siteName ? siteSettings.siteName.toUpperCase() : "LOW FLAME"}
                 </span>
                 {siteSettings?.siteTagline && (
-                  <span className={`font-sans text-[9px] tracking-wider ${overlayTop ? 'text-white/60' : 'text-[#6B6F75]/60'}`}>
+                  <span className={`font-sans text-[11px] tracking-wider ${overlayTop ? 'text-white/80' : 'text-[#6B6F75]/80'}`}>
                     {siteSettings.siteTagline}
                   </span>
                 )}
@@ -208,7 +208,7 @@ export default function Header() {
               <Link href="/messages" className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Messages">
                 <MessageCircle size={15} strokeWidth={1.5} />
                 {unreadReplies > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#8BA8A0] text-white text-[7px] font-sans font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#8BA8A0] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
                     {unreadReplies > 9 ? '9+' : unreadReplies}
                   </span>
                 )}
@@ -216,7 +216,7 @@ export default function Header() {
               <Link href="/cart" className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Cart">
                 <ShoppingBag size={15} strokeWidth={1.5} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#2D2F33] text-white text-[7px] font-sans font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#2D2F33] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
@@ -265,7 +265,7 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
               <div className="flex items-center gap-2 mb-8">
                 <span className="text-[#8BA8A0] text-[10px]">◈</span>
-                <h3 className="font-sans text-[9px] text-[#6B6F75] tracking-[0.15em] uppercase font-medium">Curated Collections</h3>
+                <h3 className="font-sans text-[11px] text-[#6B6F75] tracking-[0.15em] uppercase font-medium">Curated Collections</h3>
               </div>
               <div className={`grid grid-cols-2 sm:grid-cols-3 gap-4 ${MEGA_COLS[Math.min(Math.max(collections.length, 2), 6)]}`}>
                 {collections.map((col) => (
@@ -282,7 +282,7 @@ export default function Header() {
                       />
                     </div>
                     <h4 className="font-sans text-[10px] font-medium text-[#2D2F33] tracking-wider uppercase group-hover:text-[#8BA8A0] transition-colors">{col.label}</h4>
-                    <p className="font-sans text-[9px] text-[#6B6F75]/50 mt-0.5">{col.desc}</p>
+                    <p className="font-sans text-[11px] text-[#6B6F75]/72 mt-0.5">{col.desc}</p>
                   </Link>
                 ))}
               </div>
@@ -348,13 +348,13 @@ export default function Header() {
               </button>
             </div>
             <nav className="flex flex-col px-4 py-4 gap-0.5">
-              <p className="font-sans text-[9px] text-[#8BA8A0] tracking-[0.15em] uppercase px-4 pt-2 pb-1 font-medium">Collections</p>
+              <p className="font-sans text-[11px] text-[#8BA8A0] tracking-[0.15em] uppercase px-4 pt-2 pb-1 font-medium">Collections</p>
               {collections.map((col) => (
                 <Link key={col.label} href={col.href}
                   className="font-sans text-sm text-[#4A4D52] py-2.5 px-4 hover:bg-[#EDE8E0]/30 transition-colors flex items-center justify-between"
                   onClick={() => setMenuOpen(false)}>
                   <span>{col.label}</span>
-                  <span className="text-[9px] text-[#6B6F75]/40">→</span>
+                  <span className="text-[11px] text-[#6B6F75]/65">→</span>
                 </Link>
               ))}
               <div className="divider-refined my-3" />
