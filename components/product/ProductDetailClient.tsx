@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   ArrowUpLeft, Star, ShoppingBag, Plus, Minus, Check, ShieldCheck, Truck, RotateCcw,
-  MessageCircle, Heart, X, ChevronDown, Package, Clock, ChevronRight, ZoomIn,
+  MessageCircle, Heart, X, ChevronDown, Package, Clock, ChevronRight, ZoomIn, Zap,
 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 import { useCart } from '@/context/CartContext'
@@ -15,6 +15,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product, Review } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import ProductCard from '@/components/product/ProductCard'
+import StickyBuyBar from '@/components/product/StickyBuyBar'
 import { useProductPrice } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
@@ -112,6 +113,7 @@ export default function ProductDetailClient({
   const eff = useProductPrice(product)
   const { labelFor } = useCategories()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -119,6 +121,8 @@ export default function ProductDetailClient({
   const [wishlistLoading, setWishlistLoading] = useState(false)
   const [visitRecord, setVisitRecord] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState(false)
+  const [showStickyBar, setShowStickyBar] = useState(false)
+  const buyBoxRef = useRef<HTMLDivElement | null>(null)
   const [related, setRelated] = useState<Product[]>([])
   const [shipping, setShipping] = useState<{ days: number; freeThreshold: number; cost: number } | null>(null)
   const pageStartTime = useRef(Date.now())
@@ -251,6 +255,24 @@ export default function ProductDetailClient({
     }
   }, [lightbox, closeLightbox])
 
+  // 吸底加购栏的出现时机：主购买区（加购按钮那一块）滚出视口后才出现
+  // 对标站也是这样——不是一进页面就顶出来，避免和主按钮重复
+  useEffect(() => {
+    const el = buyBoxRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { rootMargin: '-96px 0px 0px 0px', threshold: 0 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [product?.id])
+
+  // 主区改了数量 → 同步给吸底栏
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('pdp:qty', { detail: { qty } }))
+  }, [qty])
+
   const handleToggleWishlist = async () => {
     if (!product || wishlistLoading) return
     setWishlistLoading(true)
@@ -315,6 +337,19 @@ export default function ProductDetailClient({
     }
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+  }
+
+  /** 立即购买：加购后直接进结算页（跳过购物车） */
+  const handleBuyNow = () => {
+    for (let i = 0; i < qty; i++) {
+      addItem({
+        id: product.id, name: product.name,
+        nameEn: product.nameEn || product.name,
+        image: product.image, price: product.price,
+        category: product.category,
+      })
+    }
+    router.push('/checkout')
   }
 
   return (
@@ -530,7 +565,7 @@ export default function ProductDetailClient({
             )}
 
             {/* 数量 + 加购 */}
-            <div className="flex items-stretch gap-3 mt-7">
+            <div ref={buyBoxRef} className="flex items-stretch gap-3 mt-7">
               <div className="flex items-center" style={{ border: `1px solid rgba(35,31,28,0.14)` }}>
                 <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 transition-colors duration-200 hover:opacity-60" style={{ color: SOFT }} aria-label="Decrease quantity">
                   <Minus size={14} strokeWidth={1.8} />
@@ -564,6 +599,16 @@ export default function ProductDetailClient({
                 <Heart size={17} strokeWidth={1.6} fill={isWishlisted ? 'currentColor' : 'none'} />
               </button>
             </div>
+
+            {/* 立即购买：直接进结算，跳过购物车这一步 */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="pdp-btn mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px"
+              style={{ backgroundColor: '#fff', color: INK, border: `1px solid ${INK}`, borderRadius: 2 }}
+            >
+              <Zap size={15} strokeWidth={2.2} /> Buy Now
+            </button>
 
             {/* 咨询 */}
             <Link
@@ -749,6 +794,16 @@ export default function ProductDetailClient({
           </Link>
         </div>
       </div>
+
+      {/* ============ 吸底加购栏（主购买区滚出视口后出现） ============ */}
+      <StickyBuyBar
+        product={product}
+        effPrice={eff.price}
+        originalPrice={eff.originalPrice || product.originalPrice}
+        discount={eff.discount}
+        visible={showStickyBar && !lightbox}
+        freeThreshold={shipping?.freeThreshold}
+      />
 
       {/* ============ 主图放大灯箱 ============ */}
       {lightbox && (

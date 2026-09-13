@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown, Lock } from 'lucide-react'
+import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   }, [submitted, items.length])
   const [processing, setProcessing] = useState(false)
   const [userEmail, setUserEmail] = useState('')
-  // 结算需要登录：未登录时展示登录引导卡片
+  // 登录态仅用于「预填邮箱 + 显示快捷登录入口」，不再作为下单前提
   const [authChecked, setAuthChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [paypalError, setPaypalError] = useState('')
@@ -362,44 +362,10 @@ export default function CheckoutPage() {
   }
 
   // 未登录：结算前引导登录 / 注册（购物车内容保留，登录后回到本页继续）
-  if (authChecked && !isLoggedIn && !submitted && items.length > 0) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-[#F8F5F0] px-6">
-        <div className="w-full max-w-[300px]">
-          <div className="bg-white border border-[#EDE8DC] rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.03)] px-6 py-7 text-center">
-            <div className="w-10 h-10 mx-auto mb-3.5 rounded-full bg-[#EDE8DC]/60 flex items-center justify-center">
-              <Lock size={15} strokeWidth={1.5} className="text-[#6B6B6B]" />
-            </div>
-            <h1 className="font-en text-base text-[#2C2C2C] tracking-tight mb-1.5">Sign in to check out</h1>
-            <p className="font-sans text-[11px] text-[#6B6B6B]/70 leading-relaxed mb-5">
-              Your cart is saved. Sign in or create an account to complete your order.
-            </p>
-            <div className="space-y-1.5">
-              <Link
-                href="/login?redirect=/checkout"
-                className="flex items-center justify-center w-full py-2.5 bg-[#2C2C2C] text-white text-[10px] tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors rounded-sm"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register?redirect=/checkout"
-                className="flex items-center justify-center w-full py-2.5 border border-[#2C2C2C]/20 text-[#2C2C2C] text-[10px] tracking-[0.08em] uppercase font-sans font-medium hover:border-[#2C2C2C] transition-colors rounded-sm"
-              >
-                Create Account
-              </Link>
-            </div>
-          </div>
-          <Link
-            href="/cart"
-            className="mt-4 flex items-center justify-center gap-1 font-sans text-[10px] text-[#6B6B6B]/50 hover:text-[#6B6B6B] transition-colors"
-          >
-            <ArrowUpLeft size={11} /> Back to cart
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
+  // 移除了「必须登录才能结算」的拦截：
+  // 后端 POST /api/orders 本来就不要求登录（只做限频），表单也已收齐
+  // firstName/lastName/email/address 等字段，所以访客可以直接下单。
+  // 登录态现在只用于「预填邮箱 + 提供快捷登录入口」，不再作为下单前提。
   if (submitted) {
     return <div className="min-h-[70vh] flex items-center justify-center bg-[#F8F5F0]">
       <div className="w-full max-w-4xl mx-auto px-6 py-10">
