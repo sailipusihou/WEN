@@ -1793,3 +1793,56 @@ body {
 [data-admin-panel-style="obsidian"] [style*="backgroundColor: var(--adm-accent)"] {
   color: var(--adm-accent-text) !important;
 }
+
+/* ============================================================
+   商品详情页 (PDP) 视觉增强
+   对标参考: 干净面板底 / 强对比文字 / 实心深色按钮 / 克制的动效
+   ============================================================ */
+
+/* 按键「光扫」动效: hover 时一道高光从左扫过 */
+@keyframes pdp-sheen {
+  0%   { transform: translateX(-130%) skewX(-18deg); }
+  100% { transform: translateX(260%) skewX(-18deg); }
+}
+.pdp-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.pdp-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.26), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+  pointer-events: none;
+}
+.pdp-btn:hover::after { animation: pdp-sheen 0.85s ease-out; }
+.pdp-btn:hover { transform: translateY(-1px); }
+.pdp-btn:active { transform: translateY(0); }
+
+/* 主图区柔和浮起 */
+.pdp-media {
+  box-shadow: 0 1px 2px rgba(35, 31, 28, 0.03), 0 18px 46px -28px rgba(35, 31, 28, 0.28);
+}
+
+/* 内容块依次浮现 */
+@keyframes pdp-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pdp-rise { animation: pdp-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 手风琴展开时的内容淡入 */
+@keyframes pdp-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pdp-acc-open { animation: pdp-fade 0.32s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pdp-btn::after { display: none; }
+  .pdp-btn:hover { transform: none; }
+  .pdp-rise, .pdp-acc-open { animation: none; }
+}

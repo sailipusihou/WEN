@@ -39,35 +39,60 @@ function getSessionId() {
   return id
 }
 
+/**
+ * 设计令牌（对标参考站后统一收紧）
+ *   PANEL  干净暖白面板底 —— 参考站用 #FAFAF6，不再到处套白色卡片
+ *   INK    主文字：一个强色用到底（参考站的做法），替代此前大量 40%~60% 透明灰
+ *   SOFT   次级文字：仍然清晰可读，不是灰到看不清
+ *   LINE   5%~10% 发丝分隔线，替代此前偏重的实线
+ *   BTN    实心深色按钮（参考站是实心深橄榄 + 白字 + 700 字重）
+ */
+const PANEL = '#FCFBF8'
+const INK = '#231F1C'
+const SOFT = '#5F5A54'
+const GOLD = '#8B7D5C'
+const LINE = 'rgba(35,31,28,0.10)'
+
 /** 可折叠详情区块（右侧栏「下拉详情」） */
 function Accordion({
   title, icon: Icon, defaultOpen = false, children,
 }: { title: string; icon?: any; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border-b border-[#E3DACB]">
+    <div style={{ borderBottom: `1px solid ${LINE}` }}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center justify-between gap-3 py-4 text-left group"
+        className="w-full flex items-center justify-between gap-3 py-[18px] text-left group"
       >
-        <span className="flex items-center gap-2.5 font-sans text-[11px] tracking-[0.14em] uppercase text-[#2C2C2C] font-medium">
-          {Icon && <Icon size={14} strokeWidth={1.5} className="text-[#8B7D5C]" />}
+        <span
+          className="flex items-center gap-3 font-sans text-[13px] tracking-[0.22em] uppercase font-bold transition-colors duration-300"
+          style={{ color: INK }}
+        >
+          {Icon && <Icon size={15} strokeWidth={1.5} style={{ color: GOLD }} className="transition-transform duration-300 group-hover:scale-110" />}
           {title}
         </span>
-        <ChevronDown
-          size={15}
-          strokeWidth={1.5}
-          className={`shrink-0 text-[#8B7D5C] transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-        />
+        <span
+          className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full transition-all duration-300 group-hover:rotate-180"
+          style={{ backgroundColor: open ? INK : 'rgba(35,31,28,0.05)' }}
+        >
+          <ChevronDown
+            size={14}
+            strokeWidth={1.8}
+            className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+            style={{ color: open ? '#fff' : GOLD }}
+          />
+        </span>
       </button>
       <div
-        className="grid transition-all duration-300 ease-out"
+        className="grid transition-all duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="pb-5 font-sans text-sm leading-relaxed text-[#6B6B6B]/80">{children}</div>
+          <div className={`pb-6 font-sans text-[14px] leading-[1.75] ${open ? 'pdp-acc-open' : ''}`} style={{ color: SOFT }}>
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -252,8 +277,8 @@ export default function ProductDetailClient({
 
   if (!product) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-[#F8F5F0]">
-        <p className="font-en text-2xl text-[#6B6B6B]">Piece not found</p>
+      <div className="min-h-[60vh] flex items-center justify-center" style={{ backgroundColor: PANEL }}>
+        <p className="font-en text-2xl" style={{ color: SOFT }}>Piece not found</p>
       </div>
     )
   }
@@ -293,19 +318,19 @@ export default function ProductDetailClient({
   }
 
   return (
-    <div className="bg-[#F8F5F0] min-h-screen">
+    <div className="min-h-screen" style={{ backgroundColor: PANEL }}>
       <div className="max-w-[1560px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         {/* Breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] text-[#6B6B6B]/50 tracking-wider uppercase mb-8 md:mb-10">
-          <Link href="/" className="hover:text-[#2C2C2C] transition-colors">Home</Link>
+        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.14em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(35,31,28,0.42)' }}>
+          <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>Home</Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-[#2C2C2C] transition-colors">All Objects</Link>
+          <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>All Objects</Link>
           <span>/</span>
-          <Link href={`/category/${product.category}`} className="hover:text-[#2C2C2C] transition-colors">
+          <Link href={`/category/${product.category}`} className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>
             {labelFor(product.category)}
           </Link>
           <span>/</span>
-          <span className="text-[#8B7D5C]">{product.nameEn || product.name}</span>
+          <span className="font-semibold" style={{ color: GOLD }}>{product.nameEn || product.name}</span>
         </nav>
 
         {referralCode && (
@@ -321,7 +346,8 @@ export default function ProductDetailClient({
               </div>
               <Link
                 href={buildReferralBioLandingUrl({ code: referralCode, productId: product.id, sourceChannel })}
-                className="inline-flex items-center justify-center px-4 py-2 text-xs tracking-[0.08em] uppercase font-sans font-medium border border-[#EDE8DC] hover:border-[#8B7D5C]/40 hover:bg-[#8B7D5C]/5 transition-colors"
+                className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-[11px] tracking-[0.12em] uppercase font-sans font-semibold transition-all duration-300"
+                style={{ border: `1px solid rgba(35,31,28,0.14)`, color: INK, borderRadius: 2 }}
               >
                 Back to Link in Bio
               </Link>
@@ -348,9 +374,13 @@ export default function ProductDetailClient({
                       type="button"
                       onClick={() => setSelectedImage(i)}
                       aria-label={`View image ${i + 1}`}
-                      className={`relative aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] border transition-all ${
-                        i === selectedImage ? 'border-[#2C2C2C]' : 'border-transparent hover:border-[#B8A06C]/50'
-                      }`}
+                      className="relative aspect-[4/5] w-full overflow-hidden transition-all duration-300 hover:opacity-80"
+                      style={{
+                        backgroundColor: '#F2EAE0',
+                        border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
+                        borderRadius: 2,
+                        opacity: i === selectedImage ? 1 : 0.72,
+                      }}
                     >
                       <OptimizedImage src={img} alt={`${product.nameEn || product.name} ${i + 1}`} fill sizes="76px" objectFit="cover" placeholder="blur" />
                     </button>
@@ -361,7 +391,8 @@ export default function ProductDetailClient({
               {/* 主图：桌面端高度贴合视口，滚到顶就钉住不再走 */}
               <div className="flex-1 min-w-0">
                 <div
-                  className="relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] bg-[#F2EAE0] overflow-hidden group cursor-zoom-in"
+                  className="pdp-media relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] overflow-hidden group cursor-zoom-in"
+                  style={{ backgroundColor: '#F2EAE0', borderRadius: 3 }}
                   onClick={() => setLightbox(true)}
                 >
                   <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4 z-10" />
@@ -371,12 +402,15 @@ export default function ProductDetailClient({
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 58vw"
-                    className="transition-transform duration-[900ms] ease-out group-hover:scale-[1.06]"
+                    className="transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.07]"
                     objectFit="cover"
                     placeholder="blur"
                   />
-                  <span className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-white/85 backdrop-blur-sm px-2.5 py-1.5 font-sans text-[9px] tracking-[0.12em] uppercase text-[#2C2C2C] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ZoomIn size={11} strokeWidth={1.5} /> Click to enlarge
+                  <span
+                    className="absolute bottom-4 right-4 flex items-center gap-1.5 backdrop-blur-sm px-3 py-2 font-sans text-[9px] font-semibold tracking-[0.14em] uppercase opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: INK, borderRadius: 2 }}
+                  >
+                    <ZoomIn size={11} strokeWidth={1.8} /> Click to enlarge
                   </span>
                 </div>
 
@@ -389,9 +423,13 @@ export default function ProductDetailClient({
                         type="button"
                         onClick={() => setSelectedImage(i)}
                         aria-label={`View image ${i + 1}`}
-                        className={`relative w-16 h-16 overflow-hidden bg-[#F2EAE0] border transition-colors ${
-                          i === selectedImage ? 'border-[#2C2C2C]' : 'border-transparent'
-                        }`}
+                        className="relative w-16 h-16 overflow-hidden transition-opacity duration-300"
+                        style={{
+                          backgroundColor: '#F2EAE0',
+                          border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
+                          borderRadius: 2,
+                          opacity: i === selectedImage ? 1 : 0.72,
+                        }}
                       >
                         <OptimizedImage src={img} alt={`${product.nameEn || product.name} ${i + 1}`} fill sizes="64px" objectFit="cover" placeholder="blur" />
                       </button>
@@ -409,72 +447,83 @@ export default function ProductDetailClient({
             transition={{ duration: 0.6, delay: 0.15 }}
             className="lg:pt-1"
           >
-            <span className="font-sans text-[10px] text-[#B8A06C] tracking-[0.15em] uppercase font-medium">
+            <span className="font-sans text-[10px] tracking-[0.24em] uppercase font-semibold" style={{ color: GOLD }}>
               {labelFor(product.category)}
             </span>
 
-            <h1 className="font-en text-3xl md:text-[40px] md:leading-[1.15] text-[#2C2C2C] font-semibold mt-2 tracking-tight">
+            <h1
+              className="font-en text-[30px] md:text-[42px] md:leading-[1.12] font-semibold mt-3 tracking-[-0.01em]"
+              style={{ color: INK }}
+            >
               {product.nameEn || product.name}
             </h1>
-            <p className="font-sans text-sm text-[#6B6B6B]/60 mt-3 leading-relaxed">{product.subtitleEn || product.subtitle}</p>
+            <p className="font-sans text-[15px] mt-3.5 leading-[1.65]" style={{ color: SOFT }}>
+              {product.subtitleEn || product.subtitle}
+            </p>
 
             {/* 评分 —— 有真实评价才显示 */}
             {product.reviewCount > 0 && (
               <a href="#reviews" className="inline-flex items-center gap-2 mt-4 group">
-                <span className="flex items-center gap-0.5">
+                <span className="flex items-center gap-[3px]">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      size={12}
-                      className={i < Math.round(product.rating) ? 'fill-[#B8A06C] text-[#B8A06C]' : 'text-[#B8A06C]/30'}
+                      size={13}
+                      className={i < Math.round(product.rating) ? 'fill-[#B8A06C] text-[#B8A06C]' : 'text-[#B8A06C]/25'}
                     />
                   ))}
                 </span>
-                <span className="font-sans text-xs text-[#6B6B6B]/70 group-hover:text-[#2C2C2C] transition-colors">
+                <span
+                  className="font-sans text-[12px] font-medium transition-colors duration-200 group-hover:opacity-70"
+                  style={{ color: INK }}
+                >
                   {product.rating} · {product.reviewCount} review{product.reviewCount > 1 ? 's' : ''}
                 </span>
-                <ChevronRight size={12} strokeWidth={1.5} className="text-[#8B7D5C]/50" />
+                <ChevronRight size={13} strokeWidth={1.8} className="transition-transform duration-200 group-hover:translate-x-0.5" style={{ color: GOLD }} />
               </a>
             )}
 
             {/* 价格 */}
-            <div className="flex items-baseline gap-3 mt-6">
-              <span className={`font-en text-3xl md:text-4xl font-semibold ${eff.discount > 0 ? 'text-[#B8452E]' : 'text-[#2C2C2C]'}`}>
+            <div className="flex items-baseline gap-3 mt-7">
+              <span
+                className="font-en text-[34px] md:text-[40px] font-semibold tracking-[-0.01em]"
+                style={{ color: eff.discount > 0 ? '#B8452E' : INK }}
+              >
                 {formatPrice(convertPrice(eff.price, currency), currency)}
               </span>
               {eff.discount > 0 && <PromoSaleTag />}
               {(eff.originalPrice || product.originalPrice) && (
-                <span className="font-sans text-sm text-[#6B6B6B]/40 line-through">
+                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(35,31,28,0.32)' }}>
                   {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}
             </div>
 
             {/* 库存 / 时效 */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-5 space-y-2.5">
               {lowStock ? (
-                <p className="flex items-center gap-2 font-sans text-xs text-[#B8452E]">
-                  <Package size={13} strokeWidth={1.5} /> Only {stock} left in stock
+                <p className="flex items-center gap-2.5 font-sans text-[13px] font-medium" style={{ color: '#B8452E' }}>
+                  <Package size={14} strokeWidth={1.6} /> Only {stock} left in stock
                 </p>
               ) : (
-                <p className="flex items-center gap-2 font-sans text-xs text-[#6B6B6B]/60">
-                  <Package size={13} strokeWidth={1.5} /> In stock — ready to ship from the workshop
+                <p className="flex items-center gap-2.5 font-sans text-[13px]" style={{ color: SOFT }}>
+                  <Package size={14} strokeWidth={1.6} style={{ color: GOLD }} /> In stock — ready to ship from the workshop
                 </p>
               )}
               {deliveryText && (
-                <p className="flex items-center gap-2 font-sans text-xs text-[#6B6B6B]/60">
-                  <Clock size={13} strokeWidth={1.5} /> Order today, estimated arrival {deliveryText}
+                <p className="flex items-center gap-2.5 font-sans text-[13px]" style={{ color: SOFT }}>
+                  <Clock size={14} strokeWidth={1.6} style={{ color: GOLD }} /> Order today, estimated arrival <strong style={{ color: INK, fontWeight: 600 }}>{deliveryText}</strong>
                 </p>
               )}
             </div>
 
             {/* 规格表 */}
             {specRows.length > 0 && (
-              <div className="grid grid-cols-3 gap-4 mt-7 py-5 border-y border-[#E3DACB]">
+              <div className="grid grid-cols-3 gap-5 mt-7 py-6" style={{ borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
                 {specRows.map(([label, value]) => (
                   <div key={label}>
-                    <span className="font-sans text-[9px] text-[#6B6B6B]/40 tracking-wider uppercase">{label}</span>
-                    <p className="font-sans text-[13px] text-[#2C2C2C] mt-1 leading-snug">{value}</p>
+                    <span className="font-sans text-[9px] tracking-[0.18em] uppercase font-semibold" style={{ color: 'rgba(35,31,28,0.42)' }}>{label}</span>
+                    <p className="font-sans text-[14px] mt-1.5 leading-snug font-medium" style={{ color: INK }}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -482,70 +531,72 @@ export default function ProductDetailClient({
 
             {/* 数量 + 加购 */}
             <div className="flex items-stretch gap-3 mt-7">
-              <div className="flex items-center border border-[#E3DACB] bg-white/60">
-                <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-3.5 py-3 text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors" aria-label="Decrease quantity">
-                  <Minus size={14} strokeWidth={1.5} />
+              <div className="flex items-center" style={{ border: `1px solid rgba(35,31,28,0.14)` }}>
+                <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 transition-colors duration-200 hover:opacity-60" style={{ color: SOFT }} aria-label="Decrease quantity">
+                  <Minus size={14} strokeWidth={1.8} />
                 </button>
-                <span className="px-3 font-sans text-sm text-[#2C2C2C] min-w-[2rem] text-center">{qty}</span>
-                <button type="button" onClick={() => setQty(qty + 1)} className="px-3.5 py-3 text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors" aria-label="Increase quantity">
-                  <Plus size={14} strokeWidth={1.5} />
+                <span className="px-2 font-sans text-[15px] font-medium min-w-[2.2rem] text-center" style={{ color: INK }}>{qty}</span>
+                <button type="button" onClick={() => setQty(qty + 1)} className="px-4 py-3 transition-colors duration-200 hover:opacity-60" style={{ color: SOFT }} aria-label="Increase quantity">
+                  <Plus size={14} strokeWidth={1.8} />
                 </button>
               </div>
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 text-xs tracking-[0.08em] uppercase font-sans font-medium transition-all duration-300 ${
-                  added ? 'bg-[#8B7D5C] text-white' : 'bg-[#2C2C2C] text-white hover:bg-[#1A1A1A]'
-                }`}
+                className="pdp-btn flex-1 flex items-center justify-center gap-2.5 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.2em] uppercase text-white transition-all duration-300"
+                style={{ backgroundColor: added ? GOLD : INK, borderRadius: 2 }}
               >
-                {added ? <><Check size={14} strokeWidth={1.5} /> Added to Cart</> : <><ShoppingBag size={14} strokeWidth={1.5} /> Add to Cart</>}
+                {added ? <><Check size={15} strokeWidth={2} /> Added to Cart</> : <><ShoppingBag size={15} strokeWidth={2} /> Add to Cart</>}
               </button>
               <button
                 type="button"
                 onClick={handleToggleWishlist}
                 disabled={wishlistLoading}
-                className={`px-3.5 border transition-all duration-300 ${
-                  isWishlisted
-                    ? 'border-[#B85450] bg-[#B85450]/5 text-[#B85450]'
-                    : 'border-[#E3DACB] text-[#6B6B6B] hover:text-[#2C2C2C] hover:border-[#2C2C2C]'
-                } ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="px-4 transition-all duration-300 hover:-translate-y-px"
+                style={{
+                  border: `1px solid ${isWishlisted ? '#B85450' : 'rgba(35,31,28,0.14)'}`,
+                  backgroundColor: isWishlisted ? 'rgba(184,84,80,0.06)' : 'transparent',
+                  color: isWishlisted ? '#B85450' : SOFT,
+                  borderRadius: 2,
+                }}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                <Heart size={16} strokeWidth={1.5} fill={isWishlisted ? 'currentColor' : 'none'} />
+                <Heart size={17} strokeWidth={1.6} fill={isWishlisted ? 'currentColor' : 'none'} />
               </button>
             </div>
 
             {/* 咨询 */}
             <Link
               href={'/messages?product=' + product.id}
-              className="inline-flex items-center gap-2 mt-3.5 px-4 py-2.5 text-xs border border-[#E3DACB] hover:border-[#8B7D5C]/40 hover:bg-[#8B7D5C]/5 transition-colors font-sans w-full justify-center"
+              className="pdp-btn inline-flex items-center gap-2 mt-3 px-5 py-3 font-sans text-[12px] font-semibold tracking-[0.06em] transition-all duration-300 w-full justify-center hover:-translate-y-px"
+              style={{ border: `1px solid rgba(35,31,28,0.14)`, color: INK, borderRadius: 2 }}
             >
-              <MessageCircle size={14} strokeWidth={1.5} className="text-[#8B7D5C]" />
-              <span className="text-[#6B6B6B]">Ask about this piece</span>
-              <span className="text-[10px] text-[#8B7D5C]/60">→</span>
+              <MessageCircle size={15} strokeWidth={1.7} style={{ color: GOLD }} />
+              <span>Ask about this piece</span>
+              <span className="text-[12px]" style={{ color: GOLD }}>→</span>
             </Link>
 
             {/* 信任条 */}
-            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 pt-5 border-t border-[#E3DACB]">
+            <div className="flex flex-wrap gap-x-6 gap-y-2.5 mt-7 pt-6" style={{ borderTop: `1px solid ${LINE}` }}>
               {[
                 { icon: ShieldCheck, text: 'Authenticity Guaranteed' },
                 { icon: Truck, text: 'Free Damaged Replacement' },
                 { icon: RotateCcw, text: '30-Day Money Back' },
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-1.5 text-[10px] text-[#6B6B6B]/55 font-sans tracking-wider uppercase">
-                  <item.icon size={12} strokeWidth={1.5} /> {item.text}
+                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: 'rgba(35,31,28,0.55)' }}>
+                  <item.icon size={13} strokeWidth={1.7} style={{ color: GOLD }} /> {item.text}
                 </div>
               ))}
             </div>
 
             {/* ---------- 下拉详情 ---------- */}
-            <div className="mt-8 border-t border-[#E3DACB]">
+            <div className="mt-9" style={{ borderTop: `1px solid ${LINE}` }}>
               <Accordion title="Description" icon={Package} defaultOpen>
                 <p>{product.descriptionEn || product.description}</p>
                 {(product.tagsEn || product.tags)?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
+                  <div className="flex flex-wrap gap-2 mt-5">
                     {(product.tagsEn || product.tags).map((tag, i) => (
-                      <span key={i} className="font-sans text-[10px] text-[#8B7D5C] bg-[#8B7D5C]/5 border border-[#B8A06C]/20 px-2.5 py-1 tracking-wider uppercase">
+                      <span key={i} className="font-sans text-[10px] tracking-[0.08em] uppercase px-3 py-1.5" style={{ color: GOLD, backgroundColor: 'rgba(139,125,92,0.07)', border: '1px solid rgba(184,160,108,0.22)', borderRadius: 2 }}>
                         {tag}
                       </span>
                     ))}
@@ -558,26 +609,26 @@ export default function ProductDetailClient({
                   <dl className="space-y-2.5">
                     {specRows.map(([label, value]) => (
                       <div key={label} className="flex gap-4">
-                        <dt className="w-24 shrink-0 text-[10px] tracking-wider uppercase text-[#6B6B6B]/45 pt-0.5">{label}</dt>
-                        <dd className="text-[#2C2C2C]">{value}</dd>
+                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.18em] uppercase font-semibold pt-1" style={{ color: 'rgba(35,31,28,0.42)' }}>{label}</dt>
+                        <dd className="text-[14px] font-medium" style={{ color: INK }}>{value}</dd>
                       </div>
                     ))}
                   </dl>
                   {(product.storyEn || product.story) && (
-                    <p className="mt-4 text-[13px] text-[#6B6B6B]/70">{product.storyEn || product.story}</p>
+                    <p className="mt-5 text-[14px] leading-[1.75]">{product.storyEn || product.story}</p>
                   )}
                 </Accordion>
               )}
 
               <Accordion title="Shipping & Returns" icon={Truck}>
-                <ul className="space-y-2.5">
+                <ul className="space-y-3">
                   <li>
                     Dispatched from the workshop within 1–2 business days.
-                    {shipping && shipping.days > 0 && <> Estimated delivery <strong className="text-[#2C2C2C]">{shipping.days}–{shipping.days + 7} days</strong>{deliveryText && <> ({deliveryText})</>}.</>}
+                    {shipping && shipping.days > 0 && <> Estimated delivery <strong style={{ color: INK, fontWeight: 600 }}>{shipping.days}–{shipping.days + 7} days</strong>{deliveryText && <> ({deliveryText})</>}.</>}
                   </li>
                   {shipping && shipping.freeThreshold > 0 && (
                     <li>
-                      Free shipping on orders over <strong className="text-[#2C2C2C]">${shipping.freeThreshold.toFixed(2)}</strong>
+                      Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>${shipping.freeThreshold.toFixed(2)}</strong>
                       {shipping.cost > 0 && <> · flat rate ${shipping.cost.toFixed(2)} below that</>}.
                     </li>
                   )}
@@ -587,19 +638,19 @@ export default function ProductDetailClient({
               </Accordion>
 
               <Accordion title="Questions & Answers" icon={MessageCircle}>
-                <dl className="space-y-4">
+                <dl className="space-y-5">
                   <div>
-                    <dt className="text-[#2C2C2C] font-medium text-[13px]">Is this piece genuinely handmade?</dt>
-                    <dd className="mt-1 text-[13px] text-[#6B6B6B]/70">Yes. Each piece is made by hand in the workshop named above — small variations in glaze and finish are the signature of handmade work, not defects.</dd>
+                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Is this piece genuinely handmade?</dt>
+                    <dd className="mt-1.5 text-[14px] leading-[1.75]">Yes. Each piece is made by hand in the workshop named above — small variations in glaze and finish are the signature of handmade work, not defects.</dd>
                   </div>
                   <div>
-                    <dt className="text-[#2C2C2C] font-medium text-[13px]">Will it arrive safely?</dt>
-                    <dd className="mt-1 text-[13px] text-[#6B6B6B]/70">Every order ships double-boxed with padding. If anything arrives damaged, send us a photo and we will replace it at no cost.</dd>
+                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Will it arrive safely?</dt>
+                    <dd className="mt-1.5 text-[14px] leading-[1.75]">Every order ships double-boxed with padding. If anything arrives damaged, send us a photo and we will replace it at no cost.</dd>
                   </div>
                   <div>
-                    <dt className="text-[#2C2C2C] font-medium text-[13px]">Can I ask before ordering?</dt>
-                    <dd className="mt-1 text-[13px] text-[#6B6B6B]/70">
-                      Of course — use <strong className="text-[#2C2C2C]">Ask about this piece</strong> above and we will reply within 24 hours.
+                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Can I ask before ordering?</dt>
+                    <dd className="mt-1.5 text-[14px] leading-[1.75]">
+                      Of course — use <strong style={{ color: INK, fontWeight: 600 }}>Ask about this piece</strong> above and we will reply within 24 hours.
                     </dd>
                   </div>
                 </dl>
@@ -610,28 +661,28 @@ export default function ProductDetailClient({
 
             {/* 工艺故事 */}
             {(product.storyEn || product.story) && (
-              <div className="mt-12 pt-10 border-t border-[#E3DACB]">
-                <h2 className="font-en text-xl text-[#2C2C2C] font-semibold tracking-tight">The Story Behind This Piece</h2>
-                <p className="mt-4 font-sans text-[13px] leading-loose text-[#6B6B6B]/75">{product.storyEn || product.story}</p>
+              <div className="mt-12 pt-10" style={{ borderTop: `1px solid ${LINE}` }}>
+                <h2 className="font-en text-[22px] font-semibold tracking-tight" style={{ color: INK }}>The Story Behind This Piece</h2>
+                <p className="mt-4 font-sans text-[14px] leading-[1.85]" style={{ color: SOFT }}>{product.storyEn || product.story}</p>
               </div>
             )}
 
             {/* 评价 */}
-            <div id="reviews" className="mt-12 pt-10 border-t border-[#E3DACB] scroll-mt-24">
+            <div id="reviews" className="mt-12 pt-10 scroll-mt-24" style={{ borderTop: `1px solid ${LINE}` }}>
               <div className="flex items-baseline justify-between">
-                <h2 className="font-en text-xl text-[#2C2C2C] font-semibold tracking-tight">
+                <h2 className="font-en text-[22px] font-semibold tracking-tight" style={{ color: INK }}>
                   Reviews{product.reviewCount > 0 ? ` (${reviews.length || product.reviewCount})` : ''}
                 </h2>
                 {product.reviewCount > 0 && (
-                  <span className="flex items-center gap-1.5 font-sans text-[11px] text-[#6B6B6B]/60">
-                    <Star size={11} className="fill-[#B8A06C] text-[#B8A06C]" /> {product.rating}
+                  <span className="flex items-center gap-1.5 font-sans text-[12px] font-medium" style={{ color: SOFT }}>
+                    <Star size={12} className="fill-[#B8A06C] text-[#B8A06C]" /> {product.rating}
                   </span>
                 )}
               </div>
 
               <div className="mt-5 space-y-4">
                 {reviews.length === 0 ? (
-                  <p className="font-sans text-[13px] text-[#6B6B6B]/50 py-6">
+                  <p className="font-sans text-[14px] py-6" style={{ color: SOFT }}>
                     No reviews yet. Reviews from customers who completed an order will appear here.
                   </p>
                 ) : (
@@ -642,27 +693,28 @@ export default function ProductDetailClient({
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.06 }}
-                      className="bg-white/70 border border-[#EDE8DC]/50 p-5"
+                      className="p-5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(35,31,28,0.35)]"
+                      style={{ backgroundColor: '#FFFFFF', border: `1px solid ${LINE}`, borderRadius: 3 }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-[#EDE8DC]/50 flex items-center justify-center font-sans text-sm text-[#6B6B6B] overflow-hidden shrink-0">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center font-sans text-sm overflow-hidden shrink-0" style={{ backgroundColor: 'rgba(139,125,92,0.10)', color: GOLD }}>
                             {review.avatar && (review.avatar.startsWith('http') || review.avatar.startsWith('/api/uploads') || review.avatar.startsWith('/images/')) ? (
                               <img src={review.avatar} alt={review.author} className="w-full h-full object-cover" />
                             ) : (review.avatar)}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-sans text-[13px] text-[#2C2C2C] font-medium truncate">{review.author}</p>
-                            <p className="font-sans text-[10px] text-[#6B6B6B]/40 truncate">{review.location} · {review.date}</p>
+                            <p className="font-sans text-[13px] font-semibold truncate" style={{ color: INK }}>{review.author}</p>
+                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(35,31,28,0.42)' }}>{review.location} · {review.date}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
+                        <div className="flex items-center gap-[2px] shrink-0">
                           {Array(review.rating).fill(0).map((_, j) => (
-                            <Star key={j} size={10} className="fill-[#B8A06C] text-[#B8A06C]" />
+                            <Star key={j} size={11} className="fill-[#B8A06C] text-[#B8A06C]" />
                           ))}
                         </div>
                       </div>
-                      <p className="mt-3 font-sans text-[13px] text-[#6B6B6B]/75 leading-relaxed">{review.content}</p>
+                      <p className="mt-3 font-sans text-[14px] leading-[1.75]" style={{ color: SOFT }}>{review.content}</p>
                     </motion.div>
                   ))
                 )}
@@ -680,8 +732,8 @@ export default function ProductDetailClient({
             className="mt-20 md:mt-28"
           >
             <div className="flex items-end justify-between mb-8">
-              <h2 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold tracking-tight">You May Also Like</h2>
-              <Link href={`/category/${product.category}`} className="font-sans text-[10px] tracking-[0.12em] uppercase text-[#8B7D5C] hover:text-[#2C2C2C] transition-colors">
+              <h2 className="font-en text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: INK }}>You May Also Like</h2>
+              <Link href={`/category/${product.category}`} className="font-sans text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: GOLD }}>
                 View all →
               </Link>
             </div>
@@ -692,8 +744,8 @@ export default function ProductDetailClient({
         )}
 
         <div className="mt-16 text-center">
-          <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors tracking-wider uppercase font-sans font-medium">
-            <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Collection
+          <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs transition-opacity hover:opacity-60 tracking-[0.14em] uppercase font-sans font-semibold" style={{ color: SOFT }}>
+            <ArrowUpLeft size={12} strokeWidth={1.8} /> Back to Collection
           </Link>
         </div>
       </div>
