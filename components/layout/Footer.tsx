@@ -7,8 +7,8 @@ import type { Category } from "@/lib/products"
 
 /* ---- 深色页脚的文字色阶（此前用 white/20~35，几乎看不见） ---- */
 const ON_DARK = 'rgba(248,246,242,0.92)'      // 主
-const ON_DARK_SOFT = 'rgba(248,246,242,0.62)' // 次（仍清晰）
-const ON_DARK_FAINT = 'rgba(248,246,242,0.42)'
+const ON_DARK_SOFT = 'rgba(248,246,242,0.68)' // 次（仍清晰）
+const ON_DARK_FAINT = 'rgba(248,246,242,0.55)' // 弱但仍达 WCAG AA
 const ACCENT = '#8BA8A0'                       // jade 强调
 
 /** 真实品牌图标（内联 SVG，替代此前的 X/IG/FB 文字圆圈） */

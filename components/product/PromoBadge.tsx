@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // 促销价前端标注组件:
 // - PromoImageBadge: 商品图片上的促销价角标 (仅真实促销活动时显示)
@@ -32,13 +32,13 @@ export function PromoImageBadge({
     <div
       className={`absolute ${className} z-10 flex flex-col items-start gap-0.5 rounded-sm bg-[#B8452E]/95 px-2 py-1 shadow-md backdrop-blur-sm`}
     >
-      <span className="font-sans text-[8px] font-bold tracking-[0.14em] text-white/85 uppercase">
+      <span className="font-sans text-[10px] font-bold tracking-[0.14em] text-white uppercase">
         Sale
       </span>
       <span className="font-en text-sm font-semibold leading-none text-white">
         {formatPrice(convertPrice(eff.price, currency), currency)}
         {pct > 0 && (
-          <span className="ml-1 font-sans text-[9px] font-medium text-white/80">-{pct}%</span>
+          <span className="ml-1 font-sans text-[10px] font-medium text-white/90">-{pct}%</span>
         )}
       </span>
     </div>
@@ -48,7 +48,7 @@ export function PromoImageBadge({
 // 价格区 SALE 标签 (仅真实促销时渲染)
 export function PromoSaleTag() {
   return (
-    <span className="ml-1.5 inline-block align-middle rounded-sm bg-[#B8452E] px-1.5 py-0.5 font-sans text-[9px] font-bold tracking-[0.12em] text-white uppercase">
+    <span className="ml-1.5 inline-block align-middle rounded-sm bg-[#B8452E] px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-[0.12em] text-white uppercase">
       Sale
     </span>
   )
