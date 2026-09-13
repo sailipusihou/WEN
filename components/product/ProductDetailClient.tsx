@@ -493,7 +493,7 @@ export default function ProductDetailClient({
               </span>
               {eff.discount > 0 && <PromoSaleTag />}
               {(eff.originalPrice || product.originalPrice) && (
-                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(35,31,28,0.32)' }}>
+                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(35,31,28,0.45)' }}>
                   {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}

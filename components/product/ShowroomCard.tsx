@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
@@ -182,7 +182,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
                 {eff.discount > 0 && <PromoSaleTag />}
               </span>
               {eff.originalPrice && (
-                <span className="font-sans text-[9px] text-[#6B6F75]/45 line-through block">
+                <span className="font-sans text-[11px] text-[#6B6F75]/70 line-through block">
                   {formatPrice(convertPrice(eff.originalPrice, currency), currency)}
                 </span>
               )}

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef } from 'react'
 import { motion } from 'framer-motion'
@@ -155,7 +155,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <span className={`font-en text-sm font-medium ${eff.discount > 0 ? 'text-[#B8452E] font-semibold' : 'text-[#2D2F33]'}`}>{formatPrice(convertPrice(eff.price, currency), currency)}</span>
             {eff.discount > 0 && <PromoSaleTag />}
             {(eff.originalPrice || product.originalPrice) && (
-              <span className="font-sans text-[10px] text-[#6B6F75]/35 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
+              <span className="font-sans text-[12px] text-[#6B6F75]/60 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
             )}
           </div>
         </div>

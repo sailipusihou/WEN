@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -346,7 +346,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                       {eff.discount > 0 && <PromoSaleTag />}
                     </p>
                     {(eff.originalPrice || product.originalPrice) && (
-                      <p className="font-sans text-xs text-[#6B6B6B]/40 line-through">
+                      <p className="font-sans text-sm text-[#6B6B6B]/60 line-through">
                         {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                       </p>
                     )}
