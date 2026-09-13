@@ -85,7 +85,7 @@ export default function Footer() {
   ]).filter((l: any) => l.href && (l.href.startsWith('http') || l.href.startsWith('/')))
 
   return (
-    <footer style={{ backgroundColor: '#232120' }}>
+    <footer style={{ backgroundColor: '#211C17' }}>
       {/* ============ 主区 ============ */}
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 pt-20 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
@@ -110,9 +110,9 @@ export default function Footer() {
                     aria-label={s.label}
                     title={s.label}
                     className="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5"
-                    style={{ border: '1px solid rgba(248,246,242,0.16)', color: ON_DARK_SOFT, borderRadius: 3 }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#232120'; e.currentTarget.style.backgroundColor = ACCENT; e.currentTarget.style.borderColor = ACCENT }}
-                    onMouseLeave={e => { e.currentTarget.style.color = ON_DARK_SOFT; e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'rgba(248,246,242,0.16)' }}
+                    style={{ border: '1px solid rgba(184,160,108,0.22)', color: '#C9BEAA', borderRadius: 3, backgroundColor: 'rgba(184,160,108,0.05)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#211C17'; e.currentTarget.style.backgroundColor = ACCENT; e.currentTarget.style.borderColor = ACCENT }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#C9BEAA'; e.currentTarget.style.backgroundColor = 'rgba(184,160,108,0.05)'; e.currentTarget.style.borderColor = 'rgba(184,160,108,0.22)' }}
                   >
                     <SocialIcon label={s.label} />
                   </a>
@@ -163,15 +163,18 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ============ 最底层：放大成一个独立区间（对标参考站的 copy-box） ============ */}
-      <div style={{ backgroundColor: '#1B1917', borderTop: '1px solid rgba(248,246,242,0.08)' }}>
+      {/* ============ 最底层：放大成独立区间 + 质感处理 ============
+          大面积深色纯平涂会显廉价，这里叠了三层：
+          垂直渐变（体积感）+ 顶部径向金光（品牌晕染）+ 细腻噪点（去塑料感） */}
+      <div className="footer-texture">
+        <div className="footer-hairline" />
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-16 md:py-20">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
             {/* 大字标 */}
             <div>
               <p
-                className="font-en italic leading-[1.05] tracking-[-0.01em]"
-                style={{ color: ON_DARK, fontSize: 'clamp(38px, 6vw, 72px)' }}
+                className="footer-wordmark font-en italic leading-[1.05] tracking-[-0.01em]"
+                style={{ fontSize: 'clamp(38px, 6vw, 72px)' }}
               >
                 Low Flame
               </p>
@@ -185,7 +188,7 @@ export default function Footer() {
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="group inline-flex items-center gap-2.5 self-start lg:self-end font-sans text-[11px] tracking-[0.16em] uppercase font-semibold px-5 py-3 transition-all duration-300 hover:-translate-y-0.5"
-              style={{ border: '1px solid rgba(248,246,242,0.18)', color: ON_DARK_SOFT, borderRadius: 2 }}
+              style={{ border: '1px solid rgba(184,160,108,0.35)', color: '#DCCBA8', borderRadius: 2, backgroundColor: 'rgba(184,160,108,0.06)' }}
             >
               Back to top
               <ArrowUp size={13} strokeWidth={2} className="transition-transform duration-300 group-hover:-translate-y-0.5" />
@@ -193,7 +196,7 @@ export default function Footer() {
           </div>
 
           {/* 版权 + 法务链接 */}
-          <div className="mt-14 pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(248,246,242,0.08)' }}>
+          <div className="mt-14 pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(184,160,108,0.16)' }}>
             <p className="font-sans text-[12px] tracking-[0.02em]" style={{ color: ON_DARK_FAINT }}>
               &copy; 2026 Low Flame. {copyright}
             </p>

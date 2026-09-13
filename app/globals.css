@@ -1846,3 +1846,59 @@ body {
   .pdp-btn:hover { transform: none; }
   .pdp-rise, .pdp-acc-open { animation: none; }
 }
+
+/* ============================================================
+   页脚底部「质感区间」
+   大面积深色纯平涂会显廉价 —— 用三层叠加做出厚度:
+     1) 垂直渐变   制造上浅下深的体积感
+     2) 顶部径向泛光 品牌金色极淡地晕开
+     3) 细腻噪点   胶片颗粒感, 消除塑料感
+   ============================================================ */
+.footer-texture {
+  position: relative;
+  isolation: isolate;
+  background-color: #1E1913;
+  background-image:
+    radial-gradient(115% 85% at 50% 0%, rgba(184, 160, 108, 0.16) 0%, rgba(184, 160, 108, 0.05) 38%, rgba(184, 160, 108, 0) 68%),
+    linear-gradient(180deg, #2B2318 0%, #241C14 45%, #191410 100%);
+}
+/* 噪点层 */
+.footer-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.42;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 200px 200px;
+}
+/* 顶部金色发丝线 */
+.footer-hairline {
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(184, 160, 108, 0) 0%,
+    rgba(184, 160, 108, 0.16) 18%,
+    rgba(184, 160, 108, 0.55) 50%,
+    rgba(184, 160, 108, 0.16) 82%,
+    rgba(184, 160, 108, 0) 100%);
+}
+/* 大字标：象牙到香槟金的柔和渐变，比纯白更有质感 */
+.footer-wordmark {
+  background: linear-gradient(178deg, #FAF5EA 0%, #EDE2CC 46%, #C9B48C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #EDE2CC;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .footer-texture::before { animation: footer-grain 8s steps(6) infinite; }
+}
+@keyframes footer-grain {
+  0%, 100% { background-position: 0 0; }
+  20% { background-position: -30px 12px; }
+  40% { background-position: 18px -22px; }
+  60% { background-position: -12px 26px; }
+  80% { background-position: 26px 8px; }
+}
