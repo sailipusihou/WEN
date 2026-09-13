@@ -358,10 +358,10 @@ export default function ProductDetailClient({
                 </div>
               )}
 
-              {/* 主图 */}
+              {/* 主图：桌面端高度贴合视口，滚到顶就钉住不再走 */}
               <div className="flex-1 min-w-0">
                 <div
-                  className="relative aspect-[4/5] bg-[#F2EAE0] overflow-hidden group cursor-zoom-in"
+                  className="relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] bg-[#F2EAE0] overflow-hidden group cursor-zoom-in"
                   onClick={() => setLightbox(true)}
                 >
                   <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4 z-10" />
@@ -605,6 +605,69 @@ export default function ProductDetailClient({
                 </dl>
               </Accordion>
             </div>
+
+            {/* ===== 以下是右栏延长区：左主图钉住时，这里持续下滑 ===== */}
+
+            {/* 工艺故事 */}
+            {(product.storyEn || product.story) && (
+              <div className="mt-12 pt-10 border-t border-[#E3DACB]">
+                <h2 className="font-en text-xl text-[#2C2C2C] font-semibold tracking-tight">The Story Behind This Piece</h2>
+                <p className="mt-4 font-sans text-[13px] leading-loose text-[#6B6B6B]/75">{product.storyEn || product.story}</p>
+              </div>
+            )}
+
+            {/* 评价 */}
+            <div id="reviews" className="mt-12 pt-10 border-t border-[#E3DACB] scroll-mt-24">
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-en text-xl text-[#2C2C2C] font-semibold tracking-tight">
+                  Reviews{product.reviewCount > 0 ? ` (${reviews.length || product.reviewCount})` : ''}
+                </h2>
+                {product.reviewCount > 0 && (
+                  <span className="flex items-center gap-1.5 font-sans text-[11px] text-[#6B6B6B]/60">
+                    <Star size={11} className="fill-[#B8A06C] text-[#B8A06C]" /> {product.rating}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-5 space-y-4">
+                {reviews.length === 0 ? (
+                  <p className="font-sans text-[13px] text-[#6B6B6B]/50 py-6">
+                    No reviews yet. Reviews from customers who completed an order will appear here.
+                  </p>
+                ) : (
+                  reviews.map((review, i) => (
+                    <motion.div
+                      key={review.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.06 }}
+                      className="bg-white/70 border border-[#EDE8DC]/50 p-5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-[#EDE8DC]/50 flex items-center justify-center font-sans text-sm text-[#6B6B6B] overflow-hidden shrink-0">
+                            {review.avatar && (review.avatar.startsWith('http') || review.avatar.startsWith('/api/uploads') || review.avatar.startsWith('/images/')) ? (
+                              <img src={review.avatar} alt={review.author} className="w-full h-full object-cover" />
+                            ) : (review.avatar)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-sans text-[13px] text-[#2C2C2C] font-medium truncate">{review.author}</p>
+                            <p className="font-sans text-[10px] text-[#6B6B6B]/40 truncate">{review.location} · {review.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {Array(review.rating).fill(0).map((_, j) => (
+                            <Star key={j} size={10} className="fill-[#B8A06C] text-[#B8A06C]" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="mt-3 font-sans text-[13px] text-[#6B6B6B]/75 leading-relaxed">{review.content}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -627,64 +690,6 @@ export default function ProductDetailClient({
             </div>
           </motion.div>
         )}
-
-        {/* ============ 工艺故事 ============ */}
-        {(product.storyEn || product.story) && (
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mt-20 md:mt-28 max-w-3xl mx-auto">
-            <div className="divider-premium" />
-            <h2 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold mt-10 text-center tracking-tight">The Story Behind This Piece</h2>
-            <div className="mt-8 bg-white/70 border border-[#EDE8DC]/50 p-8 md:p-12">
-              <p className="font-sans text-[#6B6B6B]/70 leading-loose text-sm md:text-base">{product.storyEn || product.story}</p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ============ 评价 ============ */}
-        <motion.div id="reviews" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mt-20 md:mt-28 max-w-3xl mx-auto scroll-mt-24">
-          <div className="divider-premium" />
-          <h2 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold mt-10 text-center tracking-tight">
-            Reviews{product.reviewCount > 0 ? ` (${reviews.length || product.reviewCount})` : ''}
-          </h2>
-
-          <div className="mt-8 space-y-4">
-            {reviews.length === 0 ? (
-              <p className="text-center font-sans text-sm text-[#6B6B6B]/50 py-8">
-                No reviews yet. Reviews from customers who completed an order will appear here.
-              </p>
-            ) : (
-              reviews.map((review, i) => (
-                <motion.div
-                  key={review.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white/70 border border-[#EDE8DC]/50 p-6 md:p-8"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#EDE8DC]/50 flex items-center justify-center font-sans text-sm text-[#6B6B6B] overflow-hidden">
-                        {review.avatar && (review.avatar.startsWith('http') || review.avatar.startsWith('/api/uploads') || review.avatar.startsWith('/images/')) ? (
-                          <img src={review.avatar} alt={review.author} className="w-full h-full object-cover" />
-                        ) : (review.avatar)}
-                      </div>
-                      <div>
-                        <p className="font-sans text-sm text-[#2C2C2C] font-medium">{review.author}</p>
-                        <p className="font-sans text-[10px] text-[#6B6B6B]/40">{review.location} · {review.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      {Array(review.rating).fill(0).map((_, j) => (
-                        <Star key={j} size={11} className="fill-[#B8A06C] text-[#B8A06C]" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="mt-3 font-sans text-sm text-[#6B6B6B]/70 leading-relaxed">{review.content}</p>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </motion.div>
 
         <div className="mt-16 text-center">
           <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors tracking-wider uppercase font-sans font-medium">
