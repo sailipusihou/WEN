@@ -2,13 +2,17 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
+import { fetchCategories } from "@/lib/use-categories"
+import type { Category } from "@/lib/products"
 
 export default function Footer() {
   const [fc, setFc] = useState<any>(null)
   const [settings, setSettings] = useState<any>(null)
+  const [categories, setCategories] = useState<Category[]>([])
   useEffect(() => {
     fetch("/api/frontend-content").then(r => r.ok ? r.json() : null).then(d => setFc(d)).catch(() => {})
     fetch("/api/settings").then(r => r.ok ? r.json() : null).then(d => setSettings(d)).catch(() => {})
+    fetchCategories().then(setCategories).catch(() => {})
   }, [])
 
   const footer = fc?.footer || {}
@@ -21,15 +25,15 @@ export default function Footer() {
     { label: "FB", href: settings?.socialFacebook || "", color: "hover:text-[#1877F2]" },
     { label: "YT", href: settings?.socialYoutube || "", color: "hover:text-[#FF0000]" },
   ]).filter((s: any) => s.href && s.href.startsWith('http'))
-  // 修复 M9: 集合指向真实分类页
-  const collections = footer.collections || [
-    { label: "Tea Ceremony", href: "/category/tea-ceremony" },
-    { label: "Ceramic Living", href: "/category/ceramic-art" },
-    { label: "Silk & Embroidery", href: "/products" },
-    { label: "Bamboo Craft", href: "/products" },
-    { label: "Natural Incense", href: "/category/incense-rituals" },
-    { label: "Scholar's Desk", href: "/products" },
-  ]
+  // 集合列改为读取后台真实分类（原先写死 6 个旧分类，其中 3 个指向 /products、
+  // 另外 3 个指向真实分类但名称与后台不一致）
+  const collections = footer.collections || (categories.length > 0
+    ? categories.map(c => ({ label: c.nameEn || c.name, href: `/category/${c.slug}` }))
+    : [
+        { label: "Tea Ceremony", href: "/category/tea-ceremony" },
+        { label: "Ceramic Living", href: "/category/ceramic-art" },
+        { label: "Natural Incense", href: "/category/incense-rituals" },
+      ])
   // 修复 M9: 移除指向 /contact 的误导链接 (Shipping/Returns 无独立页面时不再显示)
   const companyLinks = footer.companyLinks || [
     { label: "About", href: "/#philosophy" },

@@ -8,8 +8,10 @@ import { useToast } from '@/context/ToastContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
+import { useCategories } from '@/lib/use-categories'
 
 export default function WishlistPage() {
+  const { labelFor } = useCategories()
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { addItem } = useCart()
@@ -68,7 +70,7 @@ export default function WishlistPage() {
                   {item.image ? <img src={item.image} alt={item.nameEn || item.name} className="w-full h-full object-contain" /> : <Heart size={32} className="text-otb-ink/10" />}
                 </div>
                 <div className="p-3">
-                  <p className="font-sans text-xs text-otb-ink/40 tracking-wider uppercase">{item.category === 'cultural-gifts' ? 'Cultural Gifts' : item.category === 'home-decor' ? 'Home Decor' : 'Creative Gifts'}</p>
+                  <p className="font-sans text-xs text-otb-ink/40 tracking-wider uppercase">{labelFor(item.category)}</p>
                   <p className="font-sans text-sm text-otb-ink truncate mt-0.5">{item.nameEn || item.name}</p>
                   <p className="font-en text-sm font-bold text-otb-terracotta mt-1">{formatPrice(convertPrice(computePromotionForProduct({ id: item.id, category: item.category || '', price: item.price }, promotions).price, currency), currency)}</p>
                 </div>

@@ -11,18 +11,14 @@ import type { Product } from "@/lib/products"
 import { useActivePromotions } from "@/lib/promotion-client"
 import { computePromotionForProduct } from "@/lib/promotion-shared"
 import { PromoSaleTag, promoPriceClass } from "@/components/product/PromoBadge"
+import { useCategories } from "@/lib/use-categories"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
 
 const PAGE_SIZE = 12
 
-const CATEGORIES = [
-  { slug: '', label: 'All' },
-  { slug: 'cultural-gifts', label: 'Cultural Gifts' },
-  { slug: 'home-decor', label: 'Home Decor' },
-  { slug: 'creative-gifts', label: 'Creative Gifts' },
-]
-
+// 分类筛选改为读取后台真实分类（此前硬编码 cultural-gifts/home-decor/creative-gifts，
+// 这三个 slug 在数据库里根本不存在，筛选结果恒为 0）
 const PRICE_RANGES = [
   { label: 'All Prices', min: '', max: '' },
   { label: 'Under $50', min: '', max: '50' },
@@ -33,6 +29,7 @@ const PRICE_RANGES = [
 
 export default function AllProductsClient({ products: initialProducts }: { products: Product[] }) {
   const { currency } = useCurrency()
+  const { categories } = useCategories()
   // 修复 H16: 列表视图也展示促销价 (与网格 ProductCard 一致)
   const promotions = useActivePromotions()
   const [search, setSearch] = useState("")
@@ -240,7 +237,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               <div>
                 <h4 className="font-sans text-[9px] text-[#6B6B6B]/60 tracking-[0.15em] uppercase font-medium mb-2">Category</h4>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map(cat => (
+                  {[{ slug: '', label: 'All' }, ...categories.map(c => ({ slug: c.slug, label: c.nameEn || c.name }))].map(cat => (
                     <button
                       key={cat.slug || 'all'}
                       type="button"
