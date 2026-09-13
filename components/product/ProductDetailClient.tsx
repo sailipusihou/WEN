@@ -117,16 +117,22 @@ export default function ProductDetailClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id])
 
-  // 同分类相关推荐（排除当前商品）
+  // 相关推荐：优先同分类；同分类不足时用「精选 + 其他商品」补足到 4 个
+  // （当前每个分类只有 1–3 件商品，只用同分类会经常整个模块空掉）
   useEffect(() => {
     if (!product) return
     let alive = true
-    fetch(`/api/products?category=${encodeURIComponent(product.category)}&activeOnly=true`)
+    fetch('/api/products?activeOnly=true')
       .then(r => (r.ok ? r.json() : { items: [] }))
       .then(d => {
         if (!alive) return
-        const items: Product[] = Array.isArray(d) ? d : (d.items || [])
-        setRelated(items.filter(p => p.id !== product.id).slice(0, 4))
+        const raw: Product[] = Array.isArray(d) ? d : (d.items || [])
+        const all = raw.filter((p: Product) => p.id !== product.id)
+        const sameCat = all.filter(p => p.category === product.category)
+        const others = all
+          .filter(p => p.category !== product.category)
+          .sort((a, b) => Number(b.featured) - Number(a.featured))
+        setRelated([...sameCat, ...others].slice(0, 4))
       })
       .catch(() => {})
     return () => { alive = false }
@@ -253,8 +259,10 @@ export default function ProductDetailClient({
   }
 
   const images = [product.image, ...(product.detailImages || [])].filter(Boolean)
+  // 库存说明：这个站的 stock 字段目前从未维护（全部为 0），所以
+  // **不能**把 0 当成「售罄」去拦截加购，否则整店无法下单。
+  // 只在后台明确填了正数（1–10）时才提示库存紧张。
   const stock = typeof product.stock === 'number' ? product.stock : undefined
-  const soldOut = stock !== undefined && stock <= 0
   const lowStock = stock !== undefined && stock > 0 && stock <= 10
   const specRows: [string, string][] = [
     ['Craft', product.craftEn || product.craft || ''],
@@ -272,7 +280,6 @@ export default function ProductDetailClient({
   }
 
   const handleAddToCart = () => {
-    if (soldOut) return
     for (let i = 0; i < qty; i++) {
       addItem({
         id: product.id, name: product.name,
@@ -445,11 +452,7 @@ export default function ProductDetailClient({
 
             {/* 库存 / 时效 */}
             <div className="mt-4 space-y-2">
-              {soldOut ? (
-                <p className="flex items-center gap-2 font-sans text-xs text-[#B8452E]">
-                  <Package size={13} strokeWidth={1.5} /> Sold out — ask us about the next batch
-                </p>
-              ) : lowStock ? (
+              {lowStock ? (
                 <p className="flex items-center gap-2 font-sans text-xs text-[#B8452E]">
                   <Package size={13} strokeWidth={1.5} /> Only {stock} left in stock
                 </p>
@@ -491,8 +494,7 @@ export default function ProductDetailClient({
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={soldOut}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 text-xs tracking-[0.08em] uppercase font-sans font-medium transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 text-xs tracking-[0.08em] uppercase font-sans font-medium transition-all duration-300 ${
                   added ? 'bg-[#8B7D5C] text-white' : 'bg-[#2C2C2C] text-white hover:bg-[#1A1A1A]'
                 }`}
               >
