@@ -82,6 +82,7 @@ export default function StickyBuyBar({
   return (
     <div
       aria-hidden={!visible}
+      data-visible={visible ? '1' : '0'}
       className="fixed left-0 right-0 bottom-0 z-[102] transition-all duration-[400ms]"
       style={{
         transform: visible ? 'translateY(0)' : 'translateY(105%)',

@@ -255,17 +255,31 @@ export default function ProductDetailClient({
     }
   }, [lightbox, closeLightbox])
 
-  // 吸底加购栏的出现时机：主购买区（加购按钮那一块）滚出视口后才出现
-  // 对标站也是这样——不是一进页面就顶出来，避免和主按钮重复
+  // 吸底加购栏的出现时机：主购买区整块滚出视口顶部之后才出现
+  // 对标站也是这样——不是一进页面就顶出来，避免和主按钮重复。
+  //
+  // 注意：这里不能用 IntersectionObserver。主购买区初始位置在首屏之下（y≈930），
+  // 往下滚时它直接从"视口下方"跑到"视口上方"，全程 isIntersecting 恒为 false，
+  // 观察器只在状态"变化"时回调 —— 于是永远等不到触发。用滚动监听才可靠。
   useEffect(() => {
-    const el = buyBoxRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(
-      ([entry]) => setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0),
-      { rootMargin: '-96px 0px 0px 0px', threshold: 0 }
-    )
-    io.observe(el)
-    return () => io.disconnect()
+    const HEADER = 96
+    let raf = 0
+    const measure = () => {
+      raf = 0
+      const el = buyBoxRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      setShowStickyBar(rect.bottom < HEADER)
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(measure) }
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      if (raf) cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [product?.id])
 
   // 主区改了数量 → 同步给吸底栏
