@@ -27,11 +27,21 @@ export default function CartPage() {
 
   // 修复 L11: 运费与结算页一致, 走 /api/shipping 分区计费 (原硬编码 3000/250 与结算页口径不同)
   const [shippingCost, setShippingCost] = useState(250)
+  // 免邮门槛必须取「该国家所属分区」的值 —— 真正决定免邮的是 zone.freeThreshold
+  // (lib/settings.ts calculateShipping: subtotal >= zone.freeThreshold ? 0 : zone.baseCost),
+  // 而不是全局 shippingFreeThreshold。两者对美加恰好相同(416.67), 但欧洲是 555.56、
+  // 亚太 486.11、其他 694.44 —— 用全局值会对这些地区的客户承诺出并不存在的免邮。
+  const [freeThreshold, setFreeThreshold] = useState(416.67)
   useEffect(() => {
     let cancelled = false
     fetch(`/api/shipping?country=United%20States&subtotal=${subtotal}`)
-      .then(r => r.ok ? r.json() : { cost: 250 })
-      .then(d => { if (!cancelled) setShippingCost(Number(d.cost) || 250) })
+      .then(r => r.ok ? r.json() : { cost: 250, zone: null })
+      .then(d => {
+        if (cancelled) return
+        setShippingCost(Number(d.cost) || 250)
+        const t = Number(d.zone?.freeThreshold)
+        if (t > 0) setFreeThreshold(t)
+      })
       .catch(() => { if (!cancelled) setShippingCost(250) })
     return () => { cancelled = true }
   }, [subtotal])
@@ -43,14 +53,6 @@ export default function CartPage() {
 
   // 底部商品推荐（与详情页同款逻辑）：排除已在购物车里的商品
   const [related, setRelated] = useState<Product[]>([])
-  // 免邮门槛（后台系统设置）
-  const [freeThreshold, setFreeThreshold] = useState(416.67)
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => (r.ok ? r.json() : null))
-      .then(s => { if (s && Number(s.shippingFreeThreshold) > 0) setFreeThreshold(Number(s.shippingFreeThreshold)) })
-      .catch(() => {})
-  }, [])
   useEffect(() => {
     let alive = true
     fetch('/api/products?activeOnly=true')

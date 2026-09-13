@@ -122,14 +122,10 @@ export default function CheckoutPage() {
 
   const totalPrice = Math.round((discountedSubtotal - couponDiscount + shippingCost) * 100) / 100
 
-  // 免邮门槛（后台系统设置）：用于订单摘要里的免邮进度条
-  const [freeThreshold, setFreeThreshold] = useState(0)
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => (r.ok ? r.json() : null))
-      .then(s => { if (s) setFreeThreshold(Number(s.shippingFreeThreshold) || 0) })
-      .catch(() => {})
-  }, [])
+  // 免邮门槛：必须取「该国家所属分区」的 zone.freeThreshold（真正决定免邮的值），
+  // 不能用全局 shippingFreeThreshold —— 两者对美加相同(416.67)，
+  // 但欧洲 555.56 / 亚太 486.11 / 其他 694.44，用全局值会承诺不存在的免邮。
+  const freeThreshold = Number(shippingZone?.freeThreshold) || 0
 
   // estimatedDays 是字符串（形如 "14-21"），这里解析出下限/上限算具体到达日期
   const checkoutEta = (() => {

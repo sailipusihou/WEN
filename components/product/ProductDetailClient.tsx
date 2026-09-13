@@ -167,16 +167,19 @@ export default function ProductDetailClient({
     return () => { alive = false }
   }, [product?.id, product?.category])
 
-  // 配送时效（后台系统设置的默认天数 / 免邮门槛）
+  // 配送时效 + 免邮门槛
+  // 免邮门槛取「分区」的 freeThreshold（lib/settings.ts calculateShipping 真正用它判定），
+  // 而不是全局 shippingFreeThreshold —— 两者只在美加相同，其它地区差异很大。
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/shipping?country=United%20States&subtotal=0')
       .then(r => (r.ok ? r.json() : null))
-      .then(s => {
-        if (!s) return
+      .then(d => {
+        if (!d) return
+        const nums = String(d.estimatedDays || '').match(/\d+/g) || []
         setShipping({
-          days: Number(s.defaultShippingDays) || 12,
-          freeThreshold: Number(s.shippingFreeThreshold) || 0,
-          cost: Number(s.shippingCost) || 0,
+          days: nums.length ? Number(nums[0]) : 12,
+          freeThreshold: Number(d.zone?.freeThreshold) || 0,
+          cost: Number(d.cost) || 0,
         })
       })
       .catch(() => {})

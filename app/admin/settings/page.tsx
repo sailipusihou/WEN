@@ -5,7 +5,7 @@ import {
   Settings, ShoppingCart, Truck, Mail, Plus, X, Users,
   GalleryHorizontalEnd, Video, ArrowLeft, Type, Sparkles,
   Mailbox, Footprints, Cloud, Bell, Image as ImageIcon, Sun, Contrast, Star,
-  ChevronDown, Store, Monitor, Shield, Bot,
+  ChevronDown, Store, Monitor, Shield, Bot, AlertCircle,
   Facebook, Instagram, Linkedin, Youtube, Pin, MessageCircle, PenTool, Music,
 } from 'lucide-react'
 import XLogo from "@/components/ui/XLogo"
@@ -2427,11 +2427,23 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
         {/* ============ Shipping tab (System) ============ */}
         {subTab === "shipping" && settings && (
           <Section icon={Truck} title="Shipping Settings">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
               <Field label="Free Threshold ($)"><Input type="number" value={String(settings.shippingFreeThreshold ?? 0)} onChange={v => update("shippingFreeThreshold", Number(v))} /></Field>
               <Field label="Default Cost ($)"><Input type="number" value={String(settings.shippingCost ?? 0)} onChange={v => update("shippingCost", Number(v))} /></Field>
               <Field label="Default Carrier"><Input value={settings.defaultCarrier || ""} onChange={v => update("defaultCarrier", v)} /></Field>
               <Field label="Tracking URL"><Input value={settings.trackingUrlTemplate || ""} onChange={v => update("trackingUrlTemplate", v)} /></Field>
+            </div>
+            {/* 这里必须说清楚：实际免邮判定走的是下面「每个分区自己的 Free at $」，
+                上面这个全局值不参与计算（calculateShipping 只读 zone.freeThreshold）。
+                不标注的话，后台改了上面的值会发现前台毫无变化。 */}
+            <div className="mb-6 px-3 py-2.5 rounded-lg text-xs flex items-start gap-2"
+              style={{ backgroundColor: "rgba(245,158,11,0.10)", color: "#b45309" }}>
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <span>
+                <strong>Above values do not decide free shipping.</strong> Free shipping is decided per zone by
+                each zone&apos;s own <strong>Free at $</strong> below — e.g. United States &amp; Canada 416.67,
+                Europe 555.56, Asia Pacific 486.11, Rest of World 694.44. Change the zone value, not the one above.
+              </span>
             </div>
             <div style={{ borderTop: "1px solid var(--adm-border)" }} className="pt-6">
               <div className="flex items-center justify-between mb-4">
