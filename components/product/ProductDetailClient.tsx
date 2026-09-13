@@ -294,7 +294,7 @@ export default function ProductDetailClient({
 
   return (
     <div className="bg-[#F8F5F0] min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
+      <div className="max-w-[1560px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         {/* Breadcrumb */}
         <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] text-[#6B6B6B]/50 tracking-wider uppercase mb-8 md:mb-10">
           <Link href="/" className="hover:text-[#2C2C2C] transition-colors">Home</Link>
@@ -330,7 +330,7 @@ export default function ProductDetailClient({
         )}
 
         {/* ============ 主图为主 + 右侧详情 ============ */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.28fr)_minmax(0,1fr)] gap-8 lg:gap-14 xl:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.42fr)_minmax(0,1fr)] gap-8 lg:gap-14 xl:gap-16">
           {/* ---------- 左：放大主图 ---------- */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -341,7 +341,7 @@ export default function ProductDetailClient({
             <div className="flex gap-3 md:gap-4">
               {/* 缩略图竖排（桌面） */}
               {images.length > 1 && (
-                <div className="hidden md:flex flex-col gap-2.5 w-[76px] shrink-0">
+                <div className="hidden md:flex flex-col gap-2.5 w-[64px] shrink-0">
                   {images.map((img, i) => (
                     <button
                       key={i}
