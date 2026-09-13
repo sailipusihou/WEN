@@ -276,7 +276,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <motion.div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" style={{ opacity: heroOpacity }}>
           <div className="max-w-2xl">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}>
-              <span className="font-sans text-[9px] text-coral-light tracking-[0.15em] uppercase font-medium border-b border-coral/20 pb-1 inline-block">
+              <span className="font-en italic text-[15px] tracking-[0.01em] text-coral border-b border-coral/25 pb-1 inline-block">
                 {hero.eyebrow || "Low Flame · Contemporary Craftsmanship"}
               </span>
             </motion.div>
@@ -287,21 +287,22 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               className="mt-5 font-en text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-paper-light font-semibold leading-[1.05] tracking-tight"
             >
               {(hero.headline || "Objects That\nCarry Stories").split("\n").map((line: string, i: number) => (
-                <span key={i}>{i > 0 && <br />}{line}</span>
+                // 第二行用 Playfair 斜体：编辑式排版，比整段同款字体更有「花样」
+                <span key={i} className={i > 0 ? 'italic font-normal' : ''}>{i > 0 && <br />}{line}</span>
               ))}
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
-              className="mt-5 text-sm md:text-base text-paper-light/50 font-sans font-light leading-relaxed max-w-md">
+              className="mt-5 text-sm md:text-base text-paper-light/76 font-sans font-light leading-relaxed max-w-md">
               {hero.subtitle || "Celadon, silk, bamboo, and incense — each piece hand-selected from master craftspeople."}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Link href={hero.buttonLink || "/products"}
-                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-coral text-paper-light text-[10px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
+                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
                 {hero.buttonText || "Explore the Collection"} <ArrowUpRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
               <Link href={hero.secondaryLink || "/#philosophy"}
-                className="text-[10px] text-paper-light/40 hover:text-paper-light/70 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
                 {hero.secondaryText || "Our Philosophy"}
               </Link>
             </motion.div>
@@ -313,11 +314,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           <>
             {/* 左右箭头 — 悬停显示 */}
             <button onClick={prevSlide} aria-label="Previous slide"
-              className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
+              className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/86 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <button onClick={nextSlide} aria-label="Next slide"
-              className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
+              className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/86 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
 
@@ -344,15 +345,15 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
             </div>
 
             {/* 计数器 */}
-            <div className="absolute top-6 right-6 md:top-8 md:right-8 z-20 font-en text-[10px] text-white/50 tracking-[0.2em]">
-              {String(currentSlide + 1).padStart(2, '0')} <span className="text-white/25">/</span> {String(slideshowImages.length).padStart(2, '0')}
+            <div className="absolute top-6 right-6 md:top-8 md:right-8 z-20 font-en text-[12px] text-white/76 tracking-[0.2em]">
+              {String(currentSlide + 1).padStart(2, '0')} <span className="text-white/58">/</span> {String(slideshowImages.length).padStart(2, '0')}
             </div>
           </>
         )}
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
-          <span className="font-sans text-[7px] text-white/20 tracking-[0.25em] uppercase">Scroll</span>
+          <span className="font-sans text-[12px] text-white/79 tracking-[0.25em] uppercase">Scroll</span>
           <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
             className="w-4 h-7 border border-white/10 rounded-full flex justify-center pt-1">
             <div className="w-0.5 h-1.5 bg-white/20 rounded-full" />
@@ -373,7 +374,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }}>
                 <span className="font-en text-[11px] text-coral tracking-wider">{item.number}</span>
                 <h4 className="font-sans text-[11px] font-medium text-ink-deep mt-2 tracking-[0.08em] uppercase">{item.label}</h4>
-                <p className="font-sans text-[11px] text-ink-soft/60 mt-1 leading-relaxed">{item.desc}</p>
+                <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -384,7 +385,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       <section className="py-20 md:py-28 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
-            <span className="font-sans text-[9px] text-coral tracking-[0.15em] uppercase font-medium">Curated by Heritage</span>
+            <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">Curated by Heritage</span>
             <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">Our Collections</h2>
           </motion.div>
           {categories.length > 0 && (
@@ -407,13 +408,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} style={{ y: featuredHeadY }} className="flex items-end justify-between mb-10">
             <div>
-              <span className="font-sans text-[9px] text-coral tracking-[0.15em] uppercase font-medium">{featured.eyebrow || "Curated Selection"}</span>
+              <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{featured.eyebrow || "Curated Selection"}</span>
               <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">{featured.headline || "Featured Pieces"}</h2>
             </div>
           </motion.div>
           <ShowroomGrid products={featuredProducts} />
           <motion.div {...fadeUp} className="text-center mt-10">
-            <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 bg-ink-deep text-paper-light text-[10px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink transition-colors">
+            <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 bg-ink-deep text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink transition-colors">
               Browse All Products <ArrowUpRight size={12} strokeWidth={1.5} />
             </Link>
           </motion.div>
@@ -437,19 +438,19 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               </div>
               <div className="absolute -bottom-4 -right-4 bg-white p-5 md:p-6 shadow-soft-lg max-w-[170px]">
                 <span className="font-en text-2xl font-semibold text-ink-deep">{artisanStory.badgeNumber || "45+"}</span>
-                <p className="font-sans text-[11px] text-ink-soft/60 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
+                <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
               </div>
             </div>
             <div>
-              <span className="font-sans text-[9px] text-coral tracking-[0.15em] uppercase font-medium">{artisanStory.eyebrow || "Behind the Craft"}</span>
+              <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{artisanStory.eyebrow || "Behind the Craft"}</span>
               <h2 className="font-en text-3xl md:text-4xl text-ink-deep font-semibold mt-3 leading-tight tracking-tight">
                 {(artisanStory.headline || "Every Object Has a\nMaker, Place, Story").split("\n").map((l: string, i: number) => <span key={i}>{i > 0 && <br />}{l}</span>)}
               </h2>
               <div className="divider-refined my-6" />
-              {artisanStory.paragraph1 && <p className="font-sans text-sm text-ink-soft/70 leading-relaxed">{artisanStory.paragraph1}</p>}
-              {artisanStory.paragraph2 && <p className="font-sans text-sm text-ink-soft/70 leading-relaxed mt-4">{artisanStory.paragraph2}</p>}
+              {artisanStory.paragraph1 && <p className="font-sans text-sm text-ink-soft/86 leading-relaxed">{artisanStory.paragraph1}</p>}
+              {artisanStory.paragraph2 && <p className="font-sans text-sm text-ink-soft/86 leading-relaxed mt-4">{artisanStory.paragraph2}</p>}
               <Link href={artisanStory.buttonLink || "/products"}
-                className="inline-flex items-center gap-1.5 mt-8 text-[10px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium border-b border-ink-deep pb-0.5 hover:text-coral hover:border-coral transition-all duration-300">
+                className="inline-flex items-center gap-1.5 mt-8 text-[12px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium border-b border-ink-deep pb-0.5 hover:text-coral hover:border-coral transition-all duration-300">
                 {artisanStory.buttonText || "Meet the Artisans"} <ArrowUpRight size={11} strokeWidth={1.5} />
               </Link>
             </div>
@@ -461,19 +462,19 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       <section id="philosophy" className="py-20 md:py-28 bg-ink-deep text-paper-light">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
-            <span className="font-sans text-[9px] text-coral-light tracking-[0.15em] uppercase font-medium">{philosophySection.eyebrow || "Our Philosophy"}</span>
+            <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{philosophySection.eyebrow || "Our Philosophy"}</span>
             <h2 className="font-en text-3xl md:text-5xl text-paper-light font-semibold mt-3 leading-tight tracking-tight">
                 {(philosophySection.headline || "Beauty Lives in the\nDetails We Often Overlook").split("\n").map((l: string, i: number) => <span key={i}>{i > 0 && <br />}{l}</span>)}
               </h2>
             <div className="w-10 h-px bg-coral/30 mx-auto my-8" />
-            <p className="font-sans text-sm md:text-base text-paper-light/50 leading-relaxed max-w-xl mx-auto">{philosophySection.body || "We believe everyday objects carry cultural memory."}</p>
+            <p className="font-sans text-sm md:text-base text-paper-light/76 leading-relaxed max-w-xl mx-auto">{philosophySection.body || "We believe everyday objects carry cultural memory."}</p>
           </motion.div>
           {(philosophySection.quotes?.length > 0) && (
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-4xl mx-auto">
               {philosophySection.quotes.map((q: any, i: number) => (
                 <motion.div key={i} {...stagger} transition={{ delay: i * 0.1 }} className="text-center">
-                  <p className="font-en text-sm md:text-base text-paper-light/55 leading-relaxed italic">&ldquo;{q.quote}&rdquo;</p>
-                  <p className="font-sans text-[10px] text-paper-light/30 mt-3">{q.author}</p>
+                  <p className="font-en text-sm md:text-base text-paper-light/79 leading-relaxed italic">&ldquo;{q.quote}&rdquo;</p>
+                  <p className="font-sans text-[12px] text-paper-light/62 mt-3">{q.author}</p>
                 </motion.div>
               ))}
             </div>
@@ -485,9 +486,9 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       <section id="journal" className="py-20 md:py-28 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
-            <span className="font-sans text-[9px] text-coral tracking-[0.15em] uppercase font-medium">{journal.eyebrow || "Stories & Essays"}</span>
+            <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{journal.eyebrow || "Stories & Essays"}</span>
             <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">{journal.headline || "The Journal"}</h2>
-            {journal.body && <p className="font-sans text-sm text-ink-soft/60 mt-3 max-w-lg leading-relaxed">{journal.body}</p>}
+            {journal.body && <p className="font-sans text-sm text-ink-soft/82 mt-3 max-w-lg leading-relaxed">{journal.body}</p>}
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {(journal.entries || []).map((entry: any, i: number) => {
@@ -507,13 +508,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                       />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[9px] text-ink-soft/35 font-sans tracking-[0.1em] uppercase mb-2">
+                  <div className="flex items-center gap-2 text-[11px] text-ink-soft/66 font-sans tracking-[0.1em] uppercase mb-2">
                     <span>{entry.date}</span>
                     <span className="w-1 h-1 rounded-full bg-coral/30" />
                     <span>{entry.readTime} min</span>
                   </div>
                   <h3 className="font-en text-base text-ink-deep font-semibold group-hover:text-coral transition-colors leading-snug">{entry.title}</h3>
-                  <p className="font-sans text-[11px] text-ink-soft/55 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
+                  <p className="font-sans text-[11px] text-ink-soft/79 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
                 </>
               )
               return (
@@ -543,16 +544,16 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <div className="absolute inset-0 bg-gradient-to-t from-ink-deep via-ink-deep/60 to-ink-deep/80" />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
-            <span className="font-sans text-[9px] text-coral-light tracking-[0.15em] uppercase font-medium">{seasonal.eyebrow || "Seasonal Edition"}</span>
+            <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{seasonal.eyebrow || "Seasonal Edition"}</span>
             <h2 className="font-en text-3xl md:text-5xl text-paper-light font-semibold mt-3 leading-tight tracking-tight">{seasonal.headline || "Summer Collection"}</h2>
-            {seasonal.body && <p className="font-sans text-sm text-paper-light/50 mt-4 max-w-md mx-auto leading-relaxed">{seasonal.body}</p>}
+            {seasonal.body && <p className="font-sans text-sm text-paper-light/76 mt-4 max-w-md mx-auto leading-relaxed">{seasonal.body}</p>}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href={seasonal.buttonLink || "/products"}
-                className="px-8 py-3.5 bg-coral text-paper-light text-[10px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
+                className="px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
                 {seasonal.buttonText || "Explore Collection"}
               </Link>
               <Link href={seasonal.secondaryLink || "/contact"}
-                className="text-[10px] text-paper-light/40 hover:text-paper-light/70 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
                 {seasonal.secondaryText || "Request a Lookbook"}
               </Link>
             </div>
@@ -564,9 +565,9 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       <section className="py-16 md:py-20 bg-white border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
-            <span className="font-sans text-[9px] text-coral tracking-[0.15em] uppercase font-medium">{newsletter.eyebrow || "Stay Connected"}</span>
+            <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{newsletter.eyebrow || "Stay Connected"}</span>
             <h3 className="font-en text-2xl md:text-3xl text-ink-deep font-semibold mt-2">{newsletter.headline || "Receive Stories from the Studio"}</h3>
-            {newsletter.body && <p className="font-sans text-sm text-ink-soft/60 mt-2 leading-relaxed">{newsletter.body}</p>}
+            {newsletter.body && <p className="font-sans text-sm text-ink-soft/82 mt-2 leading-relaxed">{newsletter.body}</p>}
             <form onSubmit={handleNewsletterSubmit} className="mt-8 flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <input
                 type="email"
@@ -580,7 +581,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               <button
                 type="submit"
                 disabled={newsletterStatus === 'loading'}
-                className="px-6 py-2.5 bg-ink-deep text-paper-light text-[10px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink disabled:opacity-50 transition-colors inline-flex items-center justify-center gap-2"
+                className="px-6 py-2.5 bg-ink-deep text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink disabled:opacity-50 transition-colors inline-flex items-center justify-center gap-2"
               >
                 {newsletterStatus === 'loading' ? <Loader2 size={12} className="animate-spin" /> : null}
                 {newsletter.buttonText || "Subscribe"}
@@ -591,7 +592,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                 {newsletterMessage}
               </p>
             )}
-            <p className="font-sans text-[9px] text-ink-soft/35 mt-3">{newsletter.disclaimer || "No spam. Unsubscribe anytime."}</p>
+            <p className="font-sans text-[11px] text-ink-soft/66 mt-3">{newsletter.disclaimer || "No spam. Unsubscribe anytime."}</p>
           </motion.div>
         </div>
       </section>
@@ -648,18 +649,18 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
           </AnimatePresence>
         </div>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-deep/30 via-transparent to-transparent" />
-        <span className="absolute top-4 left-4 font-en text-[10px] text-white tracking-[0.25em] bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-full">
+        <span className="absolute top-4 left-4 font-en text-[12px] text-white tracking-[0.25em] bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-full">
           {String(active + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
         </span>
 
         {/* Glass info card */}
         <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-white/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
-          <span className="font-sans text-[8px] text-coral tracking-[0.15em] uppercase">{current.subtitle}</span>
+          <span className="font-sans text-[11px] text-coral tracking-[0.15em] uppercase">{current.subtitle}</span>
           <h3 className="font-en text-xl md:text-2xl text-ink-deep font-semibold mt-1.5">{current.title}</h3>
-          <p className="font-sans text-[11px] text-ink-soft/70 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
+          <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E5DFD5]/60">
-            <span className="font-sans text-[10px] text-ink-soft/50">{current.productCount ?? 0} items</span>
-            <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[10px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium hover:text-coral transition-colors">
+            <span className="font-sans text-[12px] text-ink-soft/76">{current.productCount ?? 0} items</span>
+            <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium hover:text-coral transition-colors">
               View Collection <ArrowUpRight size={11} strokeWidth={1.5} />
             </Link>
           </div>
@@ -682,19 +683,19 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
               >
                 <div className="py-4 md:py-5 flex items-baseline justify-between gap-4">
                   <div className="flex items-baseline gap-2.5 min-w-0">
-                    <span className={`font-en text-[10px] tracking-widest ${isActive ? 'text-coral' : 'text-ink-soft/40'}`}>
+                    <span className={`font-en text-[12px] tracking-widest ${isActive ? 'text-coral' : 'text-ink-soft/86'}`}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <h4 className={`font-en text-lg md:text-xl truncate transition-colors ${isActive ? 'text-ink-deep' : 'text-ink-soft group-hover:text-ink-deep'}`}>{item.title}</h4>
-                    <span className="font-sans text-[11px] text-ink-soft/50 truncate">{item.subtitle}</span>
+                    <span className="font-sans text-[11px] text-ink-soft/76 truncate">{item.subtitle}</span>
                   </div>
-                  <ArrowUpRight size={13} strokeWidth={1.5} className={`shrink-0 transition-all duration-300 ${isActive ? 'text-coral' : 'text-ink-soft/30 group-hover:text-coral'}`} />
+                  <ArrowUpRight size={13} strokeWidth={1.5} className={`shrink-0 transition-all duration-300 ${isActive ? 'text-coral' : 'text-ink-soft/62 group-hover:text-coral'}`} />
                 </div>
                 {isActive && item.description && (
                   <motion.p
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="font-sans text-[11px] text-ink-soft/60 pb-4 pl-6 leading-relaxed line-clamp-2"
+                    className="font-sans text-[11px] text-ink-soft/82 pb-4 pl-6 leading-relaxed line-clamp-2"
                   >
                     {item.description}
                   </motion.p>
