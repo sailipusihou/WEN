@@ -55,10 +55,32 @@ export default function OptimizedImage({
     onError?.()
   }
 
+  // ---------------------------------------------------------------------------
+  // fill 模式的定位规则（2026-09 修复）
+  //
+  // 历史 bug：这里无条件拼上 `relative`。Tailwind 生成的 CSS 里 .relative 排在
+  // .absolute 之后，所以调用方传进来的 `absolute inset-0` 被 .relative 直接盖掉，
+  // 容器退化成「position:relative + 唯一子元素是绝对定位」→ 高度 0，
+  // 于是 <Image fill> 被压成 h=0，商品图永远看不见，只露出底下的暖色面板。
+  // 站内 20 个 fill 调用点全部中招（商品列表、PDP 主图与缩略图、分类卡、
+  // 购物车缩略图、后台、搜索框、link-in-bio 等）。
+  //
+  // 现在的规则：
+  //   1. 调用方自带 absolute/fixed/sticky → 完全尊重，不再强塞 relative；
+  //   2. fill 且调用方没给尺寸 → 用 Next.js 官方推荐的 `absolute inset-0` 撑满父容器
+  //      （站内所有父容器都是 relative/absolute，已逐个核对）；
+  //   3. 其余情况维持原来的 relative。
+  // ---------------------------------------------------------------------------
+  const callerPositioned = /(^|\s)(absolute|fixed|sticky)(\s|$)/.test(className)
+  const callerSized = /(^|\s)(w-|h-|size-|aspect-|inset-)/.test(className)
+  const positionClass = callerPositioned
+    ? ''
+    : (fill && !callerSized ? 'absolute inset-0' : 'relative')
+
   if (hasError || !src) {
     return (
       <div
-        className={`bg-[#F7F0DE] flex items-center justify-center ${className}`}
+        className={`${positionClass} bg-[#F7F0DE] flex items-center justify-center ${className}`.trim()}
         style={style}
       >
         <svg
@@ -85,7 +107,7 @@ export default function OptimizedImage({
   }
 
   return (
-    <div className={`relative overflow-hidden ${className}`} style={style}>
+    <div className={`${positionClass} overflow-hidden ${className}`.trim()} style={style}>
       {isLoading && placeholder === 'blur' && (
         <div className="absolute inset-0 bg-gradient-to-r from-[#F7F0DE] via-[#EDE3D2] to-[#F7F0DE] bg-[length:200%_100%] animate-pulse" />
       )}
