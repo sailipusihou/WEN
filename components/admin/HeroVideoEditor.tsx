@@ -159,15 +159,18 @@ export default function HeroVideoEditor({
 
   const multiVideo = list.length > 1
 
+  // 与前台 HomeClient 保持完全一致：色温 50 是中性，必须返回空串而不是
+  // sepia(0) hue-rotate(0deg) saturate(1) —— 后者数学上等价，但会让浏览器多铺一层
+  // 滤镜合成，预览画面比真实前台发灰发黄，管理员据此调参就会越调越偏。
   const getTemperatureFilter = (temp: number) => {
     const t = (temp - 50) / 50
+    if (t === 0) return ''
     if (t < 0) {
       const coldIntensity = Math.abs(t)
       return `hue-rotate(${coldIntensity * 15}deg) saturate(${1 - coldIntensity * 0.2})`
-    } else {
-      const warmIntensity = t
-      return `sepia(${warmIntensity * 0.25}) hue-rotate(${-warmIntensity * 12}deg) saturate(${1 + warmIntensity * 0.15})`
     }
+    const warmIntensity = t
+    return `sepia(${warmIntensity * 0.25}) hue-rotate(${-warmIntensity * 12}deg) saturate(${1 + warmIntensity * 0.15})`
   }
 
   return (
@@ -357,7 +360,7 @@ export default function HeroVideoEditor({
                     loop
                     playsInline
                     className="w-full h-full"
-                    style={{ objectFit: fit, filter: `brightness(${brightness}%) ${getTemperatureFilter(temperature)}` }}
+                    style={{ objectFit: fit, filter: `brightness(${brightness}%) ${getTemperatureFilter(temperature)}`.trim() }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLVideoElement).play().catch(() => {}) }}
                     onMouseLeave={(e) => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0 }}
                   />
@@ -445,7 +448,7 @@ export default function HeroVideoEditor({
                 className="absolute inset-0 w-full h-full"
                 style={{
                   objectFit: fit,
-                  filter: `brightness(${brightness}%) ${getTemperatureFilter(temperature)}`,
+                  filter: `brightness(${brightness}%) ${getTemperatureFilter(temperature)}`.trim(),
                 }}
               />
             ) : (
