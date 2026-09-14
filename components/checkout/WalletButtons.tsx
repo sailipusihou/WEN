@@ -55,6 +55,11 @@ interface Props {
    */
   title?: string
   subtitle?: string
+  /**
+   * 并排显示在钱包前面的按钮（通常是精简版 PayPal 按钮的挂载容器）。
+   * 参考站的 Express Checkout 里 PayPal 和两个钱包是排在一起的。
+   */
+  leading?: React.ReactNode
   /** 建站内订单 + PayPal 订单，返回 PayPal order id（服务端核价） */
   createOrderId: (contact?: WalletContact) => Promise<string>
   /** 用 PayPal order id 完成扣款（服务端 capture + 落库） */
@@ -166,6 +171,7 @@ export default function WalletButtons({
   layout = 'stack',
   title,
   subtitle,
+  leading,
   createOrderId,
   captureOrder,
   onError,
@@ -463,12 +469,15 @@ export default function WalletButtons({
   }
 
   const hasAny = masterEnabled && (showGooglePay || showApplePay)
+  const hasContent = hasAny || !!leading
 
   // 诊断模式下即使没有可用钱包也要把面板显示出来，否则没法看原因
-  if (!hasAny && !debugOn) return null
-  if (!masterEnabled && !debugOn) return null
+  if (!hasContent && !debugOn) return null
+  if (!masterEnabled && !leading && !debugOn) return null
 
   const items = [
+    // PayPal 精简按钮（由结算页渲染进这个容器）排在最左，和参考站一致
+    leading ? <div key="leading" className="express-leading">{leading}</div> : null,
     showApplePay
       ? (
         // Apple 新版 SDK 注册了 <apple-pay-button> 自定义元素时优先用它
@@ -516,7 +525,7 @@ export default function WalletButtons({
     </div>
   ) : null
 
-  if (!hasAny && debugOn) {
+  if (!hasAny && !leading && debugOn) {
     return <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">{debugPanel}</div>
   }
 

@@ -429,55 +429,56 @@ export default function CheckoutPage() {
     setSubmitted(true)
   }
 
+  /**
+   * 渲染 PayPal 按钮。
+   *
+   * 渲染两处，和参考站一致：
+   *   1) 顶部 Express Checkout 行 —— 精简单个 PayPal 按钮，与 Apple Pay / Google Pay 并排
+   *   2) 底部 Payment 区 —— 完整那套（PayPal / Pay Later / 借记卡信用卡）
+   * 两处共用同一份 createOrder / onApprove 逻辑（createPayPalOrderId / captureAndFinalize），
+   * 金额口径与落库逻辑不会分叉。
+   */
   useEffect(() => {
     if (!paypalReady) return
+    const pp = (window as any).paypal
+    if (!pp) return
+
+    const handleApprove = async (data: any) => {
+      setProcessing(true)
+      setPaypalError('')
+      try {
+        await captureAndFinalize(data.orderID)
+      } catch (e: any) {
+        setPaypalError(e.message || 'Payment verification failed')
+      } finally {
+        setProcessing(false)
+      }
+    }
+
+    // ---- 顶部 Express Checkout：只要一个 PayPal 按钮 ----
+    const expressEl = document.getElementById('paypal-express-container')
+    if (expressEl && !expressEl.dataset.rendered) {
+      expressEl.dataset.rendered = '1'
+      try {
+        pp.Buttons({
+          fundingSource: pp.FUNDING?.PAYPAL,
+          style: { layout: 'horizontal', shape: 'rect', height: 48, tagline: false, label: 'pay' },
+          createOrder: () => createPayPalOrderId(),
+          onApprove: handleApprove,
+          onError: () => setPaypalError('A PayPal error occurred. Please try again.'),
+        }).render(expressEl)
+      } catch (e) {
+        console.warn('[paypal] express button render failed', e)
+      }
+    }
+
+    // ---- 底部 Payment 区：完整按钮组 ----
     const container = document.getElementById('paypal-button-container')
-    if (!container || !(window as any).paypal) return
-    ;(window as any).paypal.Buttons({
-      createOrder: async () => {
-        // 1) 先建站内订单（服务端核价、落库为 unpaid）
-        const orderId = await createPendingOrder()
-        // 2) 再按服务端确认的订单总额创建 PayPal 订单（金额不接受客户端指定）
-        const res = await fetch('/api/create-paypal-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId }),
-        })
-        const d = await res.json().catch(() => ({}))
-        if (!res.ok || !d?.id) throw new Error(d?.error || 'PayPal order creation failed')
-        return d.id
-      },
-      onApprove: async (data: any) => {
-        setProcessing(true)
-        setPaypalError('')
-        try {
-          const orderId = pendingOrderRef.current
-          if (!orderId) throw new Error('Order reference lost. Please refresh and try again.')
-
-          const capRes = await fetch('/api/capture-paypal-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, paypalOrderId: data.orderID }),
-          })
-          const capData = await capRes.json().catch(() => ({}))
-          if (!capRes.ok || capData.status !== 'COMPLETED') {
-            throw new Error(
-              capData.error ||
-                'Payment could not be confirmed. If you were charged, contact us with the reference and we will resolve it.'
-            )
-          }
-
-          const finalOrderId = capData.orderId || orderId
-          setOrderId(finalOrderId)
-          try { sessionStorage.setItem('otm_last_order', finalOrderId) } catch { /* ignore */ }
-          clearCart()
-          setSubmitted(true)
-        } catch (e: any) {
-          setPaypalError(e.message || 'Payment verification failed')
-        } finally {
-          setProcessing(false)
-        }
-      },
+    if (!container || container.dataset.rendered) return
+    container.dataset.rendered = '1'
+    pp.Buttons({
+      createOrder: () => createPayPalOrderId(),
+      onApprove: handleApprove,
       onError: () => {
         setPaypalError('A PayPal error occurred. Please try again.')
       },
@@ -681,8 +682,8 @@ export default function CheckoutPage() {
 
         {/* 参考站顶部没有步骤标签页，只有 Back to Cart 那种细面包屑 —— 这里也去掉编号步进条，
             页面直接进入支付区，减少视觉噪音 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 lg:gap-0 mt-2">
-          <div className="lg:col-span-1 space-y-6 lg:pr-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 mt-2">
+          <div className="lg:col-span-1 space-y-6 lg:pr-10 pb-10">
             {/* Express Checkout —— 放在最顶部，和参考站一致：
                 客户可以一个点击用钱包里的卡付掉，跳过下面整张表单。
                 组件自己判断有没有可用钱包；都不可用就整块不渲染。 */}
@@ -697,15 +698,16 @@ export default function CheckoutPage() {
                   currency="USD"
                   layout="row"
                   title="Express Checkout"
-                  subtitle="Skip the form — pay in one tap with a saved card."
+                  subtitle="Skip the form — pay in one tap with a saved card or wallet."
+                  leading={<div id="paypal-express-container" style={{ width: '100%', height: 48 }} />}
                   createOrderId={createPayPalOrderId}
                   captureOrder={captureAndFinalize}
                   onError={(m) => setPaypalError(m)}
                   setProcessing={setProcessing}
                 />
               ) : paypalLoading ? (
-                <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
-                  <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-4">Express Checkout</h2>
+                <div className="checkout-card p-6 md:p-8">
+                  <h2 className="checkout-section-title mb-4">Express Checkout</h2>
                   <div className="flex items-center justify-center gap-2 py-3 font-sans text-xs tracking-[0.08em] uppercase text-[#5A4A36]/60">
                     <Loader2 size={14} className="animate-spin" /> Loading payment options...
                   </div>
@@ -713,7 +715,7 @@ export default function CheckoutPage() {
               ) : null
             )}
             {referralInfo && (
-              <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
+              <div className="checkout-card p-6 md:p-8">
                 <p className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-3">Attribution Active</p>
                 <div className="space-y-2">
                   <p className="font-sans text-sm text-[#2A2118]">
@@ -737,9 +739,9 @@ export default function CheckoutPage() {
               </div>
             )}
             {/* Contact —— 参考站把「邮箱」单独拎出来一段，右上角挂登录入口 */}
-            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
+            <div className="checkout-card p-6 md:p-8">
               <div className="flex items-baseline justify-between gap-4 mb-5">
-                <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium">Contact</h2>
+                <h2 className="checkout-section-title">Contact</h2>
                 {!isLoggedIn && (
                   <Link
                     href="/login?redirect=/checkout"
@@ -795,8 +797,8 @@ export default function CheckoutPage() {
             </div>
 
             {/* Shipping address —— 字段顺序对齐参考站：国家 → 姓名 → 地址 → 邮编 → 电话 */}
-            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
-              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Shipping Address</h2>
+            <div className="checkout-card p-6 md:p-8">
+              <h2 className="checkout-section-title mb-5">Shipping Address</h2>
 
               <div className="space-y-3">
                 <div>
@@ -873,8 +875,8 @@ export default function CheckoutPage() {
               </div>
             </div>
             {/* Payment */}
-            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
-              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Payment</h2>
+            <div className="checkout-card p-6 md:p-8">
+              <h2 className="checkout-section-title mb-5">Payment</h2>
               <p className="font-sans text-sm text-[#5A4A36]/60 mb-4">Secure payment options available</p>
               
               {(paypalError || payoneerError) && (
@@ -1006,11 +1008,10 @@ export default function CheckoutPage() {
               )}
             </div>
           </div>
-          {/* Order Summary —— 与左栏之间加一条竖线分隔（参考站同款）；
-              移动端不显示（上下堆叠时竖线没有意义） */}
-          <div className="lg:col-span-1 lg:border-l lg:pl-10" style={{ borderColor: 'rgba(74,58,36,0.16)' }}>
-            <div className="bg-[#FFFFFF] border border-[#EFE7D4] p-6 md:p-8 lg:sticky lg:top-24">
-              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Order Summary</h2>
+          {/* Order Summary —— 右栏用暖米色底 + 左侧竖线，和左栏（净白卡片）形成明确分区 */}
+          <div className="lg:col-span-1 checkout-zone-summary lg:pl-10 pt-8 lg:pt-0 pb-10 -mx-6 sm:-mx-8 lg:mx-0 px-6 sm:px-8 lg:px-0">
+            <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 md:p-8 lg:sticky lg:top-24">
+              <h2 className="checkout-section-title mb-5">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {discountedItems.map((item: any) => (
                   <div key={item.id} className="flex justify-between text-[#5A4A36]/70">

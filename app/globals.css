@@ -1992,34 +1992,103 @@ select.input-premium { appearance: none; -webkit-appearance: none; padding-right
 apple-pay-button {
   display: block;
   width: 100%;
-  height: 44px;
+  height: 100%;
   --apple-pay-button-width: 100%;
-  --apple-pay-button-height: 44px;
-  --apple-pay-button-border-radius: 4px;
+  --apple-pay-button-height: 100%;
+  --apple-pay-button-border-radius: 10px;
   --apple-pay-button-padding: 0px;
   --apple-pay-button-box-sizing: border-box;
 }
 
 /* ---------------------------------------------------------------------------
    Express Checkout 钱包按钮排版
-   row = 参考站那种「Google Pay / Apple Pay 并排两个大按钮」
+   row = 参考站那种「PayPal / Google Pay / Apple Pay 并排的大按钮」
+   按钮统一 48px 高、圆角 10px，和参考站的圆润观感一致。
 --------------------------------------------------------------------------- */
 .wallet-buttons { width: 100%; }
-.wallet-buttons-stack > * + * { margin-top: 8px; }
+.wallet-buttons-stack > * + * { margin-top: 10px; }
 .wallet-buttons-row {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;          /* 窄屏自动换行，不会把三个按钮挤扁 */
+  gap: 10px;
   align-items: stretch;
 }
 .wallet-buttons-row > * {
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 150px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
 }
-/* Google 的按钮是它自己创建的，强制拉满容器宽度，避免并排时尺寸不齐 */
+/* 只有一个钱包可用时独占整行 */
+.wallet-buttons-row > *:only-child { flex: 1 1 100%; }
+
+/* Google 的按钮由它自己创建，统一裁成同样的圆角与高度 */
+.wallet-buttons [data-wallet="googlepay"] {
+  border-radius: 10px;
+  overflow: hidden;
+}
 .wallet-buttons [data-wallet="googlepay"] > button,
 .wallet-buttons [data-wallet="googlepay"] iframe {
   width: 100% !important;
   min-width: 0 !important;
+  height: 100% !important;
+  border-radius: 10px !important;
 }
-/* 只有一个钱包可用时，并排模式下也让它独占一行 */
-.wallet-buttons-row > *:only-child { flex: 1 1 100%; }
+
+/* ---------------------------------------------------------------------------
+   结算页视觉分区
+
+   参考站把「表单区」和「订单摘要区」用背景色 + 竖线分开，形成明确的两个区域。
+   这里照做：
+     .checkout-zone-form   左栏 —— 净白卡片，直接压在页面上
+     .checkout-zone-summary 右栏 —— 淡淡的暖米色底 + 左侧竖线，和左栏拉开层次
+   同时把卡片做出立体感：外描边 + 极淡投影，不再是纯平面的边框盒子。
+--------------------------------------------------------------------------- */
+.checkout-zone-summary {
+  background-color: #F7F3EA;
+  border-left: 1px solid rgba(74, 58, 36, 0.14);
+}
+@media (max-width: 1023px) {
+  .checkout-zone-summary { border-left: none; border-top: 1px solid rgba(74, 58, 36, 0.14); }
+}
+
+.checkout-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(74, 58, 36, 0.13);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(74, 58, 36, 0.04),
+    0 8px 24px -18px rgba(74, 58, 36, 0.35);
+}
+.checkout-card-soft {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(74, 58, 36, 0.10);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(74, 58, 36, 0.03);
+}
+
+/* 区块标题：加一条短金线，做出层级感 */
+.checkout-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: #8A6A2E;
+}
+.checkout-section-title::after {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(138, 106, 46, 0.8), rgba(138, 106, 46, 0));
+}
+
+/* 合计行：给总额一点重量感 */
+.checkout-total-row {
+  border-top: 1px solid rgba(74, 58, 36, 0.14);
+  padding-top: 14px;
+}
