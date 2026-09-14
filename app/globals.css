@@ -1984,6 +1984,23 @@ select.input-premium { appearance: none; -webkit-appearance: none; padding-right
 }
 
 /* ---------------------------------------------------------------------------
+   Apple 新版 SDK 的 <apple-pay-button> 自定义元素
+   加载 https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js 之后注册。
+   在 Chrome / Edge（Windows）上走的就是这个元素 —— 点击后弹出「用 iPhone 扫描二维码」
+   的跨设备付款界面（需 iOS 18+）。旧的 -apple-pay-button CSS 按钮在 Chrome 上不会渲染。
+--------------------------------------------------------------------------- */
+apple-pay-button {
+  display: block;
+  width: 100%;
+  height: 44px;
+  --apple-pay-button-width: 100%;
+  --apple-pay-button-height: 44px;
+  --apple-pay-button-border-radius: 4px;
+  --apple-pay-button-padding: 0px;
+  --apple-pay-button-box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------------------
    Express Checkout 钱包按钮排版
    row = 参考站那种「Google Pay / Apple Pay 并排两个大按钮」
 --------------------------------------------------------------------------- */

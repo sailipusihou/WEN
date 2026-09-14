@@ -94,6 +94,47 @@ function splitName(full?: string): { firstName?: string; lastName?: string } {
   return { firstName: parts.slice(0, -1).join(' '), lastName: parts[parts.length - 1] }
 }
 
+/**
+ * 加载 Apple 官方的新版 Apple Pay JS SDK。
+ *
+ * ⚠️ 这是「Chrome / Edge 上 Apple Pay 不显示」的根因所在。
+ *
+ * 旧实现只判断 window.ApplePaySession —— 而这个对象**只在 Safari 里原生存在**，
+ * 于是判断失败直接 return，Chrome/Edge 上按钮永远不出现。
+ *
+ * 但 Apple 现在提供了新版 SDK，它在**非 Safari 浏览器**里也会注册 ApplePaySession，
+ * 并让 Windows 上的 Chrome/Edge 走「用 iPhone 扫描二维码」的跨设备付款流程（需 iOS 18+）。
+ * PayPal 官方 v5 文档明确要求同时引入两个 SDK：
+ *   <script src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js">
+ *
+ * 实测（Windows + HTTPS + 有界面浏览器）：
+ *   加载前 ApplePaySession=undefined → 加载后 =function，canMakePayments()=true
+ */
+const APPLE_PAY_SDK_URL = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js'
+
+function loadApplePaySdk(): Promise<boolean> {
+  const w = window as any
+  if (typeof w.ApplePaySession === 'function') return Promise.resolve(true)
+  return new Promise(resolve => {
+    const existing = document.querySelector('script[data-apple-pay-sdk]') as HTMLScriptElement | null
+    const done = () => resolve(typeof (window as any).ApplePaySession === 'function')
+    if (existing) {
+      existing.addEventListener('load', done)
+      existing.addEventListener('error', () => resolve(false))
+      return
+    }
+    const s = document.createElement('script')
+    s.src = APPLE_PAY_SDK_URL
+    s.async = true
+    s.crossOrigin = 'anonymous'
+    s.dataset.applePaySdk = '1'
+    s.onload = () => setTimeout(done, 200)
+    s.onerror = () => resolve(false)
+    document.head.appendChild(s)
+    setTimeout(() => resolve(typeof (window as any).ApplePaySession === 'function'), 12000)
+  })
+}
+
 function loadGooglePaySdk(): Promise<any> {
   const w = window as any
   if (w.google?.payments?.api?.PaymentsClient) return Promise.resolve(w.google)
@@ -138,6 +179,8 @@ export default function WalletButtons({
   const probedRef = useRef(false)
   // Apple Pay 的 config：必须在渲染探测阶段就缓存好，点击时要同步建 session + begin()
   const appleCfgRef = useRef<any>(null)
+  // Apple 新版 SDK 是否注册了 <apple-pay-button> 自定义元素（决定用新元素还是旧 CSS 按钮）
+  const appleHasElementRef = useRef(false)
 
   /** 只在 URL 带 ?debugpay=1 时收集诊断信息（对真实客户完全不可见） */
   const debugOn = (() => {
@@ -252,25 +295,41 @@ export default function WalletButtons({
     }
 
     // ---------------- Apple Pay ----------------
-    const ApplePaySessionCtor = (window as any).ApplePaySession
+    // ⚠️ 必须先加载 Apple 新版 SDK —— 它在非 Safari 浏览器（Chrome/Edge on Windows）
+    // 里注册 ApplePaySession，从而支持「用 iPhone 扫码」的跨设备付款。
+    // 不加载的话 ApplePaySession 在 Chrome/Edge 里是 undefined，按钮永远不会出现。
     const applePayClient = paypal.ApplePay || paypal.Applepay
     if (!allowApplePay) {
       dlog('Apple Pay: 被开关关闭 (allowApplePay=false)')
     } else if (typeof applePayClient !== 'function') {
       dlog(`Apple Pay: SDK 未提供 Applepay 组件 (typeof=${typeof applePayClient})`)
-    } else if (!ApplePaySessionCtor) {
-      dlog('Apple Pay: 本浏览器没有 ApplePaySession —— Apple Pay 只在 Safari / iOS / macOS 上存在')
-    } else if (typeof applePayClient === 'function' && ApplePaySessionCtor) {
+    } else {
       ;(async () => {
         try {
+          const sdkOk = await loadApplePaySdk()
+          if (cancelled) return
+          const Ctor = (window as any).ApplePaySession
+          dlog(`Apple Pay: Apple SDK 加载=${sdkOk}, ApplePaySession=${typeof Ctor}`)
+          if (typeof Ctor !== 'function') {
+            dlog('Apple Pay: 本环境不支持（需要 Safari，或 iOS 18+ 的跨设备扫码）')
+            return
+          }
+          try {
+            dlog(`Apple Pay: canMakePayments=${Ctor.canMakePayments()}`)
+          } catch (e: any) {
+            dlog(`Apple Pay: canMakePayments 报错 ${e?.message}`)
+          }
           const cfg = await applePayClient().config()
           if (cancelled) return
-          dlog(`Apple Pay config(): isEligible=${cfg?.isEligible} country=${cfg?.countryCode} networks=${JSON.stringify(cfg?.supportedNetworks)}`)
+          dlog(`Apple Pay config(): isEligible=${cfg?.isEligible} country=${cfg?.countryCode}`)
           if (cfg && cfg.isEligible === false) return
           appleCfgRef.current = cfg
+          // 新版 SDK 会注册 <apple-pay-button> 自定义元素；没有就退回旧的 CSS 按钮
+          appleHasElementRef.current = !!(window as any).customElements?.get?.('apple-pay-button')
+          dlog(`Apple Pay: <apple-pay-button> 元素=${appleHasElementRef.current}`)
           setShowApplePay(true)
         } catch (e: any) {
-          dlog(`Apple Pay config() 报错: ${e?.message || e}`)
+          dlog(`Apple Pay 探测失败: ${e?.message || e}`)
           if (!cancelled) setShowApplePay(false)
         }
       })()
@@ -377,14 +436,44 @@ export default function WalletButtons({
   const items = [
     showApplePay
       ? (
-        <button
-          key="applepay"
-          type="button"
-          data-wallet="applepay"
-          onClick={startApplePay}
-          className="apple-pay-button h-11 rounded w-full"
-          aria-label="Pay with Apple Pay"
-        />
+        // Apple 新版 SDK 注册了 <apple-pay-button> 自定义元素时优先用它
+        // （Chrome/Edge 上旧的 -apple-pay-button CSS 按钮不会渲染）
+        appleHasElementRef.current
+          ? (
+            <button
+              key="applepay"
+              type="button"
+              data-wallet="applepay"
+              onClick={startApplePay}
+              className="w-full"
+              aria-label="Pay with Apple Pay"
+              style={{ padding: 0, border: 'none', background: 'none', display: 'block' }}
+              ref={el => {
+                // 把 <apple-pay-button> 塞进这个按钮里，保证点击事件落在我们的处理函数上
+                if (el && !el.querySelector('apple-pay-button')) {
+                  const btn = document.createElement('apple-pay-button')
+                  btn.setAttribute('buttonstyle', 'black')
+                  btn.setAttribute('type', 'buy')
+                  btn.setAttribute('locale', 'en-US')
+                  btn.style.setProperty('--apple-pay-button-width', '100%')
+                  btn.style.setProperty('--apple-pay-button-height', '44px')
+                  btn.style.setProperty('--apple-pay-button-border-radius', '4px')
+                  btn.style.setProperty('--apple-pay-button-padding', '0px')
+                  el.appendChild(btn)
+                }
+              }}
+            />
+          )
+          : (
+            <button
+              key="applepay"
+              type="button"
+              data-wallet="applepay"
+              onClick={startApplePay}
+              className="apple-pay-button h-11 rounded w-full"
+              aria-label="Pay with Apple Pay"
+            />
+          )
       )
       : null,
     showGooglePay
