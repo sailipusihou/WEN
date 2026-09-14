@@ -16,16 +16,16 @@ export default function CategoryClient({
 }) {
   if (!category) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-[#F1E9DC]">
-        <p className="font-en text-2xl text-[#57503F]">Collection not found</p>
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#FBFAF7]">
+        <p className="font-en text-2xl text-[#5A4A36]">Collection not found</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-[#F1E9DC]">
+    <div className="bg-[#FBFAF7]">
       {/* Hero Banner */}
-      <section className="relative py-20 md:py-28 overflow-hidden bg-[#221E1A]">
+      <section className="relative py-20 md:py-28 overflow-hidden bg-[#2A2118]">
         {category.image && (
           <OptimizedImage
             src={category.image}
@@ -41,13 +41,13 @@ export default function CategoryClient({
         <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A1A]/70 via-[#1A1A1A]/40 to-[#1A1A1A]/80" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <h1 className="font-en text-4xl md:text-6xl text-white font-semibold tracking-tight">
+            <h1 className="font-en text-4xl md:text-6xl text-white font-medium tracking-[0.005em]">
               {category.nameEn || category.name}
             </h1>
             <p className="mt-4 text-white/50 font-sans text-sm md:text-base max-w-lg mx-auto leading-relaxed">
               {category.descriptionEn || category.description}
             </p>
-            <p className="mt-2 text-white/30 font-sans text-[10px] tracking-wider uppercase">
+            <p className="mt-2 text-white/30 font-sans text-[10px] tracking-[0.18em] uppercase">
               {products.length} pieces
             </p>
           </motion.div>
@@ -58,8 +58,8 @@ export default function CategoryClient({
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#57503F]/50 tracking-wider uppercase mb-10">
-            <Link href="/" className="hover:text-[#221E1A] transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-10">
+            <Link href="/" className="hover:text-[#2A2118] transition-colors">Home</Link>
             <span>/</span>
             <span className="text-[#8A6A2E]">{category.nameEn || category.name}</span>
           </nav>
@@ -72,13 +72,13 @@ export default function CategoryClient({
             </div>
           ) : (
             <div className="text-center py-20">
-              <p className="font-sans text-sm text-[#57503F]/50">This collection is being curated. Check back soon.</p>
+              <p className="font-sans text-sm text-[#5A4A36]/50">This collection is being curated. Check back soon.</p>
             </div>
           )}
 
           <div className="mt-16 text-center">
             <Link href="/products"
-              className="inline-flex items-center gap-1.5 text-xs text-[#57503F] hover:text-[#221E1A] transition-colors tracking-wider uppercase font-sans font-medium">
+              className="inline-flex items-center gap-1.5 text-xs text-[#5A4A36] hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase font-sans font-medium">
               <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to All Products
             </Link>
           </div>

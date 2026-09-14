@@ -80,7 +80,7 @@ export default function ProfilePage() {
       <h1 className="font-serif text-2xl md:text-3xl text-otb-ink mb-6">My Profile</h1>
 
       {/* Avatar */}
-      <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 mb-6">
+      <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="relative group">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-otb-sand/30 flex items-center justify-center">
@@ -134,32 +134,32 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Info */}
-      <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 space-y-4 mb-6">
+      <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 space-y-4 mb-6">
         <h2 className="font-serif text-base text-otb-ink mb-2">Personal Information</h2>
         {msg.text && <p className={"text-sm font-sans p-2.5 rounded-sm " + (msg.type === "success" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500")}>{msg.text}</p>}
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Email</label>
           <p className="px-3 py-2.5 bg-otb-sand/10 rounded-sm text-sm font-sans text-otb-ink/50">{user.email}</p></div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">First Name</label>
-            <input value={form.firstName} onChange={e => update("firstName", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+            <input value={form.firstName} onChange={e => update("firstName", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Last Name</label>
-            <input value={form.lastName} onChange={e => update("lastName", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+            <input value={form.lastName} onChange={e => update("lastName", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
         </div>
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Phone</label>
-          <input value={form.phone} onChange={e => update("phone", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+          <input value={form.phone} onChange={e => update("phone", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Date of Birth</label>
-            <input type="date" value={form.dob} onChange={e => update("dob", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+            <input type="date" value={form.dob} onChange={e => update("dob", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Gender</label>
-            <select value={form.gender} onChange={e => update("gender", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50">
+            <select value={form.gender} onChange={e => update("gender", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50">
               <option value="">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
             </select></div>
         </div>
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Bio / About</label>
           <textarea value={form.bio} onChange={e => update("bio", e.target.value)} rows={3} placeholder="Tell us a little about yourself..."
-            className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+            className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Preferred Currency</label>
-          <select value={form.preferredCurrency} onChange={e => update("preferredCurrency", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50">
+          <select value={form.preferredCurrency} onChange={e => update("preferredCurrency", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50">
             {/* 定价基线 USD: 前台固定美元显示 */}
             <option value="USD">USD ($)</option>
           </select></div>
@@ -169,20 +169,20 @@ export default function ProfilePage() {
       </div>
 
       {/* Change Password */}
-      <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 space-y-4">
+      <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 space-y-4">
         <h2 className="font-serif text-base text-otb-ink mb-2">Change Password</h2>
         {pwMsg.text && <p className={"text-sm font-sans p-2.5 rounded-sm " + (pwMsg.type === "success" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500")}>{pwMsg.text}</p>}
         <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Current Password</label>
-          <input type="password" value={pwForm.current} onChange={e => pwUpdate("current", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
+          <input type="password" value={pwForm.current} onChange={e => pwUpdate("current", e.target.value)} className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" /></div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">New Password</label>
             <div className="relative"><input type={showPw ? "text" : "password"} value={pwForm.newPw} onChange={e => pwUpdate("newPw", e.target.value)} minLength={6}
-              className="w-full px-3 py-2.5 pr-10 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+              className="w-full px-3 py-2.5 pr-10 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
               <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-otb-ink/30 hover:text-otb-ink/60">
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></div>
           <div><label className="block text-xs font-sans text-otb-ink/60 mb-1.5">Confirm New Password</label>
             <div className="relative"><input type={showNew ? "text" : "password"} value={pwForm.confirm} onChange={e => pwUpdate("confirm", e.target.value)}
-              className="w-full px-3 py-2.5 pr-10 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+              className="w-full px-3 py-2.5 pr-10 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
               <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-otb-ink/30 hover:text-otb-ink/60">
                 {showNew ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></div>
         </div>

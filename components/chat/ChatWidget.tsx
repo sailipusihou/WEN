@@ -47,7 +47,7 @@ export default function ChatWidget({ productContext }: { productContext?: string
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && !minimized && (
-        <div className="bg-[#FFFCF7] rounded-xl shadow-2xl border border-paper w-80 md:w-96 overflow-hidden">
+        <div className="bg-[#FFFFFF] rounded-xl shadow-2xl border border-paper w-80 md:w-96 overflow-hidden">
           <div className="bg-otb-terracotta px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2"><MessageCircle size={16} className="text-white" /><span className="text-white font-serif text-sm font-medium">Customer Service</span></div>
             <div className="flex items-center gap-1">

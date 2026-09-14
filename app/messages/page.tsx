@@ -215,7 +215,7 @@ function MessagesPage() {
         {msgs.filter(m => m.senderType === 'admin').length > 0 && <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-sans">{msgs.filter(m => m.senderType === 'admin').length} replies</span>}
       </div>
 
-      <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm overflow-hidden" style={{ height: "calc(100vh - 240px)", minHeight: "400px" }}>
+      <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm overflow-hidden" style={{ height: "calc(100vh - 240px)", minHeight: "400px" }}>
         {msgs.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center p-8">
@@ -223,7 +223,7 @@ function MessagesPage() {
               <h2 className="font-serif text-lg text-otb-ink mb-1">No messages yet</h2>
               <p className="font-sans text-sm text-otb-ink/40 mb-6">Send us a message and we will get back to you.</p>
               <div className="flex items-center gap-2 max-w-md mx-auto">
-                <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg(text)} placeholder="Type your message..." className="flex-1 px-4 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+                <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg(text)} placeholder="Type your message..." className="flex-1 px-4 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
                 <button onClick={() => sendMsg(text)} disabled={sending || !text.trim()} className="px-4 py-2.5 bg-otb-terracotta text-white text-sm font-serif rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors"><Send size={14} /></button>
               </div>
             </div>
@@ -249,7 +249,7 @@ function MessagesPage() {
                           {(m.adminAttachments || m.attachments)?.map((a: any, ai: number) => {
                             if (a.type === "product" || a.type === "product_card") {
                               return (
-                                <Link key={ai} href={a.url || `/products/${a.productId}`} className="block mt-2 rounded-lg overflow-hidden border border-otb-sand/40 bg-[#FFFCF7]/80 hover:shadow-md transition-shadow">
+                                <Link key={ai} href={a.url || `/products/${a.productId}`} className="block mt-2 rounded-lg overflow-hidden border border-otb-sand/40 bg-[#FFFFFF]/80 hover:shadow-md transition-shadow">
                                   <div className="flex gap-2 p-2">
                                     {a.image && <div className="w-14 h-14 rounded shrink-0 overflow-hidden bg-otb-sand/20"><img src={a.image} alt={a.name} className="w-full h-full object-cover" /></div>}
                                     <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -294,9 +294,9 @@ function MessagesPage() {
                         {m.attachments?.map((a: any, ai: number) => {
                           if (a.type === "product" || a.type === "product_card") {
                             return (
-                              <Link key={ai} href={a.url || `/products/${a.productId}`} className="block mt-2 rounded-lg overflow-hidden border border-white/20 bg-[#FFFCF7]/10 hover:bg-[#FFFCF7]/20 transition-colors">
+                              <Link key={ai} href={a.url || `/products/${a.productId}`} className="block mt-2 rounded-lg overflow-hidden border border-white/20 bg-[#FFFFFF]/10 hover:bg-[#FFFFFF]/20 transition-colors">
                                 <div className="flex gap-2 p-2">
-                                  {a.image && <div className="w-14 h-14 rounded shrink-0 overflow-hidden bg-[#FFFCF7]/20"><img src={a.image} alt={a.name} className="w-full h-full object-cover" /></div>}
+                                  {a.image && <div className="w-14 h-14 rounded shrink-0 overflow-hidden bg-[#FFFFFF]/20"><img src={a.image} alt={a.name} className="w-full h-full object-cover" /></div>}
                                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                                     <div>
                                       <p className="text-xs font-medium text-white truncate">{a.name}</p>
@@ -312,12 +312,12 @@ function MessagesPage() {
                             )
                           }
                           if (a.type === "product_link") {
-                            return <Link key={ai} href={a.url} className="flex items-center gap-2 bg-[#FFFCF7]/10 rounded-lg p-2 mt-1.5 text-xs hover:bg-[#FFFCF7]/20 transition-colors"><ShoppingBag size={12} className="text-white shrink-0" /><span className="text-white truncate">{a.name || a.url}</span><ExternalLink size={10} className="text-white/50 shrink-0" /></Link>
+                            return <Link key={ai} href={a.url} className="flex items-center gap-2 bg-[#FFFFFF]/10 rounded-lg p-2 mt-1.5 text-xs hover:bg-[#FFFFFF]/20 transition-colors"><ShoppingBag size={12} className="text-white shrink-0" /><span className="text-white truncate">{a.name || a.url}</span><ExternalLink size={10} className="text-white/50 shrink-0" /></Link>
                           }
                           if (a.type === "image") {
                             return <img key={ai} src={a.url} alt={a.name || ""} className="max-w-[200px] rounded-lg mt-1.5 border border-white/20" />
                           }
-                          return <a key={ai} href={a.url} download className="flex items-center gap-2 bg-[#FFFCF7]/10 rounded-lg p-2 mt-1.5 text-xs text-white/80 hover:text-white transition-colors"><Paperclip size={12} />{a.name || "File"}</a>
+                          return <a key={ai} href={a.url} download className="flex items-center gap-2 bg-[#FFFFFF]/10 rounded-lg p-2 mt-1.5 text-xs text-white/80 hover:text-white transition-colors"><Paperclip size={12} />{a.name || "File"}</a>
                         })}
                         <div className="flex items-center justify-end gap-1 mt-1">
                           <p className="text-[10px] text-white/50">{new Date(m.createdAt).toLocaleTimeString()}</p>
@@ -350,7 +350,7 @@ function MessagesPage() {
               {showLinkInput && (
                 <div className="flex items-center gap-2 mb-2 bg-otb-sand/10 p-2 rounded-sm">
                   <LinkIcon size={12} className="text-otb-ink/30 shrink-0" />
-                  <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="Paste product URL..." className="flex-1 px-2 py-1.5 text-sm bg-[#FFFCF7] border border-otb-sand/50 rounded-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+                  <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="Paste product URL..." className="flex-1 px-2 py-1.5 text-sm bg-[#FFFFFF] border border-otb-sand/50 rounded-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
                   <button onClick={handleAddLink} className="px-3 py-1.5 bg-otb-terracotta text-white text-xs font-serif rounded-sm hover:bg-otb-terracotta/90">Add</button>
                   <button onClick={() => setShowLinkInput(false)} className="px-2 py-1.5 text-xs text-otb-ink/40 hover:text-otb-ink">Cancel</button>
                 </div>
@@ -361,7 +361,7 @@ function MessagesPage() {
                     <Smile size={16} />
                   </button>
                   {showEmojiPicker && (
-                    <div className="absolute bottom-full left-0 mb-2 w-72 bg-[#FFFCF7] border border-otb-sand/50 rounded-lg shadow-xl z-20 overflow-hidden">
+                    <div className="absolute bottom-full left-0 mb-2 w-72 bg-[#FFFFFF] border border-otb-sand/50 rounded-lg shadow-xl z-20 overflow-hidden">
                       <div className="flex border-b border-otb-sand/30">
                         {EMOJI_CATEGORIES.map((cat, idx) => (
                           <button key={cat.name} onClick={() => setEmojiCategory(idx)} className={`flex-1 py-1.5 text-[10px] transition-colors ${emojiCategory === idx ? 'bg-otb-terracotta/10 text-otb-terracotta' : 'text-otb-ink/50 hover:bg-otb-sand/20'}`}>
@@ -385,7 +385,7 @@ function MessagesPage() {
                     <ShoppingBag size={16} />
                   </button>
                   {showProductPicker && (
-                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-[#FFFCF7] border border-otb-sand/50 rounded-lg shadow-xl z-20 overflow-hidden">
+                    <div className="absolute bottom-full left-0 mb-2 w-80 bg-[#FFFFFF] border border-otb-sand/50 rounded-lg shadow-xl z-20 overflow-hidden">
                       <div className="p-2 border-b border-otb-sand/30">
                         <div className="relative">
                           <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-otb-ink/30" />
@@ -416,7 +416,7 @@ function MessagesPage() {
                 <button onClick={() => fileRef.current?.click()} className="p-2 text-otb-ink/30 hover:text-otb-terracotta transition-colors" title="Send file"><Paperclip size={16} /></button>
                 <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, "image")} />
                 <input ref={fileRef} type="file" accept=".pdf,.txt,application/pdf,text/plain" className="hidden" onChange={e => handleFileUpload(e, "file")} />
-                <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg(text)} placeholder="Type a message..." className="flex-1 px-3 py-2 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+                <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg(text)} placeholder="Type a message..." className="flex-1 px-3 py-2 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
                 <button onClick={() => sendMsg(text)} disabled={sending} className="px-4 py-2 bg-otb-terracotta text-white text-sm font-serif rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors flex items-center gap-1.5">{sending ? "..." : <><Send size={14} /> Send</>}</button>
               </div>
             </div>

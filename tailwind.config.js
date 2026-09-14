@@ -4,17 +4,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // 2026-09 色彩压实重制：底子下沉、文字去灰、品牌色加饱和
-        // （原配色 79% 面积为明度≥90 近白、背景平均饱和度仅 19.6%，整体发浅发灰）
-        'ink-deep': '#171310',
-        'ink': '#221E1A',
-        'ink-mid': '#403A31',
-        'ink-soft': '#57503F',
-        'ink-faint': '#8A8071',
-        'paper': '#EAE0CE',
-        'paper-light': '#EFE6D6',
-        'paper-warm': '#E2D5C0',
-        'paper-dark': '#D8C9AE',
+        // 2026-09 三轮调色定稿：净白 + 商品区微黄 + 暖深棕文字
+        // 参考站实测：页面底 #FAFAF6（近乎纯白只带一丝暖调），正文 #4A3422（对比度 11.7:1）
+        // 原理：对比是相对的 —— 底色越接近白，深色字越"跳"；底色一深，字反而显闷。
+        'ink-deep': '#1F1811',
+        'ink': '#2A2118',        // 正文：暖深棕（对齐参考站 #4A3422 的路子，再深一档）
+        'ink-mid': '#4A3E2E',
+        'ink-soft': '#5A4A36',   // 次要文字：暖棕，不再用灰
+        'ink-faint': '#7A6B54',
+        'paper': '#FDFCFA',      // 卡片面
+        'paper-light': '#FFFFFF', // 纯白（参考站的"实际的纯白感"）
+        'paper-warm': '#F8F2E2', // 商品图区/暖块：泛微黄
+        'paper-dark': '#F2EBD8',
         'jade': '#5F7D72',
         'jade-light': '#7D9B8F',
         'jade-dark': '#4A665D',
@@ -34,8 +35,8 @@ module.exports = {
         'coral-light': '#C4694F',
         'coral-dark': '#8E3C28',
         'otb-terracotta': '#A8472E',
-        'otb-ink': '#221E1A',
-        'otb-sand': '#D8C9AE',
+        'otb-ink': '#2A2118',
+        'otb-sand': '#F2EBD8',
       },
       fontFamily: {
         'sans': ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],

@@ -5,7 +5,7 @@ export default function Loading() {
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-[#5F7D72]" />
-        <p className="text-sm text-[#57503F]/60 tracking-wide">Loading category...</p>
+        <p className="text-sm text-[#5A4A36]/60 tracking-[0.1em]">Loading category...</p>
       </div>
     </div>
   )

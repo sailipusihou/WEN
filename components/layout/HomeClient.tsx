@@ -284,7 +284,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="mt-5 font-en text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-paper-light font-semibold leading-[1.05] tracking-tight"
+              className="mt-5 font-en text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-paper-light font-medium leading-[1.05] tracking-[0.005em]"
             >
               {(hero.headline || "Objects That\nCarry Stories").split("\n").map((line: string, i: number) => (
                 // 第二行用 Playfair 斜体：编辑式排版，比整段同款字体更有「花样」
@@ -298,11 +298,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Link href={hero.buttonLink || "/products"}
-                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
+                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
                 {hero.buttonText || "Explore the Collection"} <ArrowUpRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
               <Link href={hero.secondaryLink || "/#philosophy"}
-                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.22em] uppercase font-sans font-medium">
                 {hero.secondaryText || "Our Philosophy"}
               </Link>
             </motion.div>
@@ -333,7 +333,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                   }}>
                   {idx === currentSlide && (
                     <motion.div
-                      className="absolute inset-y-0 left-0 bg-[#FFFCF7]/80"
+                      className="absolute inset-y-0 left-0 bg-[#FFFFFF]/80"
                       initial={{ width: "0%" }}
                       animate={{ width: isPaused ? "0%" : "100%" }}
                       transition={{ duration: slideshowInterval, ease: "linear" }}
@@ -345,7 +345,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
             </div>
 
             {/* 计数器 */}
-            <div className="absolute top-6 right-6 md:top-8 md:right-8 z-20 font-en text-[12px] text-white/76 tracking-[0.2em]">
+            <div className="absolute top-6 right-6 md:top-8 md:right-8 z-20 font-en text-[12px] text-white/76 tracking-[0.28em]">
               {String(currentSlide + 1).padStart(2, '0')} <span className="text-white/58">/</span> {String(slideshowImages.length).padStart(2, '0')}
             </div>
           </>
@@ -356,13 +356,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           <span className="font-sans text-[12px] text-white/79 tracking-[0.25em] uppercase">Scroll</span>
           <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
             className="w-4 h-7 border border-white/10 rounded-full flex justify-center pt-1">
-            <div className="w-0.5 h-1.5 bg-[#FFFCF7]/20 rounded-full" />
+            <div className="w-0.5 h-1.5 bg-[#FFFFFF]/20 rounded-full" />
           </motion.div>
         </motion.div>
       </section>
 
       {/* PHILOSOPHY STRIP */}
-      <section className="py-14 md:py-18 border-b border-paper bg-[#FFFCF7]">
+      <section className="py-14 md:py-18 border-b border-paper bg-[#FFFFFF]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             {(philosophyStrip.length > 0 ? philosophyStrip : [
@@ -372,7 +372,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               { number: "04", label: "Timeless Design", desc: "Objects made to last" },
             ]).map((item: any, i: number) => (
               <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }}>
-                <span className="font-en text-[11px] text-coral tracking-wider">{item.number}</span>
+                <span className="font-en text-[11px] text-coral tracking-[0.18em]">{item.number}</span>
                 <h4 className="font-sans text-[11px] font-medium text-ink-deep mt-2 tracking-[0.08em] uppercase">{item.label}</h4>
                 <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{item.desc}</p>
               </motion.div>
@@ -382,11 +382,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* COLLECTIONS CAROUSEL */}
-      <section className="py-20 md:py-28 bg-[#FFFCF7] overflow-hidden">
+      <section className="py-20 md:py-28 bg-[#FFFFFF] overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">Curated by Heritage</span>
-            <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">Our Collections</h2>
+            <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-medium mt-2 tracking-[0.005em]">Our Collections</h2>
           </motion.div>
           {categories.length > 0 && (
             <CollectionLookbook
@@ -409,12 +409,12 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           <motion.div {...fadeUp} style={{ y: featuredHeadY }} className="flex items-end justify-between mb-10">
             <div>
               <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{featured.eyebrow || "Curated Selection"}</span>
-              <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">{featured.headline || "Featured Pieces"}</h2>
+              <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-medium mt-2 tracking-[0.005em]">{featured.headline || "Featured Pieces"}</h2>
             </div>
           </motion.div>
           <ShowroomGrid products={featuredProducts} />
           <motion.div {...fadeUp} className="text-center mt-10">
-            <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 bg-ink-deep text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink transition-colors">
+            <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 bg-ink-deep text-paper-light text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-ink transition-colors">
               Browse All Products <ArrowUpRight size={12} strokeWidth={1.5} />
             </Link>
           </motion.div>
@@ -422,7 +422,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* ARTISAN STORY */}
-      <section className="py-20 md:py-28 bg-[#FFFCF7]">
+      <section className="py-20 md:py-28 bg-[#FFFFFF]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="relative">
@@ -436,21 +436,21 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                   placeholder="blur"
                 />
               </div>
-              <div className="absolute -bottom-4 -right-4 bg-[#FFFCF7] p-5 md:p-6 shadow-soft-lg max-w-[170px]">
-                <span className="font-en text-2xl font-semibold text-ink-deep">{artisanStory.badgeNumber || "45+"}</span>
+              <div className="absolute -bottom-4 -right-4 bg-[#FFFFFF] p-5 md:p-6 shadow-soft-lg max-w-[170px]">
+                <span className="font-en text-2xl font-medium text-ink-deep">{artisanStory.badgeNumber || "45+"}</span>
                 <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
               </div>
             </div>
             <div>
               <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{artisanStory.eyebrow || "Behind the Craft"}</span>
-              <h2 className="font-en text-3xl md:text-4xl text-ink-deep font-semibold mt-3 leading-tight tracking-tight">
+              <h2 className="font-en text-3xl md:text-4xl text-ink-deep font-medium mt-3 leading-tight tracking-[0.005em]">
                 {(artisanStory.headline || "Every Object Has a\nMaker, Place, Story").split("\n").map((l: string, i: number) => <span key={i}>{i > 0 && <br />}{l}</span>)}
               </h2>
               <div className="divider-refined my-6" />
               {artisanStory.paragraph1 && <p className="font-sans text-sm text-ink-soft/86 leading-relaxed">{artisanStory.paragraph1}</p>}
               {artisanStory.paragraph2 && <p className="font-sans text-sm text-ink-soft/86 leading-relaxed mt-4">{artisanStory.paragraph2}</p>}
               <Link href={artisanStory.buttonLink || "/products"}
-                className="inline-flex items-center gap-1.5 mt-8 text-[12px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium border-b border-ink-deep pb-0.5 hover:text-coral hover:border-coral transition-all duration-300">
+                className="inline-flex items-center gap-1.5 mt-8 text-[12px] text-ink-deep tracking-[0.2em] uppercase font-sans font-medium border-b border-ink-deep pb-0.5 hover:text-coral hover:border-coral transition-all duration-300">
                 {artisanStory.buttonText || "Meet the Artisans"} <ArrowUpRight size={11} strokeWidth={1.5} />
               </Link>
             </div>
@@ -463,7 +463,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{philosophySection.eyebrow || "Our Philosophy"}</span>
-            <h2 className="font-en text-3xl md:text-5xl text-paper-light font-semibold mt-3 leading-tight tracking-tight">
+            <h2 className="font-en text-3xl md:text-5xl text-paper-light font-medium mt-3 leading-tight tracking-[0.005em]">
                 {(philosophySection.headline || "Beauty Lives in the\nDetails We Often Overlook").split("\n").map((l: string, i: number) => <span key={i}>{i > 0 && <br />}{l}</span>)}
               </h2>
             <div className="w-10 h-px bg-coral/30 mx-auto my-8" />
@@ -487,7 +487,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{journal.eyebrow || "Stories & Essays"}</span>
-            <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-semibold mt-2 tracking-tight">{journal.headline || "The Journal"}</h2>
+            <h2 className="font-en text-3xl md:text-5xl text-ink-deep font-medium mt-2 tracking-[0.005em]">{journal.headline || "The Journal"}</h2>
             {journal.body && <p className="font-sans text-sm text-ink-soft/82 mt-3 max-w-lg leading-relaxed">{journal.body}</p>}
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -508,7 +508,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                       />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-ink-soft/66 font-sans tracking-[0.1em] uppercase mb-2">
+                  <div className="flex items-center gap-2 text-[11px] text-ink-soft/66 font-sans tracking-[0.2em] uppercase mb-2">
                     <span>{entry.date}</span>
                     <span className="w-1 h-1 rounded-full bg-coral/30" />
                     <span>{entry.readTime} min</span>
@@ -545,15 +545,15 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{seasonal.eyebrow || "Seasonal Edition"}</span>
-            <h2 className="font-en text-3xl md:text-5xl text-paper-light font-semibold mt-3 leading-tight tracking-tight">{seasonal.headline || "Summer Collection"}</h2>
+            <h2 className="font-en text-3xl md:text-5xl text-paper-light font-medium mt-3 leading-tight tracking-[0.005em]">{seasonal.headline || "Summer Collection"}</h2>
             {seasonal.body && <p className="font-sans text-sm text-paper-light/76 mt-4 max-w-md mx-auto leading-relaxed">{seasonal.body}</p>}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href={seasonal.buttonLink || "/products"}
-                className="px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
+                className="px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
                 {seasonal.buttonText || "Explore Collection"}
               </Link>
               <Link href={seasonal.secondaryLink || "/contact"}
-                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                className="text-[12px] text-paper-light/86 hover:text-paper-light/86 transition-colors tracking-[0.22em] uppercase font-sans font-medium">
                 {seasonal.secondaryText || "Request a Lookbook"}
               </Link>
             </div>
@@ -562,11 +562,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* NEWSLETTER */}
-      <section className="py-16 md:py-20 bg-[#FFFCF7] border-b border-paper">
+      <section className="py-16 md:py-20 bg-[#FFFFFF] border-b border-paper">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{newsletter.eyebrow || "Stay Connected"}</span>
-            <h3 className="font-en text-2xl md:text-3xl text-ink-deep font-semibold mt-2">{newsletter.headline || "Receive Stories from the Studio"}</h3>
+            <h3 className="font-en text-2xl md:text-3xl text-ink-deep font-medium mt-2">{newsletter.headline || "Receive Stories from the Studio"}</h3>
             {newsletter.body && <p className="font-sans text-sm text-ink-soft/82 mt-2 leading-relaxed">{newsletter.body}</p>}
             <form onSubmit={handleNewsletterSubmit} className="mt-8 flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <input
@@ -581,7 +581,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               <button
                 type="submit"
                 disabled={newsletterStatus === 'loading'}
-                className="px-6 py-2.5 bg-ink-deep text-paper-light text-[12px] tracking-[0.1em] uppercase font-sans font-medium hover:bg-ink disabled:opacity-50 transition-colors inline-flex items-center justify-center gap-2"
+                className="px-6 py-2.5 bg-ink-deep text-paper-light text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-ink disabled:opacity-50 transition-colors inline-flex items-center justify-center gap-2"
               >
                 {newsletterStatus === 'loading' ? <Loader2 size={12} className="animate-spin" /> : null}
                 {newsletter.buttonText || "Subscribe"}
@@ -620,7 +620,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
       {/* Left: large image + glass info card */}
       <div
-        className="relative lg:col-span-7 overflow-hidden rounded-xl bg-[#E2D5C0] min-h-[420px] md:min-h-[560px]"
+        className="relative lg:col-span-7 overflow-hidden rounded-xl bg-[#F7F0DE] min-h-[420px] md:min-h-[560px]"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -654,13 +654,13 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
         </span>
 
         {/* Glass info card */}
-        <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-[#FFFCF7]/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
-          <span className="font-sans text-[11px] text-coral tracking-[0.15em] uppercase">{current.subtitle}</span>
+        <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-[#FFFFFF]/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
+          <span className="font-sans text-[11px] text-coral tracking-[0.24em] uppercase">{current.subtitle}</span>
           <h3 className="font-en text-xl md:text-2xl text-ink-deep font-semibold mt-1.5">{current.title}</h3>
           <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#D8C9AE]/60">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#F2EBD8]/60">
             <span className="font-sans text-[12px] text-ink-soft/76">{current.productCount ?? 0} items</span>
-            <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium hover:text-coral transition-colors">
+            <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.2em] uppercase font-sans font-medium hover:text-coral transition-colors">
               View Collection <ArrowUpRight size={11} strokeWidth={1.5} />
             </Link>
           </div>
@@ -669,7 +669,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
 
       {/* Right: category list */}
       <div className="lg:col-span-5 flex flex-col justify-center">
-        <div className="divide-y divide-[#E2D5C0] border-y border-[#E2D5C0]">
+        <div className="divide-y divide-[#F7F0DE] border-y border-[#F7F0DE]">
           {items.map((item, i) => {
             const isActive = i === active
             return (
@@ -679,7 +679,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
                 onMouseEnter={() => { setActive(i); setPaused(true) }}
                 onMouseLeave={() => setPaused(false)}
                 onClick={() => setActive(i)}
-                className={`group w-full text-left transition-colors duration-300 ${isActive ? 'bg-[#EFE6D6] px-3' : 'px-1 hover:bg-[#EFE6D6]/60'}`}
+                className={`group w-full text-left transition-colors duration-300 ${isActive ? 'bg-[#FFFFFF] px-3' : 'px-1 hover:bg-[#FFFFFF]/60'}`}
               >
                 <div className="py-4 md:py-5 flex items-baseline justify-between gap-4">
                   <div className="flex items-baseline gap-2.5 min-w-0">

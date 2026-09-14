@@ -63,14 +63,14 @@ export default function WishlistPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map(item => (
-            <div key={item.id} className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm overflow-hidden group relative">
-              <button onClick={() => removeFromWishlist(item.id)} className="absolute top-2 right-2 w-7 h-7 bg-[#FFFCF7]/80 rounded-full flex items-center justify-center hover:bg-[#FFFCF7] transition-colors z-10"><X size={12} className="text-otb-ink/40" /></button>
+            <div key={item.id} className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm overflow-hidden group relative">
+              <button onClick={() => removeFromWishlist(item.id)} className="absolute top-2 right-2 w-7 h-7 bg-[#FFFFFF]/80 rounded-full flex items-center justify-center hover:bg-[#FFFFFF] transition-colors z-10"><X size={12} className="text-otb-ink/40" /></button>
               <Link href={"/products/" + item.id}>
                 <div className="aspect-square bg-otb-sand/20 flex items-center justify-center p-4 overflow-hidden">
                   {item.image ? <img src={item.image} alt={item.nameEn || item.name} className="w-full h-full object-contain" /> : <Heart size={32} className="text-otb-ink/10" />}
                 </div>
                 <div className="p-3">
-                  <p className="font-sans text-xs text-otb-ink/40 tracking-wider uppercase">{labelFor(item.category)}</p>
+                  <p className="font-sans text-xs text-otb-ink/40 tracking-[0.18em] uppercase">{labelFor(item.category)}</p>
                   <p className="font-sans text-sm text-otb-ink truncate mt-0.5">{item.nameEn || item.name}</p>
                   <p className="font-en text-sm font-bold text-otb-terracotta mt-1">{formatPrice(convertPrice(computePromotionForProduct({ id: item.id, category: item.category || '', price: item.price }, promotions).price, currency), currency)}</p>
                 </div>

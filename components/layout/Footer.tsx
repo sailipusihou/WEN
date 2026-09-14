@@ -123,7 +123,7 @@ export default function Footer() {
 
           {/* 三列导航 */}
           <div className="lg:col-span-2">
-            <h4 className="font-sans text-[11px] tracking-[0.2em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Collections</h4>
+            <h4 className="font-sans text-[11px] tracking-[0.28em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Collections</h4>
             <ul className="space-y-3.5">
               {collections.map((item: any, i: number) => (
                 <li key={i}>
@@ -135,7 +135,7 @@ export default function Footer() {
             </ul>
           </div>
           <div className="lg:col-span-2">
-            <h4 className="font-sans text-[11px] tracking-[0.2em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Company</h4>
+            <h4 className="font-sans text-[11px] tracking-[0.28em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Company</h4>
             <ul className="space-y-3.5">
               {companyLinks.map((item: any, i: number) => (
                 <li key={i}>
@@ -147,7 +147,7 @@ export default function Footer() {
             </ul>
           </div>
           <div className="lg:col-span-3">
-            <h4 className="font-sans text-[11px] tracking-[0.2em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Contact</h4>
+            <h4 className="font-sans text-[11px] tracking-[0.28em] uppercase font-semibold mb-6" style={{ color: ACCENT }}>Contact</h4>
             <ul className="space-y-3.5 font-sans text-[13px]" style={{ color: ON_DARK_SOFT }}>
               {contacts.map((c: any, i: number) => (
                 <li key={i}>
@@ -187,7 +187,7 @@ export default function Footer() {
             <button
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="group inline-flex items-center gap-2.5 self-start lg:self-end font-sans text-[11px] tracking-[0.16em] uppercase font-semibold px-5 py-3 transition-all duration-300 hover:-translate-y-0.5"
+              className="group inline-flex items-center gap-2.5 self-start lg:self-end font-sans text-[11px] tracking-[0.28em] uppercase font-semibold px-5 py-3 transition-all duration-300 hover:-translate-y-0.5"
               style={{ border: '1px solid rgba(184,160,108,0.35)', color: '#DCCBA8', borderRadius: 2, backgroundColor: 'rgba(184,160,108,0.06)' }}
             >
               Back to top

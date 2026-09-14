@@ -58,7 +58,7 @@ export default function OptimizedImage({
   if (hasError || !src) {
     return (
       <div
-        className={`bg-[#E2D5C0] flex items-center justify-center ${className}`}
+        className={`bg-[#F7F0DE] flex items-center justify-center ${className}`}
         style={style}
       >
         <svg
@@ -87,7 +87,7 @@ export default function OptimizedImage({
   return (
     <div className={`relative overflow-hidden ${className}`} style={style}>
       {isLoading && placeholder === 'blur' && (
-        <div className="absolute inset-0 bg-gradient-to-r from-[#E2D5C0] via-[#EDE3D2] to-[#E2D5C0] bg-[length:200%_100%] animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#F7F0DE] via-[#EDE3D2] to-[#F7F0DE] bg-[length:200%_100%] animate-pulse" />
       )}
       <Image
         src={src}

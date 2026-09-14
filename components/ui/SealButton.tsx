@@ -33,9 +33,9 @@ export default function SealButton({
   }
 
   const sizeClasses = {
-    sm: 'px-5 py-2 text-sm tracking-wide',
+    sm: 'px-5 py-2 text-sm tracking-[0.1em]',
     md: 'px-8 py-3 text-base tracking-widest',
-    lg: 'px-12 py-4 text-lg tracking-[0.15em]',
+    lg: 'px-12 py-4 text-lg tracking-[0.24em]',
   }
 
   const buttonClasses = `

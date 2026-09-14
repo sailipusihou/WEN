@@ -475,8 +475,8 @@ export default function VideoAudioEditor({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={undo} disabled={!hasUndo} className="p-2 rounded-lg transition-colors hover:bg-[#FFFCF7]/5 disabled:opacity-30" style={{ color: C.sub }} title="撤销"><Undo2 size={15} /></button>
-          <button onClick={redo} disabled={!hasRedo} className="p-2 rounded-lg transition-colors hover:bg-[#FFFCF7]/5 disabled:opacity-30" style={{ color: C.sub }} title="重做"><Redo2 size={15} /></button>
+          <button onClick={undo} disabled={!hasUndo} className="p-2 rounded-lg transition-colors hover:bg-[#FFFFFF]/5 disabled:opacity-30" style={{ color: C.sub }} title="撤销"><Undo2 size={15} /></button>
+          <button onClick={redo} disabled={!hasRedo} className="p-2 rounded-lg transition-colors hover:bg-[#FFFFFF]/5 disabled:opacity-30" style={{ color: C.sub }} title="重做"><Redo2 size={15} /></button>
           <button onClick={() => videoFileRef.current?.click()} className="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5" style={{ backgroundColor: C.input, color: C.text, border: `1px solid ${C.border}` }}>
             <Upload size={13} /> 上传视频
           </button>
@@ -578,13 +578,13 @@ export default function VideoAudioEditor({
 
           {/* 播放控制条 */}
           <div className="flex items-center justify-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: C.input, border: `1px solid ${C.border}` }}>
-            <button onClick={() => seekTo(0)} className="p-2 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="回到开头"><SkipBack size={14} /></button>
-            <button onClick={() => seekTo(Math.max(0, playhead - 1))} className="p-2 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="后退 1 秒"><ChevronLeft size={14} /></button>
+            <button onClick={() => seekTo(0)} className="p-2 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="回到开头"><SkipBack size={14} /></button>
+            <button onClick={() => seekTo(Math.max(0, playhead - 1))} className="p-2 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="后退 1 秒"><ChevronLeft size={14} /></button>
             <button onClick={() => setPlaying(!playing)} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: C.accent, color: C.accentText }}>
               {playing ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 1 }} />}
             </button>
-            <button onClick={() => seekTo(Math.min(total, playhead + 1))} className="p-2 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="前进 1 秒"><ChevronRight size={14} /></button>
-            <button onClick={() => seekTo(total)} className="p-2 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="跳到结尾"><SkipForward size={14} /></button>
+            <button onClick={() => seekTo(Math.min(total, playhead + 1))} className="p-2 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="前进 1 秒"><ChevronRight size={14} /></button>
+            <button onClick={() => seekTo(total)} className="p-2 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="跳到结尾"><SkipForward size={14} /></button>
             <select value={outputAspect} onChange={e => setOutputAspect(e.target.value)} className="px-2 py-1.5 rounded-lg text-[11px] outline-none" style={{ backgroundColor: C.card, color: C.sub, border: `1px solid ${C.border}` }}>
               <option value="source">画幅：跟随</option>
               <option value="16:9">画幅：16:9</option>
@@ -612,7 +612,7 @@ export default function VideoAudioEditor({
                     a.remove()
                     URL.revokeObjectURL(a.href)
                   } catch { window.open(resultUrl, '_blank') }
-                }} className="p-1.5 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="下载"><Download size={14} /></button>
+                }} className="p-1.5 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="下载"><Download size={14} /></button>
               </div>
             </div>
           )}
@@ -674,9 +674,9 @@ export default function VideoAudioEditor({
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold" style={{ color: C.text }}>视频片段属性</p>
                 <div className="flex gap-1">
-                  <button onClick={() => moveClip(-1)} className="p-1.5 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="前移"><ChevronLeft size={13} /></button>
-                  <button onClick={() => moveClip(1)} className="p-1.5 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: C.sub }} title="后移"><ChevronRight size={13} /></button>
-                  <button onClick={() => { setClips(prev => prev.filter(c => c.id !== selectedClip.id)); setSelectedClipId('') }} className="p-1.5 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: '#EF4444' }} title="删除"><Trash2 size={13} /></button>
+                  <button onClick={() => moveClip(-1)} className="p-1.5 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="前移"><ChevronLeft size={13} /></button>
+                  <button onClick={() => moveClip(1)} className="p-1.5 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: C.sub }} title="后移"><ChevronRight size={13} /></button>
+                  <button onClick={() => { setClips(prev => prev.filter(c => c.id !== selectedClip.id)); setSelectedClipId('') }} className="p-1.5 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: '#EF4444' }} title="删除"><Trash2 size={13} /></button>
                 </div>
               </div>
 
@@ -820,7 +820,7 @@ export default function VideoAudioEditor({
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold" style={{ color: C.text }}>音频片段属性</p>
-                <button onClick={() => { setAudioClips(prev => prev.filter(a => a.id !== selectedAudio.id)); setSelectedAudioId('') }} className="p-1.5 rounded-lg hover:bg-[#FFFCF7]/5 transition-colors" style={{ color: '#EF4444' }}><Trash2 size={13} /></button>
+                <button onClick={() => { setAudioClips(prev => prev.filter(a => a.id !== selectedAudio.id)); setSelectedAudioId('') }} className="p-1.5 rounded-lg hover:bg-[#FFFFFF]/5 transition-colors" style={{ color: '#EF4444' }}><Trash2 size={13} /></button>
               </div>
               <audio controls preload="none" src={selectedAudio.url} className="w-full h-8" />
               <div className="grid grid-cols-2 gap-2">

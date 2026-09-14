@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 }
 
 export default function SearchLayout({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<div className="min-h-screen bg-[#F1E9DC]" />}>{children}</Suspense>
+  return <Suspense fallback={<div className="min-h-screen bg-[#FBFAF7]" />}>{children}</Suspense>
 }

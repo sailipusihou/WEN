@@ -109,7 +109,7 @@ export default function OrderDetailPage() {
       <Link href="/account/orders" className="inline-flex items-center gap-1 font-sans text-sm text-otb-ink/40 hover:text-otb-ink transition-colors mb-6"><ArrowLeft size={14} /> Back to Orders</Link>
 
       {/* Invoice Header */}
-      <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 mb-6">
+      <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 mb-6">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -119,7 +119,7 @@ export default function OrderDetailPage() {
             <p className="font-sans text-sm text-otb-ink/60">Order #<span className="font-mono">{order.id}</span></p>
             <p className="font-sans text-xs text-otb-ink/40 mt-0.5">Date: {new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
           </div>
-          <span className={"text-xs font-sans font-medium px-3 py-1.5 rounded-full uppercase tracking-wider " + statusBadge(order.status)}>{statusLabel(order.status)}</span>
+          <span className={"text-xs font-sans font-medium px-3 py-1.5 rounded-full uppercase tracking-[0.18em] " + statusBadge(order.status)}>{statusLabel(order.status)}</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export default function OrderDetailPage() {
         <div className="lg:col-span-2 space-y-6">
 
           {/* Items Table */}
-          <div className="bg-[#FFFCF7] border border-otb-sand/50 rounded-sm overflow-hidden">
+          <div className="bg-[#FFFFFF] border border-otb-sand/50 rounded-sm overflow-hidden">
             <div className="bg-otb-sand/10 px-5 py-3 border-b border-otb-sand/30">
               <h2 className="font-serif text-sm text-otb-ink font-medium">Order Items</h2>
             </div>
@@ -164,7 +164,7 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Detailed Timeline from statusHistory */}
-          <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6">
+          <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6">
             <h2 className="font-serif text-sm text-otb-ink font-medium mb-4">Order Timeline</h2>
             <div className="relative">
               {history.length > 0 ? (
@@ -206,7 +206,7 @@ export default function OrderDetailPage() {
 
           {/* 订单完成后评价 (仅 delivered/completed 可评论) */}
           {["delivered", "completed"].includes(order.status) && (
-            <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6">
+            <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6">
               <h2 className="font-serif text-sm text-otb-ink font-medium mb-1">Review Your Order</h2>
               <p className="font-sans text-xs text-otb-ink/50 mb-4">Share your experience — published reviews appear instantly on each product page.</p>
               <div className="space-y-5">
@@ -231,7 +231,7 @@ export default function OrderDetailPage() {
                       </div>
                       <textarea value={rv.content} onChange={e => setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, content: e.target.value } }))}
                         rows={2} placeholder="How was this piece? Craft, quality, packaging..."
-                        className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+                        className="w-full px-3 py-2.5 border border-otb-sand/50 rounded-sm bg-[#FFFFFF] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
                       <div className="flex items-center gap-3 mt-2">
                         <button type="button" onClick={() => submitItemReview(item)} disabled={rv.submitting}
                           className="px-4 py-2 bg-otb-terracotta text-white font-serif text-xs rounded-sm hover:bg-otb-terracotta/90 disabled:opacity-50 transition-colors">
@@ -254,7 +254,7 @@ export default function OrderDetailPage() {
 
           {/* Assigned Staff */}
           {order.assignedToName && (
-            <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+            <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
               <h2 className="font-serif text-sm text-otb-ink font-medium mb-3">Assigned Staff</h2>
               <div className="flex items-center gap-3">
                 <div
@@ -335,7 +335,7 @@ export default function OrderDetailPage() {
           )}
 
           {/* Payment Summary */}
-          <div className="bg-[#FFFCF7] border border-otb-sand/50 rounded-sm overflow-hidden">
+          <div className="bg-[#FFFFFF] border border-otb-sand/50 rounded-sm overflow-hidden">
             <div className="bg-otb-sand/10 px-5 py-3 border-b border-otb-sand/30">
               <h2 className="font-serif text-sm text-otb-ink font-medium">Payment Summary</h2>
             </div>
@@ -356,7 +356,7 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+          <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
             <h2 className="font-serif text-sm text-otb-ink font-medium mb-3">Payment Method</h2>
             <div className="flex items-center gap-2">
               <CreditCard size={16} className="text-blue-500" />
@@ -374,7 +374,7 @@ export default function OrderDetailPage() {
           </div>
 
           {(order.referralCode || order.referredByStaffName || order._referralConversion) && (
-            <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+            <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
               <h2 className="font-serif text-sm text-otb-ink font-medium mb-3">Marketing Attribution</h2>
               <div className="space-y-2 font-sans text-sm text-otb-ink/70">
                 {order.referralCode && (
@@ -424,7 +424,7 @@ export default function OrderDetailPage() {
 
           {/* Shipping Tracking — 详细物流轨迹时间轴 */}
           {shipments.length > 0 ? (
-            <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+            <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
               <h2 className="font-serif text-sm text-otb-ink font-medium mb-3 flex items-center gap-1.5">
                 <Navigation size={14} className="text-otb-terracotta" /> Shipping Tracking
               </h2>
@@ -492,7 +492,7 @@ export default function OrderDetailPage() {
               </div>
             </div>
           ) : order.tracking && (
-            <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+            <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
               <h2 className="font-serif text-sm text-otb-ink font-medium mb-3">Tracking</h2>
               <div className="flex items-start gap-2">
                 <Truck size={14} className="text-otb-ink/30 mt-0.5 shrink-0" />
@@ -512,7 +512,7 @@ export default function OrderDetailPage() {
           )}
 
           {/* Shipping Address */}
-          <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-5">
+          <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-5">
             <h2 className="font-serif text-sm text-otb-ink font-medium mb-3">Shipping Address</h2>
             <div className="flex items-start gap-2">
               <MapPin size={14} className="text-otb-ink/30 mt-0.5 shrink-0" />

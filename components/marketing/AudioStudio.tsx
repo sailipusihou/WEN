@@ -208,7 +208,7 @@ export default function AudioStudio({ library, setLibrary, selectedAudioUrl, onS
       </div>
 
       <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--adm-text-secondary)' }}>
+        <label className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5 block" style={{ color: 'var(--adm-text-secondary)' }}>
           音频提示词 {type === 'speech' ? '（配音文案）' : ''}
         </label>
         <textarea
@@ -225,7 +225,7 @@ export default function AudioStudio({ library, setLibrary, selectedAudioUrl, onS
 
       {type === 'speech' && (
         <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--adm-text-secondary)' }}>
+          <label className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5 block" style={{ color: 'var(--adm-text-secondary)' }}>
             音色 ID（MiniMax 音色编号，留空用默认男声）
           </label>
           <input

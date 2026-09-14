@@ -48,11 +48,11 @@ function getSessionId() {
  *   LINE   5%~10% 发丝分隔线，替代此前偏重的实线
  *   BTN    实心深色按钮（参考站是实心深橄榄 + 白字 + 700 字重）
  */
-const PANEL = '#F1E9DC'
-const INK = '#1C1814'
+const PANEL = '#FBFAF7'
+const INK = '#241C12'
 const SOFT = '#5F5A54'
 const GOLD = '#8A6A2E'
-const LINE = 'rgba(58,44,26,0.22)'
+const LINE = 'rgba(74,58,36,0.24)'
 
 /** 可折叠详情区块（右侧栏「下拉详情」） */
 function Accordion({
@@ -68,7 +68,7 @@ function Accordion({
         className="w-full flex items-center justify-between gap-3 py-[18px] text-left group"
       >
         <span
-          className="flex items-center gap-3 font-sans text-[13px] tracking-[0.22em] uppercase font-bold transition-colors duration-300"
+          className="flex items-center gap-3 font-sans text-[13px] tracking-[0.3em] uppercase font-bold transition-colors duration-300"
           style={{ color: INK }}
         >
           {Icon && <Icon size={15} strokeWidth={1.5} style={{ color: GOLD }} className="transition-transform duration-300 group-hover:scale-110" />}
@@ -76,7 +76,7 @@ function Accordion({
         </span>
         <span
           className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full transition-all duration-300 group-hover:rotate-180"
-          style={{ backgroundColor: open ? INK : 'rgba(58,44,26,0.10)' }}
+          style={{ backgroundColor: open ? INK : 'rgba(74,58,36,0.12)' }}
         >
           <ChevronDown
             size={14}
@@ -375,12 +375,12 @@ export default function ProductDetailClient({
     <div className="min-h-screen" style={{ backgroundColor: PANEL }}>
       <div className="max-w-[1560px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         {/* Breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.14em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(58,44,26,0.52)' }}>
-          <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>Home</Link>
+        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.26em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(74,58,36,0.56)' }}>
+          <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(74,58,36,0.65)' }}>Home</Link>
           <span>/</span>
-          <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>All Objects</Link>
+          <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(74,58,36,0.65)' }}>All Objects</Link>
           <span>/</span>
-          <Link href={`/category/${product.category}`} className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>
+          <Link href={`/category/${product.category}`} className="transition-colors hover:opacity-100" style={{ color: 'rgba(74,58,36,0.65)' }}>
             {labelFor(product.category)}
           </Link>
           <span>/</span>
@@ -388,20 +388,20 @@ export default function ProductDetailClient({
         </nav>
 
         {referralCode && (
-          <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-[#FFFCF7]/70 px-5 py-4">
+          <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-[#FFFFFF]/70 px-5 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8A6A2E]">
+                <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-[#8A6A2E]">
                   Social Attribution Active
                 </p>
-                <p className="mt-1 font-sans text-sm text-[#221E1A]">
+                <p className="mt-1 font-sans text-sm text-[#2A2118]">
                   This page is carrying social tracking parameters — your next order can be attributed back to the campaign.
                 </p>
               </div>
               <Link
                 href={buildReferralBioLandingUrl({ code: referralCode, productId: product.id, sourceChannel })}
-                className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-[11px] tracking-[0.12em] uppercase font-sans font-semibold transition-all duration-300"
-                style={{ border: `1px solid rgba(58,44,26,0.26)`, color: INK, borderRadius: 2 }}
+                className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-[11px] tracking-[0.22em] uppercase font-sans font-semibold transition-all duration-300"
+                style={{ border: `1px solid rgba(74,58,36,0.28)`, color: INK, borderRadius: 2 }}
               >
                 Back to Link in Bio
               </Link>
@@ -430,7 +430,7 @@ export default function ProductDetailClient({
                       aria-label={`View image ${i + 1}`}
                       className="relative aspect-[4/5] w-full overflow-hidden transition-all duration-300 hover:opacity-80"
                       style={{
-                        backgroundColor: '#E6D8C2',
+                        backgroundColor: '#F8F2E2',
                         border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                         borderRadius: 2,
                         opacity: i === selectedImage ? 1 : 0.72,
@@ -446,7 +446,7 @@ export default function ProductDetailClient({
               <div className="flex-1 min-w-0">
                 <div
                   className="pdp-media relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] overflow-hidden group cursor-zoom-in"
-                  style={{ backgroundColor: '#E6D8C2', borderRadius: 3 }}
+                  style={{ backgroundColor: '#F8F2E2', borderRadius: 3 }}
                   onClick={() => setLightbox(true)}
                 >
                   <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4 z-10" />
@@ -461,7 +461,7 @@ export default function ProductDetailClient({
                     placeholder="blur"
                   />
                   <span
-                    className="absolute bottom-4 right-4 flex items-center gap-1.5 backdrop-blur-sm px-3 py-2 font-sans text-[9px] font-semibold tracking-[0.14em] uppercase opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                    className="absolute bottom-4 right-4 flex items-center gap-1.5 backdrop-blur-sm px-3 py-2 font-sans text-[9px] font-semibold tracking-[0.26em] uppercase opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
                     style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: INK, borderRadius: 2 }}
                   >
                     <ZoomIn size={11} strokeWidth={1.8} /> Click to enlarge
@@ -479,7 +479,7 @@ export default function ProductDetailClient({
                         aria-label={`View image ${i + 1}`}
                         className="relative w-16 h-16 overflow-hidden transition-opacity duration-300"
                         style={{
-                          backgroundColor: '#E6D8C2',
+                          backgroundColor: '#F8F2E2',
                           border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                           borderRadius: 2,
                           opacity: i === selectedImage ? 1 : 0.72,
@@ -506,7 +506,7 @@ export default function ProductDetailClient({
             </span>
 
             <h1
-              className="font-en text-[30px] md:text-[42px] md:leading-[1.12] font-semibold mt-3 tracking-[-0.01em]"
+              className="font-en text-[30px] md:text-[42px] md:leading-[1.12] font-medium mt-3 tracking-[-0.01em]"
               style={{ color: INK }}
             >
               {product.nameEn || product.name}
@@ -540,14 +540,14 @@ export default function ProductDetailClient({
             {/* 价格 */}
             <div className="flex items-baseline gap-3 mt-7">
               <span
-                className="font-en text-[34px] md:text-[40px] font-semibold tracking-[-0.01em]"
+                className="font-en text-[34px] md:text-[40px] font-medium tracking-[-0.01em]"
                 style={{ color: eff.discount > 0 ? '#A83420' : INK }}
               >
                 {formatPrice(convertPrice(eff.price, currency), currency)}
               </span>
               {eff.discount > 0 && <PromoSaleTag />}
               {(eff.originalPrice || product.originalPrice) && (
-                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(58,44,26,0.55)' }}>
+                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(74,58,36,0.58)' }}>
                   {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}
@@ -583,7 +583,7 @@ export default function ProductDetailClient({
                         </span>
                       </p>
                       {sub > 0 && (
-                        <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
+                        <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(74,58,36,0.20)' }}>
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${pct}%`, backgroundColor: '#5F7D72' }}
@@ -619,7 +619,7 @@ export default function ProductDetailClient({
               <div className="grid grid-cols-3 gap-5 mt-7 py-6" style={{ borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
                 {specRows.map(([label, value]) => (
                   <div key={label}>
-                    <span className="font-sans text-[9px] tracking-[0.18em] uppercase font-semibold" style={{ color: 'rgba(58,44,26,0.52)' }}>{label}</span>
+                    <span className="font-sans text-[9px] tracking-[0.26em] uppercase font-semibold" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</span>
                     <p className="font-sans text-[14px] mt-1.5 leading-snug font-medium" style={{ color: INK }}>{value}</p>
                   </div>
                 ))}
@@ -628,7 +628,7 @@ export default function ProductDetailClient({
 
             {/* 数量 + 加购 */}
             <div ref={buyBoxRef} className="flex items-stretch gap-3 mt-7">
-              <div className="flex items-center" style={{ border: `1px solid rgba(58,44,26,0.26)` }}>
+              <div className="flex items-center" style={{ border: `1px solid rgba(74,58,36,0.28)` }}>
                 <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 transition-colors duration-200 hover:opacity-60" style={{ color: SOFT }} aria-label="Decrease quantity">
                   <Minus size={14} strokeWidth={1.8} />
                 </button>
@@ -640,7 +640,7 @@ export default function ProductDetailClient({
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="pdp-btn flex-1 flex items-center justify-center gap-2.5 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.2em] uppercase text-white transition-all duration-300"
+                className="pdp-btn flex-1 flex items-center justify-center gap-2.5 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase text-white transition-all duration-300"
                 style={{ backgroundColor: added ? GOLD : INK, borderRadius: 2 }}
               >
                 {added ? <><Check size={15} strokeWidth={2} /> Added to Cart</> : <><ShoppingBag size={15} strokeWidth={2} /> Add to Cart</>}
@@ -651,7 +651,7 @@ export default function ProductDetailClient({
                 disabled={wishlistLoading}
                 className="px-4 transition-all duration-300 hover:-translate-y-px"
                 style={{
-                  border: `1px solid ${isWishlisted ? '#A83E33' : 'rgba(58,44,26,0.26)'}`,
+                  border: `1px solid ${isWishlisted ? '#A83E33' : 'rgba(74,58,36,0.28)'}`,
                   backgroundColor: isWishlisted ? 'rgba(184,84,80,0.06)' : 'transparent',
                   color: isWishlisted ? '#A83E33' : SOFT,
                   borderRadius: 2,
@@ -666,7 +666,7 @@ export default function ProductDetailClient({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="pdp-btn mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px"
+              className="pdp-btn mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
               style={{ backgroundColor: '#fff', color: INK, border: `1px solid ${INK}`, borderRadius: 2 }}
             >
               <Zap size={15} strokeWidth={2.2} /> Buy Now
@@ -676,7 +676,7 @@ export default function ProductDetailClient({
             <Link
               href={'/messages?product=' + product.id}
               className="pdp-btn inline-flex items-center gap-2 mt-3 px-5 py-3 font-sans text-[12px] font-semibold tracking-[0.06em] transition-all duration-300 w-full justify-center hover:-translate-y-px"
-              style={{ border: `1px solid rgba(58,44,26,0.26)`, color: INK, borderRadius: 2 }}
+              style={{ border: `1px solid rgba(74,58,36,0.28)`, color: INK, borderRadius: 2 }}
             >
               <MessageCircle size={15} strokeWidth={1.7} style={{ color: GOLD }} />
               <span>Ask about this piece</span>
@@ -690,7 +690,7 @@ export default function ProductDetailClient({
                 { icon: Truck, text: 'Free Damaged Replacement' },
                 { icon: RotateCcw, text: '30-Day Money Back' },
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: 'rgba(58,44,26,0.62)' }}>
+                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: 'rgba(74,58,36,0.65)' }}>
                   <item.icon size={13} strokeWidth={1.7} style={{ color: GOLD }} /> {item.text}
                 </div>
               ))}
@@ -716,7 +716,7 @@ export default function ProductDetailClient({
                   <dl className="space-y-2.5">
                     {specRows.map(([label, value]) => (
                       <div key={label} className="flex gap-4">
-                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.18em] uppercase font-semibold pt-1" style={{ color: 'rgba(58,44,26,0.52)' }}>{label}</dt>
+                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.26em] uppercase font-semibold pt-1" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</dt>
                         <dd className="text-[14px] font-medium" style={{ color: INK }}>{value}</dd>
                       </div>
                     ))}
@@ -769,7 +769,7 @@ export default function ProductDetailClient({
             {/* 工艺故事 */}
             {(product.storyEn || product.story) && (
               <div className="mt-12 pt-10" style={{ borderTop: `1px solid ${LINE}` }}>
-                <h2 className="font-en text-[22px] font-semibold tracking-tight" style={{ color: INK }}>The Story Behind This Piece</h2>
+                <h2 className="font-en text-[22px] font-medium tracking-[0.005em]" style={{ color: INK }}>The Story Behind This Piece</h2>
                 <p className="mt-4 font-sans text-[14px] leading-[1.85]" style={{ color: SOFT }}>{product.storyEn || product.story}</p>
               </div>
             )}
@@ -777,7 +777,7 @@ export default function ProductDetailClient({
             {/* 评价 */}
             <div id="reviews" className="mt-12 pt-10 scroll-mt-24" style={{ borderTop: `1px solid ${LINE}` }}>
               <div className="flex items-baseline justify-between">
-                <h2 className="font-en text-[22px] font-semibold tracking-tight" style={{ color: INK }}>
+                <h2 className="font-en text-[22px] font-medium tracking-[0.005em]" style={{ color: INK }}>
                   Reviews{product.reviewCount > 0 ? ` (${reviews.length || product.reviewCount})` : ''}
                 </h2>
                 {product.reviewCount > 0 && (
@@ -801,7 +801,7 @@ export default function ProductDetailClient({
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.06 }}
                       className="p-5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(35,31,28,0.35)]"
-                      style={{ backgroundColor: '#FFFCF7', border: `1px solid ${LINE}`, borderRadius: 3 }}
+                      style={{ backgroundColor: '#FFFFFF', border: `1px solid ${LINE}`, borderRadius: 3 }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
@@ -812,7 +812,7 @@ export default function ProductDetailClient({
                           </div>
                           <div className="min-w-0">
                             <p className="font-sans text-[13px] font-semibold truncate" style={{ color: INK }}>{review.author}</p>
-                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(58,44,26,0.52)' }}>{review.location} · {review.date}</p>
+                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(74,58,36,0.56)' }}>{review.location} · {review.date}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-[2px] shrink-0">
@@ -839,8 +839,8 @@ export default function ProductDetailClient({
             className="mt-20 md:mt-28"
           >
             <div className="flex items-end justify-between mb-8">
-              <h2 className="font-en text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: INK }}>You May Also Like</h2>
-              <Link href={`/category/${product.category}`} className="font-sans text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: GOLD }}>
+              <h2 className="font-en text-2xl md:text-3xl font-medium tracking-[0.005em]" style={{ color: INK }}>You May Also Like</h2>
+              <Link href={`/category/${product.category}`} className="font-sans text-[10px] tracking-[0.26em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: GOLD }}>
                 View all →
               </Link>
             </div>
@@ -851,7 +851,7 @@ export default function ProductDetailClient({
         )}
 
         <div className="mt-16 text-center">
-          <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs transition-opacity hover:opacity-60 tracking-[0.14em] uppercase font-sans font-semibold" style={{ color: SOFT }}>
+          <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs transition-opacity hover:opacity-60 tracking-[0.26em] uppercase font-sans font-semibold" style={{ color: SOFT }}>
             <ArrowUpLeft size={12} strokeWidth={1.8} /> Back to Collection
           </Link>
         </div>

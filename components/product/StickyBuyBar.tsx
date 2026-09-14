@@ -24,7 +24,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import type { Product } from '@/lib/products'
 
-const INK = '#1C1814'
+const INK = '#241C12'
 const GOLD = '#8A6A2E'
 
 export default function StickyBuyBar({
@@ -101,13 +101,13 @@ export default function StickyBuyBar({
         className="w-full"
         style={{
           backgroundColor: '#FBF7EF',
-          borderTop: '1px solid rgba(58,44,26,0.18)',
-          boxShadow: 'rgba(58,44,26,0.18) 0 0 12px',
+          borderTop: '1px solid rgba(74,58,36,0.20)',
+          boxShadow: 'rgba(74,58,36,0.20) 0 0 12px',
         }}
       >
         <div className="max-w-[1560px] mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4 lg:gap-6">
           {/* 缩略图 */}
-          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: '#E6D8C2', borderRadius: 2 }}>
+          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: '#F8F2E2', borderRadius: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={product.image} alt={product.nameEn || product.name} className="w-full h-full object-cover" />
           </div>
@@ -115,22 +115,22 @@ export default function StickyBuyBar({
           {/* 价格 + 标题 */}
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-en text-[20px] sm:text-[24px] font-semibold leading-none" style={{ color: discount > 0 ? '#D22D24' : INK }}>
+              <span className="font-en text-[20px] sm:text-[24px] font-medium leading-none" style={{ color: discount > 0 ? '#D22D24' : INK }}>
                 {formatPrice(convertPrice(effPrice, currency), currency)}
               </span>
               {(originalPrice || product.originalPrice) && (
-                <span className="font-sans text-[14px] sm:text-[16px] line-through leading-none hidden sm:inline" style={{ color: 'rgba(58,44,26,0.50)' }}>
+                <span className="font-sans text-[14px] sm:text-[16px] line-through leading-none hidden sm:inline" style={{ color: 'rgba(74,58,36,0.54)' }}>
                   {formatPrice(convertPrice(originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}
             </div>
-            <p className="font-en text-[13px] sm:text-[15px] font-semibold truncate mt-1.5" style={{ color: INK }}>
+            <p className="font-en text-[13px] sm:text-[15px] font-medium truncate mt-1.5" style={{ color: INK }}>
               {product.nameEn || product.name}
             </p>
           </div>
 
           {/* 数量 */}
-          <div className="hidden md:flex items-center shrink-0" style={{ border: '1px solid rgba(58,44,26,0.26)', borderRadius: 2 }}>
+          <div className="hidden md:flex items-center shrink-0" style={{ border: '1px solid rgba(74,58,36,0.28)', borderRadius: 2 }}>
             <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2.5 transition-opacity hover:opacity-60" style={{ color: '#5F5A54' }} aria-label="Decrease quantity">
               <Minus size={13} strokeWidth={1.8} />
             </button>
@@ -145,7 +145,7 @@ export default function StickyBuyBar({
             <button
               type="button"
               onClick={handleAdd}
-              className="pdp-btn hidden sm:flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.16em] uppercase transition-all duration-300"
+              className="pdp-btn hidden sm:flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300"
               style={{ backgroundColor: INK, color: '#fff', borderRadius: 2, minWidth: 148 }}
             >
               <ShoppingBag size={14} strokeWidth={2.2} /> Add to cart
@@ -153,7 +153,7 @@ export default function StickyBuyBar({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="pdp-btn flex items-center justify-center gap-2 px-5 sm:px-6 py-3 font-sans text-[11px] font-bold tracking-[0.16em] uppercase transition-all duration-300"
+              className="pdp-btn flex items-center justify-center gap-2 px-5 sm:px-6 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300"
               style={{ backgroundColor: '#fff', color: INK, border: `1px solid ${INK}`, borderRadius: 2 }}
             >
               <Zap size={14} strokeWidth={2.2} className="sm:hidden" />

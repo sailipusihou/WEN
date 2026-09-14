@@ -60,30 +60,30 @@ export default function AccountPage() {
         <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm font-sans text-otb-ink/40 hover:text-red-500 transition-colors"><LogOut size={14} /> Sign Out</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-4">
+        <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-2xl font-serif font-bold text-otb-terracotta">{totalOrders}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Total Orders</p>
         </div>
-        <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-4">
+        <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-2xl font-serif font-bold text-otb-ink">${(customer?.totalSpent || orders.reduce((s, o) => s + (o.total || 0), 0)).toFixed(2)}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Total Spent</p>
         </div>
-        <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-4">
+        <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-2xl font-serif font-bold text-otb-ink">{availableCoupons.length}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Available Coupons</p>
         </div>
-        <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-4">
+        <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-4">
           <p className="text-sm font-serif font-bold text-otb-ink">{new Date(user.createdAt).toLocaleDateString()}</p>
           <p className="text-xs font-sans text-otb-ink/40 mt-0.5">Member Since</p>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Link href="/account/orders" className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
+        <Link href="/account/orders" className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
           <Package size={28} className="text-otb-terracotta mb-3" />
           <h3 className="font-serif text-base text-otb-ink group-hover:text-otb-terracotta transition-colors">My Orders</h3>
           <p className="font-sans text-xs text-otb-ink/40 mt-1">{orders.length} orders placed</p>
         </Link>
-        <Link href="/account/profile" className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
+        <Link href="/account/profile" className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
           <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center bg-otb-terracotta/10 mb-3">
           {user?.avatar && !avatarFailed ? (
             <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={() => setAvatarFailed(true)} />
@@ -94,12 +94,12 @@ export default function AccountPage() {
           <h3 className="font-serif text-base text-otb-ink group-hover:text-otb-terracotta transition-colors">Profile</h3>
           <p className="font-sans text-xs text-otb-ink/40 mt-1">Edit personal info & settings</p>
         </Link>
-        <Link href="/account/addresses" className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
+        <Link href="/account/addresses" className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
           <MapPin size={28} className="text-otb-terracotta mb-3" />
           <h3 className="font-serif text-base text-otb-ink group-hover:text-otb-terracotta transition-colors">Addresses</h3>
           <p className="font-sans text-xs text-otb-ink/40 mt-1">{user.addresses?.length || 0} saved addresses</p>
         </Link>
-        <Link href="/account/wishlist" className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
+        <Link href="/account/wishlist" className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-6 hover:shadow-sm transition-shadow group">
           <Heart size={28} className="text-otb-terracotta mb-3" />
           <h3 className="font-serif text-base text-otb-ink group-hover:text-otb-terracotta transition-colors">Wishlist</h3>
           <p className="font-sans text-xs text-otb-ink/40 mt-1">{user.wishlist?.length || 0} saved items</p>
@@ -112,7 +112,7 @@ export default function AccountPage() {
           <Ticket size={18} className="text-otb-terracotta" /> My Coupons
         </h2>
         {coupons.length === 0 ? (
-          <div className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-8 text-center">
+          <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm p-8 text-center">
             <p className="font-sans text-sm text-otb-ink/40">No coupons yet. New-user welcome coupons will appear here after you sign up.</p>
           </div>
         ) : (
@@ -122,7 +122,7 @@ export default function AccountPage() {
               const discountLabel = c.discountType === 'percent' ? `${c.value}% OFF` : `$${c.value} OFF`
               return (
                 <div key={c.code + c.issuedAt}
-                  className={`bg-[#FFFCF7]/70 border rounded-sm p-5 flex flex-col ${status === 'active' ? 'border-otb-terracotta/30' : 'border-otb-sand/50 opacity-60'}`}>
+                  className={`bg-[#FFFFFF]/70 border rounded-sm p-5 flex flex-col ${status === 'active' ? 'border-otb-terracotta/30' : 'border-otb-sand/50 opacity-60'}`}>
                   {/* 优惠券图 (后台 AI 生图生成) */}
                   {c.imageUrl && (
                     <div className="mb-3 overflow-hidden rounded-sm">

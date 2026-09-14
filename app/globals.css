@@ -11,19 +11,20 @@
   --font-noto-sans-sc: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
   --font-noto-serif-sc: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', Georgia, serif;
 
-  /* —— 色彩（2026-09 压实重制）——
-     原来的问题：画面 79% 面积是明度≥90 的近白，背景平均饱和度仅 19.6%，
-     次要文字 #6C6F75 饱和度只有 4%（纯灰）→ 整页发浅发灰显廉价。
-     现在：底子下沉到暖调羊皮纸，文字去灰改暖深色，品牌色加饱和。 */
-  --ink-deep: #171310;
-  --ink: #221E1A;
-  --ink-mid: #403A31;
-  --ink-soft: #57503F;   /* 原 #6C6F75 饱和4% —— 纯灰是"发灰"的元凶 */
-  --ink-faint: #8A8071;
-  --paper: #EAE0CE;
-  --paper-light: #EFE6D6;
-  --paper-warm: #E2D5C0;
-  --paper-dark: #D8C9AE;
+  /* —— 色彩（2026-09 三轮调色定稿）——
+     第一轮诊断：79% 面积为近白、背景平均饱和度仅 19.6%、次要文字饱和 4%（纯灰）→ 发浅发灰。
+     第二轮矫枉过正：底色压成深羊皮纸，反而更闷 —— 对比是相对的，
+     底色一旦发深，深色字就不"跳"了。
+     定稿：底色回到近乎纯白（参考站 #FAFAF6 的路子）+ 商品区单独泛微黄 + 文字改暖深棕。 */
+  --ink-deep: #1F1811;
+  --ink: #2A2118;
+  --ink-mid: #4A3E2E;
+  --ink-soft: #5A4A36;
+  --ink-faint: #7A6B54;
+  --paper: #FDFCFA;
+  --paper-light: #FFFFFF;   /* 参考站的"实际的纯白感" */
+  --paper-warm: #F8F2E2;    /* 商品图区/暖块：泛微黄 */
+  --paper-dark: #F2EBD8;
   --jade: #5F7D72;       /* 原 #8BA8A0 饱和14% —— 淡到没记忆点 */
   --jade-light: #7D9B8F;
   --jade-dark: #4A665D;
