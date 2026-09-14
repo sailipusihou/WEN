@@ -47,10 +47,15 @@ free -m >> "$LOG"
 
 # ---------- 3. 构建 ----------
 echo "=== 开始构建 $(date) ===" >> "$LOG"
+# ⚠️ 关键：nice + ionice 让构建进程在 CPU 与磁盘 I/O 上都让路。
+# 这台机器只有 2GB 内存，构建时的 swap 换页会把磁盘 I/O 打满，
+# sshd / nginx 抢不到资源 → 机器假死，只能去控制台重启（已发生三次）。
+# ionice -c3 是 idle 级别：只有别人不用磁盘时才轮到构建用。
+# 代价是构建变慢，但慢总比死好。
 NODE_OPTIONS="--max-old-space-size=768" \
 NEXT_TELEMETRY_DISABLED=1 \
 NEXT_DISABLE_ESLINT=1 \
-npm run build >> "$LOG" 2>&1
+nice -n 19 ionice -c3 npm run build >> "$LOG" 2>&1
 BUILD_EXIT=$?
 echo "===BUILD_EXIT=${BUILD_EXIT}===" >> "$LOG"
 free -m >> "$LOG"
