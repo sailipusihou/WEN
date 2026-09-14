@@ -132,10 +132,36 @@ export default function WalletButtons({
 }: Props) {
   const [showGooglePay, setShowGooglePay] = useState(false)
   const [showApplePay, setShowApplePay] = useState(false)
+  /** ?debugpay=1 时把探测过程记录下来，用于在真实设备上排查「按钮不出来」 */
+  const [debugLines, setDebugLines] = useState<string[]>([])
   const googleBtnRef = useRef<HTMLDivElement | null>(null)
   const probedRef = useRef(false)
   // Apple Pay 的 config：必须在渲染探测阶段就缓存好，点击时要同步建 session + begin()
   const appleCfgRef = useRef<any>(null)
+
+  /** 只在 URL 带 ?debugpay=1 时收集诊断信息（对真实客户完全不可见） */
+  const debugOn = (() => {
+    try { return new URLSearchParams(window.location.search).get('debugpay') === '1' } catch { return false }
+  })()
+  const dlog = (msg: string) => {
+    if (!debugOn) return
+    console.log('[wallet-debug]', msg)
+    setDebugLines(prev => [...prev, msg])
+  }
+
+  useEffect(() => {
+    if (debugOn) {
+      const w = window as any
+      dlog(`UA: ${navigator.userAgent.slice(0, 110)}`)
+      dlog(`ApplePaySession: ${typeof w.ApplePaySession}`)
+      if (typeof w.ApplePaySession === 'function') {
+        try { dlog(`canMakePayments: ${w.ApplePaySession.canMakePayments()}`) } catch (e: any) { dlog(`canMakePayments ERR: ${e?.message}`) }
+        try { dlog(`supportsVersion(4): ${w.ApplePaySession.supportsVersion(4)}`) } catch (e: any) { dlog(`supportsVersion ERR: ${e?.message}`) }
+      }
+      dlog(`masterEnabled: ${masterEnabled}, paypalGlobal: ${!!paypal}`)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debugOn, masterEnabled, paypal])
 
   useEffect(() => {
     if (!masterEnabled || !paypal) return
@@ -228,15 +254,23 @@ export default function WalletButtons({
     // ---------------- Apple Pay ----------------
     const ApplePaySessionCtor = (window as any).ApplePaySession
     const applePayClient = paypal.ApplePay || paypal.Applepay
-    if (allowApplePay && typeof applePayClient === 'function' && ApplePaySessionCtor) {
+    if (!allowApplePay) {
+      dlog('Apple Pay: 被开关关闭 (allowApplePay=false)')
+    } else if (typeof applePayClient !== 'function') {
+      dlog(`Apple Pay: SDK 未提供 Applepay 组件 (typeof=${typeof applePayClient})`)
+    } else if (!ApplePaySessionCtor) {
+      dlog('Apple Pay: 本浏览器没有 ApplePaySession —— Apple Pay 只在 Safari / iOS / macOS 上存在')
+    } else if (typeof applePayClient === 'function' && ApplePaySessionCtor) {
       ;(async () => {
         try {
           const cfg = await applePayClient().config()
           if (cancelled) return
+          dlog(`Apple Pay config(): isEligible=${cfg?.isEligible} country=${cfg?.countryCode} networks=${JSON.stringify(cfg?.supportedNetworks)}`)
           if (cfg && cfg.isEligible === false) return
           appleCfgRef.current = cfg
           setShowApplePay(true)
-        } catch {
+        } catch (e: any) {
+          dlog(`Apple Pay config() 报错: ${e?.message || e}`)
           if (!cancelled) setShowApplePay(false)
         }
       })()
@@ -334,7 +368,11 @@ export default function WalletButtons({
     session.begin()
   }
 
-  if (!masterEnabled || (!showGooglePay && !showApplePay)) return null
+  const hasAny = masterEnabled && (showGooglePay || showApplePay)
+
+  // 诊断模式下即使没有可用钱包也要把面板显示出来，否则没法看原因
+  if (!hasAny && !debugOn) return null
+  if (!masterEnabled && !debugOn) return null
 
   const items = [
     showApplePay
@@ -353,6 +391,21 @@ export default function WalletButtons({
       ? <div key="googlepay" ref={googleBtnRef} data-wallet="googlepay" className="w-full" />
       : null,
   ].filter(Boolean)
+
+  const debugPanel = debugOn ? (
+    <div
+      data-wallet-debug="1"
+      className="mt-4 p-3 font-mono text-[11px] leading-relaxed"
+      style={{ backgroundColor: '#111', color: '#7ee787', borderRadius: 4, whiteSpace: 'pre-wrap' }}
+    >
+      {'— wallet debug —\n' + (debugLines.length ? debugLines.join('\n') : '(暂无记录)')}
+      {'\n显示结果: applePay=' + showApplePay + ' googlePay=' + showGooglePay}
+    </div>
+  ) : null
+
+  if (!hasAny && debugOn) {
+    return <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">{debugPanel}</div>
+  }
 
   return (
     <div className={title ? 'bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8' : ''}>
@@ -374,6 +427,7 @@ export default function WalletButtons({
           <span className="flex-1 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.18)' }} />
         </div>
       )}
+      {debugPanel}
     </div>
   )
 }

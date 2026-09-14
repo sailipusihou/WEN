@@ -9,6 +9,7 @@ import { getOrCreateVisitorId, getStoredReferralChannel, getStoredReferralCode }
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 import WalletButtons, { type WalletContact } from '@/components/checkout/WalletButtons'
+import CheckoutUrgency from '@/components/checkout/CheckoutUrgency'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
@@ -50,6 +51,9 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0)
   const [estimatedDays, setEstimatedDays] = useState('')
   const [shippingZone, setShippingZone] = useState<any>(null)
+  // 结算页 Contact 段的两个勾选（参考站同款）
+  const [marketingOptIn, setMarketingOptIn] = useState(false)
+  const [createAccount, setCreateAccount] = useState(false)
   const [payoneerEnabled, setPayoneerEnabled] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'payoneer'>('paypal')
   // Apple Pay / Google Pay：额度开关来自 /api/paypal/config，默认关闭
@@ -202,6 +206,9 @@ export default function CheckoutPage() {
   }, [shipping.country, discountedSubtotal])
 
   const totalPrice = Math.round((discountedSubtotal - couponDiscount + shippingCost) * 100) / 100
+  // 「省了多少」= 促销省的 + 优惠券省的。用原价小计(subtotal)对比促销后小计得出促销部分。
+  const promoSaved = Math.max(0, Math.round((subtotal - discountedSubtotal) * 100) / 100)
+  const savedTotal = Math.round((promoSaved + (couponDiscount || 0)) * 100) / 100
 
   // 免邮门槛：必须取「该国家所属分区」的 zone.freeThreshold（真正决定免邮的值），
   // 不能用全局 shippingFreeThreshold —— 两者对美加相同(416.67)，
@@ -310,6 +317,8 @@ export default function CheckoutPage() {
       setShipping(merged)
       if (merged.email) setUserEmail(merged.email)
     }
+    // 拦住「钱包没给全地址」的情况，避免产生缺地址的订单
+    assertShippingComplete(merged)
 
     const res = await fetch('/api/orders', {
       method: 'POST',
@@ -337,6 +346,32 @@ export default function CheckoutPage() {
     }
     pendingOrderRef.current = d.id
     return d.id
+  }
+
+  /**
+   * Express Checkout 的兜底校验。
+   * 钱包（尤其 Apple Pay 在某些卡片上）可能不回传完整地址，此时不能拿一张
+   * 缺地址的订单去扣款 —— 宁可在这里拦住，让客户把表单补完。
+   */
+  const assertShippingComplete = (s: typeof shipping) => {
+    const missing: string[] = []
+    if (!String(s.firstName || '').trim()) missing.push('first name')
+    if (!String(s.lastName || '').trim()) missing.push('last name')
+    if (!String(s.address || '').trim()) missing.push('address')
+    if (!String(s.city || '').trim()) missing.push('city')
+    if (!String(s.zipCode || '').trim()) missing.push('postal code')
+    if (!String(s.email || '').trim()) missing.push('email')
+    if (missing.length) {
+      const err = new Error(
+        `Your wallet didn’t share a complete address (missing: ${missing.join(', ')}). ` +
+        `Please fill it in below and pay again.`
+      )
+      // 滚到地址表单，方便客户立刻补
+      try {
+        document.querySelector('.input-premium')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } catch { /* ignore */ }
+      throw err
+    }
   }
 
   // 把「建单 → 创建 PayPal 订单」抽出来共用：PayPal 按钮、Google Pay、Apple Pay
@@ -627,6 +662,9 @@ export default function CheckoutPage() {
         </Link>
         <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-6">Checkout</h1>
 
+        {/* 预留倒计时（对齐参考站顶部那条紧迫感提示） */}
+        <CheckoutUrgency />
+
         {/* 进度指示：让用户知道还剩几步，降低中途放弃 */}
         <ol className="flex items-center gap-2 sm:gap-4 mb-10 font-sans text-[11px] tracking-[0.08em] uppercase">
           {[
@@ -711,23 +749,111 @@ export default function CheckoutPage() {
                 </div>
               </div>
             )}
-            {/* Shipping */}
+            {/* Contact —— 参考站把「邮箱」单独拎出来一段，右上角挂登录入口 */}
             <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
-              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Shipping Information</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-baseline justify-between gap-4 mb-5">
+                <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium">Contact</h2>
+                {!isLoggedIn && (
+                  <Link
+                    href="/login?redirect=/checkout"
+                    className="font-sans text-[12px] underline underline-offset-4 transition-colors hover:opacity-70"
+                    style={{ color: '#8A6A2E' }}
+                  >
+                    Already have an account? Log in
+                  </Link>
+                )}
+                {isLoggedIn && (
+                  <span className="font-sans text-[12px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                    Signed in{userEmail ? ` as ${userEmail}` : ''}
+                  </span>
+                )}
+              </div>
+
+              <input
+                type="email"
+                value={shipping.email}
+                onChange={e => updateField('email', e.target.value)}
+                placeholder="Email *"
+                className={'input-premium ' + (fieldErrors.email ? 'border-red-400' : '')}
+              />
+              {fieldErrors.email && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors.email}</p>}
+
+              {/* 营销订阅（默认不勾，合规上更稳） */}
+              <label className="mt-3 flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={marketingOptIn}
+                  onChange={e => setMarketingOptIn(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#241C12] shrink-0"
+                />
+                <span className="font-sans text-[12px] leading-snug" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  Receive exclusive offers and collection updates
+                </span>
+              </label>
+
+              {/* 创建账户提示：未登录时给一个入口，邮箱已填就带过去 */}
+              {!isLoggedIn && (
+                <label className="mt-2 flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={createAccount}
+                    onChange={e => setCreateAccount(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-[#241C12] shrink-0"
+                  />
+                  <span className="font-sans text-[12px] leading-snug" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    Create an account so you can track this order and check out faster next time
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Shipping address —— 字段顺序对齐参考站：国家 → 姓名 → 地址 → 邮编 → 电话 */}
+            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
+              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Shipping Address</h2>
+
+              <div className="space-y-3">
+                <div>
+                  <select value={shipping.country} onChange={e => updateField('country', e.target.value)}
+                    className="input-premium w-full">
+                    <option>United States</option><option>Canada</option><option>United Kingdom</option>
+                    <option>Germany</option><option>France</option><option>Italy</option>
+                    <option>Spain</option><option>Netherlands</option><option>Australia</option>
+                    <option>Japan</option><option>South Korea</option><option>Singapore</option>
+                    <option>Other</option>
+                  </select>
+                  {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区） */}
+                  <p className="mt-1.5 font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                    {shippingCost > 0
+                      ? `Shipping to ${shipping.country}: ${formatPrice(convertPrice(shippingCost, currency), currency)}`
+                      : `Free shipping to ${shipping.country}`}
+                    {estimatedDays ? ` · ${estimatedDays} business days` : ''}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { key: 'firstName', placeholder: 'First Name *', colSpan: false },
+                    { key: 'lastName', placeholder: 'Last Name', colSpan: false },
+                  ].map(({ key, placeholder, colSpan }) => (
+                    <div key={key} className={colSpan ? 'sm:col-span-2' : ''}>
+                      <input
+                        value={(shipping as any)[key]}
+                        onChange={e => updateField(key, e.target.value)}
+                        placeholder={placeholder}
+                        className={'input-premium ' + (fieldErrors[key] ? 'border-red-400' : '')}
+                      />
+                      {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
+                    </div>
+                  ))}
+                </div>
+
                 {[
-                  { key: 'firstName', placeholder: 'First Name *', colSpan: false },
-                  { key: 'lastName', placeholder: 'Last Name *', colSpan: false },
-                  { key: 'email', placeholder: 'Email *', type: 'email', colSpan: true },
-                  { key: 'phone', placeholder: 'Phone', type: 'tel', colSpan: true },
-                  { key: 'address', placeholder: 'Address *', colSpan: true },
-                  { key: 'city', placeholder: 'City *', colSpan: false },
-                  { key: 'state', placeholder: 'State', colSpan: false },
-                  { key: 'zipCode', placeholder: 'ZIP Code *', colSpan: false },
-                ].map(({ key, placeholder, type, colSpan }) => (
-                  <div key={key} className={colSpan ? 'sm:col-span-2' : ''}>
+                  { key: 'address', placeholder: 'Address *', type: 'text' },
+                  { key: 'phone', placeholder: 'Phone', type: 'tel' },
+                ].map(({ key, placeholder, type }) => (
+                  <div key={key}>
                     <input
-                      type={type || 'text'}
+                      type={type}
                       value={(shipping as any)[key]}
                       onChange={e => updateField(key, e.target.value)}
                       placeholder={placeholder}
@@ -736,19 +862,24 @@ export default function CheckoutPage() {
                     {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
                   </div>
                 ))}
-                <select value={shipping.country} onChange={e => updateField('country', e.target.value)}
-                  className="input-premium sm:col-span-2">
-                  <option>United States</option><option>Canada</option><option>United Kingdom</option>
-                  <option>Germany</option><option>France</option><option>Italy</option>
-                  <option>Spain</option><option>Netherlands</option><option>Australia</option>
-                  <option>Japan</option><option>South Korea</option><option>Singapore</option>
-                  <option>Other</option>
-                </select>
-                {shippingZone && (
-                  <p className="sm:col-span-2 font-sans text-[10px] text-[#5A4A36]/50">
-                    Estimated delivery: {estimatedDays} business days
-                  </p>
-                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { key: 'city', placeholder: 'City *' },
+                    { key: 'state', placeholder: 'State' },
+                    { key: 'zipCode', placeholder: 'ZIP Code *' },
+                  ].map(({ key, placeholder }) => (
+                    <div key={key}>
+                      <input
+                        value={(shipping as any)[key]}
+                        onChange={e => updateField(key, e.target.value)}
+                        placeholder={placeholder}
+                        className={'input-premium ' + (fieldErrors[key] ? 'border-red-400' : '')}
+                      />
+                      {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             {/* Payment */}
@@ -938,6 +1069,14 @@ export default function CheckoutPage() {
                   <span className="text-[#2A2118]">Total</span>
                   <span className="font-en text-lg font-semibold text-[#2A2118]">{formatPrice(convertPrice(totalPrice, currency), currency)}</span>
                 </div>
+
+                {/* You saved —— 参考站把「省了多少」单独列一行，是很有效的价格锚点 */}
+                {savedTotal > 0 && (
+                  <div className="flex justify-between font-sans text-[12px]" style={{ color: '#4A665D' }}>
+                    <span>You saved</span>
+                    <span className="font-semibold">−{formatPrice(convertPrice(savedTotal, currency), currency)}</span>
+                  </div>
+                )}
 
                 {/* 预计到达日：跨境订单最大的疑虑就是「多久到」，这里给明确日期 */}
                 {!!checkoutEta && (
