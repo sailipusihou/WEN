@@ -54,6 +54,14 @@ export default function CheckoutPage() {
   // 结算页 Contact 段的两个勾选（参考站同款）
   const [marketingOptIn, setMarketingOptIn] = useState(false)
   const [createAccount, setCreateAccount] = useState(false)
+  /**
+   * 客户是否真的碰过地址信息。
+   *
+   * 参考站在填地址之前，右侧 Shipping 显示的是 "Calculated in the next step"，
+   * 而不是先拍一个运费数字上去 —— 那既不严谨也会在客户改国家后跳价。
+   * 这里同样处理：没填地址前只显示小计，运费写「结算时计算」。
+   */
+  const [addressTouched, setAddressTouched] = useState(false)
   const [payoneerEnabled, setPayoneerEnabled] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'payoneer'>('paypal')
   // Apple Pay / Google Pay：额度开关来自 /api/paypal/config，默认关闭
@@ -260,6 +268,10 @@ export default function CheckoutPage() {
   const updateField = (f: string, v: string) => {
     setShipping(prev => ({ ...prev, [f]: v }))
     if (fieldErrors[f]) setFieldErrors(prev => ({ ...prev, [f]: '' }))
+    // 客户一碰地址相关字段，就认为「地址已知」，右侧才开始显示真实运费
+    if (['country', 'address', 'city', 'state', 'zipCode'].includes(f) && String(v).trim() && f !== 'country') {
+      setAddressTouched(true)
+    }
   }
 
   const validateShipping = () => {
@@ -316,6 +328,8 @@ export default function CheckoutPage() {
       // 同步到表单，让右侧 Order Summary 与地址栏立刻反映钱包地址
       setShipping(merged)
       if (merged.email) setUserEmail(merged.email)
+      // 钱包给了地址就等于「地址已知」，右侧可以直接显示真实运费
+      setAddressTouched(true)
     }
     // 拦住「钱包没给全地址」的情况，避免产生缺地址的订单
     assertShippingComplete(merged)
@@ -660,41 +674,14 @@ export default function CheckoutPage() {
         <Link href="/cart" className="inline-flex items-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors mb-8 tracking-[0.18em] uppercase">
           <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Cart
         </Link>
-        <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-6">Checkout</h1>
+        <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-5">Checkout</h1>
 
         {/* 预留倒计时（对齐参考站顶部那条紧迫感提示） */}
         <CheckoutUrgency />
 
-        {/* 进度指示：让用户知道还剩几步，降低中途放弃 */}
-        <ol className="flex items-center gap-2 sm:gap-4 mb-10 font-sans text-[11px] tracking-[0.08em] uppercase">
-          {[
-            { n: 'Cart', done: true },
-            { n: 'Details', done: false, active: true },
-            { n: 'Payment', done: false },
-          ].map((s, i) => (
-            <li key={s.n} className="flex items-center gap-2 sm:gap-4">
-              <span className="flex items-center gap-2">
-                <span
-                  className="w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold"
-                  style={
-                    s.done
-                      ? { backgroundColor: '#5F7D72', color: '#fff' }
-                      : s.active
-                        ? { backgroundColor: '#241C12', color: '#fff' }
-                        : { backgroundColor: 'rgba(74,58,36,0.20)', color: 'rgba(74,58,36,0.58)' }
-                  }
-                >
-                  {s.done ? '✓' : i + 1}
-                </span>
-                <span style={{ color: s.active ? '#241C12' : 'rgba(74,58,36,0.58)', fontWeight: s.active ? 600 : 400 }}>
-                  {s.n}
-                </span>
-              </span>
-              {i < 2 && <span className="w-8 sm:w-12 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.28)' }} />}
-            </li>
-          ))}
-        </ol>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* 参考站顶部没有步骤标签页，只有 Back to Cart 那种细面包屑 —— 这里也去掉编号步进条，
+            页面直接进入支付区，减少视觉噪音 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
           <div className="lg:col-span-2 space-y-6">
             {/* Express Checkout —— 放在最顶部，和参考站一致：
                 客户可以一个点击用钱包里的卡付掉，跳过下面整张表单。
@@ -821,12 +808,15 @@ export default function CheckoutPage() {
                     <option>Japan</option><option>South Korea</option><option>Singapore</option>
                     <option>Other</option>
                   </select>
-                  {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区） */}
+                  {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区）。
+                      但要等客户真的填了地址再显示 —— 否则一进页面就报一个运费数字，不严谨。 */}
                   <p className="mt-1.5 font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
-                    {shippingCost > 0
-                      ? `Shipping to ${shipping.country}: ${formatPrice(convertPrice(shippingCost, currency), currency)}`
-                      : `Free shipping to ${shipping.country}`}
-                    {estimatedDays ? ` · ${estimatedDays} business days` : ''}
+                    {!addressTouched
+                      ? 'Shipping cost is calculated from your address'
+                      : shippingCost > 0
+                        ? `Shipping to ${shipping.country}: ${formatPrice(convertPrice(shippingCost, currency), currency)}`
+                        : `Free shipping to ${shipping.country}`}
+                    {addressTouched && estimatedDays ? ` · ${estimatedDays} business days` : ''}
                   </p>
                 </div>
 
@@ -1063,11 +1053,19 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between text-[#5A4A36]/60">
                   <span>Shipping</span>
-                  <span>{shippingCost === 0 ? <span className="text-green-600">Free</span> : formatPrice(convertPrice(shippingCost, currency), currency)}</span>
+                  <span>
+                    {!addressTouched
+                      ? <span className="italic" style={{ color: 'rgba(74,58,36,0.45)' }}>Calculated at checkout</span>
+                      : shippingCost === 0
+                        ? <span className="text-green-600">Free</span>
+                        : formatPrice(convertPrice(shippingCost, currency), currency)}
+                  </span>
                 </div>
                 <div className="border-t border-[#EFE7D4]/50 pt-3 flex justify-between font-medium">
                   <span className="text-[#2A2118]">Total</span>
-                  <span className="font-en text-lg font-semibold text-[#2A2118]">{formatPrice(convertPrice(totalPrice, currency), currency)}</span>
+                  <span className="font-en text-lg font-semibold text-[#2A2118]">
+                    {formatPrice(convertPrice(addressTouched ? totalPrice : Math.max(0, Math.round((discountedSubtotal - couponDiscount) * 100) / 100), currency), currency)}
+                  </span>
                 </div>
 
                 {/* You saved —— 参考站把「省了多少」单独列一行，是很有效的价格锚点 */}

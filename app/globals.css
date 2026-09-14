@@ -102,6 +102,52 @@ body {
   opacity: 0.4;
 }
 
+/* ---------------------------------------------------------------------------
+   .input-premium —— 结算页 / 登录页 / 注册页 / 联系页使用的输入框样式。
+
+   ⚠️ 历史 bug：这些页面一直写着 className="input-premium"，但这个类**从来没有被定义过**
+   （CSS 里定义的是 .input-refined），所以这些输入框一直吃的是浏览器默认样式 ——
+   边框几乎看不见、字号偏小、间距局促，整页显得不严谨。
+   现在正式定义：边框加深、内边距加大、字号提到 15px、聚焦有明确反馈。
+--------------------------------------------------------------------------- */
+.input-premium {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(74, 58, 36, 0.30);
+  border-radius: 4px;
+  background-color: #FFFFFF;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.input-premium::placeholder { color: rgba(74, 58, 36, 0.45); }
+.input-premium:hover { border-color: rgba(74, 58, 36, 0.45); }
+.input-premium:focus {
+  outline: none;
+  border-color: #241C12;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(36, 28, 18, 0.08);
+}
+/* 校验失败时优先显示红框（放在后面 + 组合选择器，确保盖过上面的规则） */
+.input-premium.border-red-400 { border-color: #ef4444; }
+.input-premium.border-red-400:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); }
+/* 下拉框补上原生箭头右侧的留白 */
+select.input-premium { appearance: none; -webkit-appearance: none; padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23241C12' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+/* 结算页表单：标签式说明文字更醒目一点 */
+.checkout-label {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: rgba(42, 33, 24, 0.72);
+}
+
 /* Divider */
 .divider-refined {
   width: 100%;
