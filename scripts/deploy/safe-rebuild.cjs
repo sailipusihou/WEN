@@ -81,11 +81,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
     const alive = typeof code === 'number'
     if (!alive) downStreak++
 
-    // 构建期间 pm2 是停的，站点本就不可用；用 SSH 探构建进度
-    const t = run('tail -2 /tmp/build.log 2>/dev/null; grep -c "BUILD_EXIT" /tmp/build.log 2>/dev/null || echo 0', { timeout: 60000 })
-    const sshOk = /BUILD_EXIT|===/ .test(t.out)
-    const finished = /BUILD_EXIT=/.test(t.out)
-    console.log(`  [${String(i).padStart(2)}] ssh=${sshOk ? 'OK ' : 'FAIL'} site=${alive ? code : String(code).padEnd(4)}  ${t.out.replace(/\s+/g, ' ').trim().slice(0, 110)}`)
+    // 构建期间 pm2 是停的，站点本就不可用；用 SSH 探构建进度。
+    // 注意：判定必须直接看「DONE」标记 —— 早先版本用 tail -2 + grep -c，
+    // 日志尾部多几行就采不到标记，导致明明构建成功却一直轮询到超时（误报）。
+    const t = run('tail -1 /tmp/build.log 2>/dev/null; echo "|"; grep -o "BUILD_EXIT=[0-9]*" /tmp/build.log 2>/dev/null | tail -1', { timeout: 60000 })
+    const sshOk = t.out.includes('|')
+    const exitMatch = /BUILD_EXIT=(\d+)/.exec(t.out)
+    const done = /===DONE===/.test(t.out)
+    console.log(`  [${String(i).padStart(2)}] ssh=${sshOk ? 'OK ' : 'FAIL'} site=${alive ? code : String(code).padEnd(4)}  ${t.out.replace(/\s+/g, ' ').trim().slice(0, 120)}`)
 
     if (!sshOk) {
       downStreak++
@@ -96,15 +99,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
       }
     }
 
-    if (finished) {
+    if (done || (exitMatch && !alive)) {
       console.log('\n=== 5. 构建结束，校验 ===')
-      console.log(run('grep "BUILD_EXIT" /tmp/build.log; ls -la /var/www/lowflame/.next/BUILD_ID && cat /var/www/lowflame/.next/BUILD_ID; echo; free -m | head -2; pm2 list | grep lowflame; tail -2 /tmp/build.log').out.trim())
-      await sleep(6000)
+      console.log(run('grep -o "BUILD_EXIT=[0-9]*" /tmp/build.log | tail -1; ls -la /var/www/lowflame/.next/BUILD_ID && cat /var/www/lowflame/.next/BUILD_ID; echo; free -m | head -2; pm2 list | grep lowflame; tail -2 /tmp/build.log').out.trim())
+      await sleep(8000)
       const final = await http('https://lowflame.store/')
       const cfg = await http('https://lowflame.store/api/paypal/config')
-      console.log(`\n站点 / → ${final}`)
+      const buildOk = exitMatch ? exitMatch[1] === '0' : false
+      console.log(`\n构建退出码: ${exitMatch ? exitMatch[1] : '未捕获'}`)
+      console.log(`站点 / → ${final}`)
       console.log(`/api/paypal/config → ${cfg}`)
-      process.exit(typeof final === 'number' && final < 400 ? 0 : 1)
+      process.exit(buildOk && typeof final === 'number' && final < 400 ? 0 : 1)
     }
   }
 
