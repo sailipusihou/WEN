@@ -280,9 +280,10 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
             </div>
           )}
           {/* 遮罩必须是中性黑：原先用暖棕 ink-deep，等于给视频整体加了一层黄棕滤镜，
-              素材被染成"泛黄"。改用中性黑只压亮度、不动色相，保住原生色彩。 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/10 to-black/55" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+              素材被染成"泛黄"。改用中性黑只压亮度、不动色相，保住原生色彩；
+              厚度集中在左侧文案区，右半幅视频几乎不动，让画面尽量还原。 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent" />
         </motion.div>
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'0.3\'/%3E%3C/g%3E%3C/svg%3E")' }} />
         <motion.div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" style={{ opacity: heroOpacity }}>
