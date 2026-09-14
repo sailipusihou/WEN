@@ -25,6 +25,7 @@ export default function CheckoutPage() {
     address: '', city: '', state: '', zipCode: '', country: 'United States',
   })
   const [paypalReady, setPaypalReady] = useState(false)
+  const [paypalLoading, setPaypalLoading] = useState(false)
   const [orderId, setOrderId] = useState('')
 
   // 修复 M13: 刷新后恢复订单确认页 (sessionStorage 持久化订单号)
@@ -94,6 +95,75 @@ export default function CheckoutPage() {
       .catch(() => {})
   }, [])
 
+  /**
+   * 预加载 PayPal SDK。
+   *
+   * ⚠️ 这一段是「客户看不到 Apple Pay / Google Pay」的根治办法。
+   * 原来 SDK 只在客户点了「Continue with PayPal」之后才加载，而那一行看起来像
+   * PayPal 的一个付款选项、不像是个"加载按钮"，客户根本不会点 ——
+   * 结果结算页上只有一堆卡片图标和一个按钮，PayPal / Apple Pay / Google Pay
+   * 三个真正的付款按钮全被挡在后面。
+   * 现在改成进页面就自动加载（和所有正常独立站一样），三个按钮直接铺出来。
+   */
+  const paypalLoadStartedRef = useRef(false)
+
+  const ensurePayPalSdk = async (presetConfig?: any) => {
+    if (paypalLoadStartedRef.current) return
+    paypalLoadStartedRef.current = true
+
+    try {
+      let config = presetConfig
+      if (!config) {
+        const res = await fetch('/api/paypal/config')
+        config = await res.json()
+      }
+      if (!config?.enabled || !config?.clientId) {
+        paypalLoadStartedRef.current = false
+        setPaypalLoading(false)
+        setPaypalError('PayPal is not available at the moment.')
+        return
+      }
+
+      // ⚠️ locale 必须用下划线。navigator.language 在所有真实浏览器里返回连字符格式
+      // （en-US / zh-CN），而 PayPal SDK 只认下划线，传连字符会直接 400、SDK 不加载。
+      const locale = (navigator.language || 'en_US').replace('-', '_')
+      const walletParam = config.wallets?.enabled ? '&components=buttons,applepay,googlepay' : ''
+      const buildSrc = (useLocale: boolean) =>
+        `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture` +
+        `${useLocale ? `&locale=${locale}` : ''}${walletParam}`
+
+      const mount = (useLocale: boolean, isRetry: boolean) => {
+        const script = document.createElement('script')
+        script.src = buildSrc(useLocale)
+        script.onload = () => {
+          if (typeof (window as any).paypal?.Buttons === 'function') {
+            setPaypalReady(true)
+          } else {
+            // 加载成功但挂载失败：放开重试，让客户还能手动点一次
+            paypalLoadStartedRef.current = false
+            setPaypalLoading(false)
+            setPaypalError('PayPal failed to initialize. Please try again.')
+          }
+        }
+        script.onerror = () => {
+          script.remove()
+          if (!isRetry) mount(false, true)
+          else {
+            paypalLoadStartedRef.current = false
+            setPaypalLoading(false)
+            setPaypalError('Failed to load PayPal. Please try again.')
+          }
+        }
+        document.body.appendChild(script)
+      }
+      mount(true, false)
+    } catch {
+      paypalLoadStartedRef.current = false
+      setPaypalLoading(false)
+      setPaypalError('PayPal configuration error.')
+    }
+  }
+
   useEffect(() => {
     Promise.all([
       fetch('/api/paypal/config').then(r => r.json()).catch(() => ({ enabled: false })),
@@ -104,7 +174,13 @@ export default function CheckoutPage() {
       }
       setPayoneerEnabled(payoneerConfig.enabled)
       if (paypalConfig.wallets) setWallets(paypalConfig.wallets)
+      // 进页面就加载，不再等客户去点「Continue with PayPal」
+      if (paypalConfig.enabled && paypalConfig.clientId) {
+        setPaypalLoading(true)
+        ensurePayPalSdk(paypalConfig)
+      }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -354,46 +430,8 @@ export default function CheckoutPage() {
   const handlePayPalClick = async () => {
     if (!validateShipping()) return
     if (paypalReady) return
-    try {
-      const res = await fetch('/api/paypal/config')
-      const config = await res.json()
-      if (!config.enabled || !config.clientId) {
-        setPaypalError('PayPal is not available at the moment.')
-        return
-      }
-
-      // ⚠️ locale 必须用下划线。
-      // navigator.language 在所有真实浏览器里返回的是连字符格式（en-US / zh-CN / de-DE），
-      // 而 PayPal SDK 只认下划线（en_US / zh_CN）。实测传连字符会直接 400：
-      //   locale=zh-CN → HTTP 400   locale=en-US → HTTP 400
-      //   locale=zh_CN → HTTP 200   locale=en_US → HTTP 200
-      // SDK 拿不到 400 就 onerror，paypal.Buttons() 永远不执行 —— 结算页一个支付按钮都没有。
-      const locale = (navigator.language || 'en_US').replace('-', '_')
-      // 开通了钱包就把 applepay / googlepay 组件一起拉进来（没开通时 SDK 也不会挂上这俩对象）
-      const walletParam = config.wallets?.enabled ? '&components=buttons,applepay,googlepay' : ''
-      const buildSrc = (useLocale: boolean) =>
-        `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture` +
-        `${useLocale ? `&locale=${locale}` : ''}${walletParam}`
-
-      // 先带 locale 试；万一是 PayPal 不支持的语种，去掉 locale 重试一次兜底。
-      const mount = (useLocale: boolean, isRetry: boolean) => {
-        const script = document.createElement('script')
-        script.src = buildSrc(useLocale)
-        script.onload = () => {
-          if (typeof (window as any).paypal?.Buttons === 'function') setPaypalReady(true)
-          else setPaypalError('PayPal failed to initialize. Please try again.')
-        }
-        script.onerror = () => {
-          script.remove()
-          if (!isRetry) mount(false, true)
-          else setPaypalError('Failed to load PayPal. Please try again.')
-        }
-        document.body.appendChild(script)
-      }
-      mount(true, false)
-    } catch {
-      setPaypalError('PayPal configuration error.')
-    }
+    setPaypalLoading(true)
+    await ensurePayPalSdk()
   }
 
   const handlePayoneerClick = async () => {
@@ -779,10 +817,16 @@ export default function CheckoutPage() {
               {paymentMethod === 'paypal' && (
                 <div className="mt-4">
                   {!paypalReady ? (
-                    <button onClick={handlePayPalClick} disabled={processing}
-                      className="w-full px-6 py-3 bg-[#0070BA] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#003087] disabled:opacity-50 transition-colors">
-                      Continue with PayPal
-                    </button>
+                    paypalLoading ? (
+                      <div className="w-full px-6 py-3 bg-[#FFFFFF] border border-[#EFE7D4] text-[#5A4A36]/70 text-xs tracking-[0.08em] uppercase font-sans flex items-center justify-center gap-2">
+                        <Loader2 size={14} className="animate-spin" /> Loading payment options...
+                      </div>
+                    ) : (
+                      <button onClick={handlePayPalClick} disabled={processing}
+                        className="w-full px-6 py-3 bg-[#0070BA] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#003087] disabled:opacity-50 transition-colors">
+                        Continue with PayPal
+                      </button>
+                    )
                   ) : (
                     <>
                       <div id="paypal-button-container" className="mt-4"></div>

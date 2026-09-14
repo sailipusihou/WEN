@@ -146,8 +146,10 @@ export default function WalletButtons({
           })
           host.innerHTML = ''
           host.appendChild(button)
-        } catch {
-          // 账号还没开通 Google Pay —— 静默不显示
+        } catch (e: any) {
+          // 账号还没开通 Google Pay、或 Google 端判定不可用 —— 静默不显示按钮。
+          // 打一条 warn 便于排查「按钮没出来」到底是哪一步断的。
+          console.warn('[wallet] Google Pay unavailable:', e?.message || e)
           if (!cancelled) setShowGooglePay(false)
         }
       })()
@@ -268,12 +270,13 @@ export default function WalletButtons({
       {showApplePay && (
         <button
           type="button"
+          data-wallet="applepay"
           onClick={startApplePay}
           className="apple-pay-button w-full h-11 rounded"
           aria-label="Pay with Apple Pay"
         />
       )}
-      {showGooglePay && <div ref={googleBtnRef} className="w-full" />}
+      {showGooglePay && <div ref={googleBtnRef} data-wallet="googlepay" className="w-full" />}
     </div>
   )
 }
