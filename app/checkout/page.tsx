@@ -8,6 +8,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { getOrCreateVisitorId, getStoredReferralChannel, getStoredReferralCode } from '@/lib/referral-client'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
+import WalletButtons from '@/components/checkout/WalletButtons'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
@@ -50,6 +51,9 @@ export default function CheckoutPage() {
   const [shippingZone, setShippingZone] = useState<any>(null)
   const [payoneerEnabled, setPayoneerEnabled] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'payoneer'>('paypal')
+  // Apple Pay / Google Pay：额度开关来自 /api/paypal/config，默认关闭
+  const [wallets, setWallets] = useState({ enabled: false, applePay: false, googlePay: false })
+  const [paypalInstance, setPaypalInstance] = useState<any>(null)
   const [referralCode, setReferralCode] = useState('')
   const [referralInfo, setReferralInfo] = useState<any>(null)
   const [referralChannel, setReferralChannel] = useState('bio')
@@ -99,6 +103,7 @@ export default function CheckoutPage() {
         setPaymentMethod('payoneer')
       }
       setPayoneerEnabled(payoneerConfig.enabled)
+      if (paypalConfig.wallets) setWallets(paypalConfig.wallets)
     })
   }, [])
 
@@ -245,6 +250,47 @@ export default function CheckoutPage() {
     return d.id
   }
 
+  // 把「建单 → 创建 PayPal 订单」抽出来共用：PayPal 按钮、Google Pay、Apple Pay
+  // 三条入口最后都汇到这一个函数，保证金额口径与订单落库逻辑只有一份实现。
+  const createPayPalOrderId = async (): Promise<string> => {
+    // 1) 先建站内订单（服务端核价、落库为 unpaid）
+    const orderId = await createPendingOrder()
+    // 2) 再按服务端确认的订单总额创建 PayPal 订单（金额不接受客户端指定）
+    const res = await fetch('/api/create-paypal-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok || !d?.id) throw new Error(d?.error || 'PayPal order creation failed')
+    return d.id
+  }
+
+  // 「扣款 → 确认订单」同样共用一份
+  const captureAndFinalize = async (paypalOrderId: string) => {
+    const orderId = pendingOrderRef.current
+    if (!orderId) throw new Error('Order reference lost. Please refresh and try again.')
+
+    const capRes = await fetch('/api/capture-paypal-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, paypalOrderId }),
+    })
+    const capData = await capRes.json().catch(() => ({}))
+    if (!capRes.ok || capData.status !== 'COMPLETED') {
+      throw new Error(
+        capData.error ||
+          'Payment could not be confirmed. If you were charged, contact us with the reference and we will resolve it.'
+      )
+    }
+
+    const finalOrderId = capData.orderId || orderId
+    setOrderId(finalOrderId)
+    try { sessionStorage.setItem('otm_last_order', finalOrderId) } catch { /* ignore */ }
+    clearCart()
+    setSubmitted(true)
+  }
+
   useEffect(() => {
     if (!paypalReady) return
     const container = document.getElementById('paypal-button-container')
@@ -300,6 +346,11 @@ export default function CheckoutPage() {
     }).render(container)
   }, [paypalReady])
 
+  // Apple Pay / Google Pay：三条入口共用上面两个函数，服务端接口零改动
+  useEffect(() => {
+    if (paypalReady && (window as any).paypal) setPaypalInstance((window as any).paypal)
+  }, [paypalReady])
+
   const handlePayPalClick = async () => {
     if (!validateShipping()) return
     if (paypalReady) return
@@ -311,8 +362,10 @@ export default function CheckoutPage() {
         return
       }
       const locale = navigator.language || 'en_US'
+      // 开通了钱包就把 applepay / googlepay 组件一起拉进来（没开通时 SDK 也不会挂上这俩对象）
+      const walletParam = config.wallets?.enabled ? '&components=buttons,applepay,googlepay' : ''
       const script = document.createElement('script')
-      script.src = `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture&locale=${locale}`
+      script.src = `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture&locale=${locale}${walletParam}`
       script.onload = () => setPaypalReady(true)
       script.onerror = () => setPaypalError('Failed to load PayPal. Please try again.')
       document.body.appendChild(script)
@@ -709,7 +762,22 @@ export default function CheckoutPage() {
                       Continue with PayPal
                     </button>
                   ) : (
-                    <div id="paypal-button-container" className="mt-4"></div>
+                    <>
+                      <div id="paypal-button-container" className="mt-4"></div>
+                      {/* Apple Pay / Google Pay —— 只有账号真的开通且当前环境可用时才渲染 */}
+                      <WalletButtons
+                        paypal={paypalInstance}
+                        masterEnabled={wallets.enabled}
+                        allowApplePay={wallets.applePay !== false}
+                        allowGooglePay={wallets.googlePay !== false}
+                        amount={convertPrice(totalPrice, 'USD').toFixed(2)}
+                        currency="USD"
+                        createOrderId={createPayPalOrderId}
+                        captureOrder={captureAndFinalize}
+                        onError={(m) => setPaypalError(m)}
+                        setProcessing={setProcessing}
+                      />
+                    </>
                   )}
                 </div>
               )}
