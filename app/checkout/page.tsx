@@ -681,8 +681,8 @@ export default function CheckoutPage() {
 
         {/* 参考站顶部没有步骤标签页，只有 Back to Cart 那种细面包屑 —— 这里也去掉编号步进条，
             页面直接进入支付区，减少视觉噪音 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 lg:gap-0 mt-2">
+          <div className="lg:col-span-1 space-y-6 lg:pr-10">
             {/* Express Checkout —— 放在最顶部，和参考站一致：
                 客户可以一个点击用钱包里的卡付掉，跳过下面整张表单。
                 组件自己判断有没有可用钱包；都不可用就整块不渲染。 */}
@@ -1006,9 +1006,10 @@ export default function CheckoutPage() {
               )}
             </div>
           </div>
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8 sticky top-24">
+          {/* Order Summary —— 与左栏之间加一条竖线分隔（参考站同款）；
+              移动端不显示（上下堆叠时竖线没有意义） */}
+          <div className="lg:col-span-1 lg:border-l lg:pl-10" style={{ borderColor: 'rgba(74,58,36,0.16)' }}>
+            <div className="bg-[#FFFFFF] border border-[#EFE7D4] p-6 md:p-8 lg:sticky lg:top-24">
               <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-5">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {discountedItems.map((item: any) => (

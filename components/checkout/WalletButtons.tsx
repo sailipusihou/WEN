@@ -181,6 +181,8 @@ export default function WalletButtons({
   const appleCfgRef = useRef<any>(null)
   // Apple 新版 SDK 是否注册了 <apple-pay-button> 自定义元素（决定用新元素还是旧 CSS 按钮）
   const appleHasElementRef = useRef(false)
+  // 原生 click 监听器要拿到最新的 startApplePay 闭包
+  const startApplePayRef = useRef<() => void>(() => {})
 
   /** 只在 URL 带 ?debugpay=1 时收集诊断信息（对真实客户完全不可见） */
   const debugOn = (() => {
@@ -427,6 +429,39 @@ export default function WalletButtons({
     session.begin()
   }
 
+  // 让原生事件监听器始终拿到最新一次的 startApplePay 闭包
+  startApplePayRef.current = startApplePay
+
+  /**
+   * 把 Apple 的 <apple-pay-button> 挂进容器，并**直接**在它身上绑原生 click。
+   *
+   * 为什么不能靠 React 的 onClick：
+   *   Apple 这个自定义元素内部会吞掉 click（不冒泡到外层），
+   *   套一层 <button> 或在容器上挂 onClick 都收不到事件 —— 实测 ApplePaySession
+   *   构造函数根本不会被调用，页面表现就是「点了没反应」。
+   */
+  const bindAppleButton = (el: HTMLDivElement | null) => {
+    if (!el) return
+    if (!el.querySelector('apple-pay-button')) {
+      const btn = document.createElement('apple-pay-button') as any
+      btn.setAttribute('buttonstyle', 'black')
+      btn.setAttribute('type', 'buy')
+      btn.setAttribute('locale', 'en-US')
+      btn.setAttribute('data-wallet-btn', 'applepay')
+      btn.style.setProperty('--apple-pay-button-width', '100%')
+      btn.style.setProperty('--apple-pay-button-height', '44px')
+      btn.style.setProperty('--apple-pay-button-border-radius', '4px')
+      btn.style.setProperty('--apple-pay-button-padding', '0px')
+      btn.style.cursor = 'pointer'
+      // 原生监听器直接绑在元素本身（合成事件收不到）
+      btn.addEventListener('click', (ev: Event) => {
+        ev.preventDefault()
+        try { startApplePayRef.current() } catch (e) { console.error('[wallet] apple pay click failed', e) }
+      })
+      el.appendChild(btn)
+    }
+  }
+
   const hasAny = masterEnabled && (showGooglePay || showApplePay)
 
   // 诊断模式下即使没有可用钱包也要把面板显示出来，否则没法看原因
@@ -438,30 +473,19 @@ export default function WalletButtons({
       ? (
         // Apple 新版 SDK 注册了 <apple-pay-button> 自定义元素时优先用它
         // （Chrome/Edge 上旧的 -apple-pay-button CSS 按钮不会渲染）
+        //
+        // ⚠️ 点击必须挂在**元素自身**上，而且用原生 addEventListener：
+        //   Apple 的这个自定义元素会自己吞掉 click（不冒泡），套在外面的 <button>
+        //   onClick 以及 React 的合成事件都收不到，表现就是「点了没反应」。
+        //   实测：包一层观测后发现 ApplePaySession 构造函数一次都没被调用。
         appleHasElementRef.current
           ? (
-            <button
+            <div
               key="applepay"
-              type="button"
               data-wallet="applepay"
-              onClick={startApplePay}
               className="w-full"
-              aria-label="Pay with Apple Pay"
-              style={{ padding: 0, border: 'none', background: 'none', display: 'block' }}
-              ref={el => {
-                // 把 <apple-pay-button> 塞进这个按钮里，保证点击事件落在我们的处理函数上
-                if (el && !el.querySelector('apple-pay-button')) {
-                  const btn = document.createElement('apple-pay-button')
-                  btn.setAttribute('buttonstyle', 'black')
-                  btn.setAttribute('type', 'buy')
-                  btn.setAttribute('locale', 'en-US')
-                  btn.style.setProperty('--apple-pay-button-width', '100%')
-                  btn.style.setProperty('--apple-pay-button-height', '44px')
-                  btn.style.setProperty('--apple-pay-button-border-radius', '4px')
-                  btn.style.setProperty('--apple-pay-button-padding', '0px')
-                  el.appendChild(btn)
-                }
-              }}
+              style={{ display: 'block', cursor: 'pointer' }}
+              ref={bindAppleButton}
             />
           )
           : (
