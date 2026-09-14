@@ -46,6 +46,20 @@ export interface Product {
   reviewCount: number
   featured: boolean
   active: boolean
+  /**
+   * 赠品绑定（买一送一 / 免费搭配）。
+   *
+   * 语义：购买本商品时，可以把 giftProductIds 里的商品**免费**拿走。
+   *   - 绑 1 个   → 加购时自动带上该赠品（$0 行）
+   *   - 绑多个    → 前台在商品页让客户选一个（参考站的 "Choose your free gift"）
+   *   - 空 / 未设置 → 无赠品活动
+   *
+   * 存储位置：product_gifts 表（一行一个可赠商品）。这里由仓库层聚合出来，
+   * 方便前台直接读 product.giftProductIds 判断要不要渲染赠品区。
+   */
+  giftProductIds?: string[]
+  /** 一份主商品送几件赠品，默认 1 */
+  giftQuantity?: number
 }
 
 export interface Review {

@@ -70,6 +70,9 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
   const [pendingSeeds, setPendingSeeds] = useState<any[]>([])
   const [seedSaving, setSeedSaving] = useState(false)
   const [seedAvatarUploading, setSeedAvatarUploading] = useState(false)
+  // 赠品绑定：候选商品列表 + 搜索词
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [giftSearch, setGiftSearch] = useState("")
   const [seedForm, setSeedForm] = useState({
     author: "",
     avatar: "",
@@ -86,6 +89,17 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
       .then(d => { if (Array.isArray(d)) setSeedReviews(d) })
       .catch(() => {})
   }, [initial?.id])
+
+  // 赠品候选：拉全部商品（含下架的，可能就是想拿它当赠品）
+  useEffect(() => {
+    fetch('/api/products?activeOnly=false')
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => {
+        const list = Array.isArray(d) ? d : (d.items || [])
+        setAllProducts(Array.isArray(list) ? list : [])
+      })
+      .catch(() => setAllProducts([]))
+  }, [])
 
   const saveSeedReview = async (seed: any, productId: string) => {
     const res = await fetch("/api/reviews", {
@@ -198,6 +212,9 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     reviewCount: initial?.reviewCount?.toString() || "0",
     featured: initial?.featured || false,
     active: initial?.active !== false,
+    // 赠品绑定：存 product_gifts 表，这里只放在表单状态里，保存时单独提交
+    giftProductIds: initial?.giftProductIds || [] as string[],
+    giftQuantity: initial?.giftQuantity?.toString() || "1",
   })
 
   function update(field: string, value: any) { setForm(prev => ({ ...prev, [field]: value })) }
@@ -339,6 +356,32 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
         if (!isEdit && data?.id && pendingSeeds.length > 0) {
           for (const seed of pendingSeeds) {
             try { await saveSeedReview(seed, data.id) } catch {}
+          }
+        }
+        // 赠品绑定单独提交（存 product_gifts 表，不走商品主表的更新接口）
+        const targetId = isEdit ? initial!.id : data?.id
+        if (targetId) {
+          try {
+            const gres = await fetch("/api/products/gifts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: targetId,
+                giftProductIds: form.giftProductIds,
+                giftQuantity: Number(form.giftQuantity) || 1,
+              }),
+            })
+            if (!gres.ok) {
+              const gerr = await gres.json().catch(() => ({}))
+              // 商品本身已保存成功，赠品保存失败就提示但不阻断
+              setError(`Product saved, but gift bindings failed: ${gerr.error || gres.status}`)
+              setSaving(false)
+              return
+            }
+          } catch {
+            setError("Product saved, but gift bindings could not be reached.")
+            setSaving(false)
+            return
           }
         }
         router.push("/admin/products")
@@ -566,6 +609,97 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
               <button type="button" onClick={addUrlImage} className="px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-accent)", color: "white" }}>Add</button>
             </div>
           )}
+        </Section>
+
+        {/* Free Gift（赠品绑定）—— 买一送一 / 免费搭配 */}
+        <Section title="Free Gift（赠品绑定）">
+          <p className="text-xs mb-3" style={{ color: "var(--adm-text-secondary, rgba(255,255,255,0.6))" }}>
+            选择「购买本商品时可以免费拿走的商品」。绑 1 个 → 加购时自动带上；
+            绑多个 → 前台会让客户自己挑一个。留空 = 没有赠品活动。
+          </p>
+
+          {/* 已绑定的赠品 */}
+          {form.giftProductIds.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {form.giftProductIds.map(gid => {
+                const gp = allProducts.find(p => p.id === gid)
+                return (
+                  <div key={gid} className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)" }}>
+                    {gp?.image && (
+                      <img src={gp.image} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" style={{ color: "var(--adm-text)" }}>{gp ? (gp.nameEn || gp.name) : gid}</p>
+                      <p className="text-[11px] opacity-50" style={{ color: "var(--adm-text)" }}>
+                        {gp ? `$${gp.price}` : "商品不存在（保存时会自动剔除）"}
+                      </p>
+                    </div>
+                    <button type="button"
+                      onClick={() => update("giftProductIds", form.giftProductIds.filter(x => x !== gid))}
+                      className="px-2 py-1 rounded text-xs shrink-0"
+                      style={{ backgroundColor: "rgba(220,38,38,0.15)", color: "#f87171" }}>
+                      移除
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 添加赠品：按名字/编码搜，避免商品多时找不到 */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={giftSearch}
+              onChange={e => setGiftSearch(e.target.value)}
+              placeholder="搜索商品名称或编码，然后从下方选择"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+              style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+            />
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg shrink-0"
+              style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)" }}>
+              <span className="text-xs whitespace-nowrap" style={{ color: "var(--adm-text)" }}>每份送</span>
+              <input type="number" min={1} max={20} value={form.giftQuantity}
+                onChange={e => update("giftQuantity", e.target.value)}
+                className="w-14 px-2 py-1 rounded text-sm text-center"
+                style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+              <span className="text-xs" style={{ color: "var(--adm-text)" }}>件</span>
+            </div>
+          </div>
+
+          {/* 候选列表：排除自己、已绑定的 */}
+          <div className="mt-2 max-h-56 overflow-y-auto rounded-lg"
+            style={{ border: "1px solid var(--adm-input-border)" }}>
+            {allProducts
+              .filter(p => p.id !== initial?.id && !form.giftProductIds.includes(p.id))
+              .filter(p => {
+                const q = giftSearch.trim().toLowerCase()
+                if (!q) return true
+                return (p.name || "").toLowerCase().includes(q)
+                  || (p.nameEn || "").toLowerCase().includes(q)
+                  || (p.code || "").toLowerCase().includes(q)
+              })
+              .slice(0, 40)
+              .map(p => (
+                <button key={p.id} type="button"
+                  onClick={() => update("giftProductIds", [...form.giftProductIds, p.id])}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors"
+                  style={{ borderBottom: "1px solid var(--adm-input-border)" }}>
+                  {p.image && <img src={p.image} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                  <span className="flex-1 min-w-0 text-sm truncate" style={{ color: "var(--adm-text)" }}>
+                    {p.nameEn || p.name}
+                  </span>
+                  <span className="text-xs opacity-50 shrink-0" style={{ color: "var(--adm-text)" }}>${p.price}</span>
+                  <Plus size={14} className="shrink-0 opacity-60" style={{ color: "var(--adm-text)" }} />
+                </button>
+              ))}
+            {allProducts.filter(p => p.id !== initial?.id && !form.giftProductIds.includes(p.id)).length === 0 && (
+              <p className="px-3 py-4 text-xs opacity-50" style={{ color: "var(--adm-text)" }}>
+                没有其它可选商品（先把其它商品建好）
+              </p>
+            )}
+          </div>
         </Section>
 
         {/* Status */}

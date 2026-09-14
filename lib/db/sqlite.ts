@@ -123,6 +123,19 @@ export function initDatabase() {
       FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
     );
 
+    -- 赠品绑定表（买一送一 / 免费搭配）
+    -- 语义：购买 productId 时，可以把 giftProductId 作为赠品免费拿走。
+    -- 每行一个可赠商品，quantity 表示一份主商品送几件。
+    -- 一个主商品绑多个赠品时，前台让客户自己选一个（参考站的 "Choose your free gift"）。
+    CREATE TABLE IF NOT EXISTS product_gifts (
+      productId TEXT NOT NULL,
+      giftProductId TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      sortOrder INTEGER DEFAULT 0,
+      PRIMARY KEY (productId, giftProductId),
+      FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+    );
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

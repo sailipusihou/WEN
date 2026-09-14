@@ -45,7 +45,43 @@ function rowToProduct(row: any): Product {
     tags: [],
     tagsEn: [],
     detailImages: [],
+    giftProductIds: [],
+    giftQuantity: 1,
   }
+}
+
+/**
+ * 把 product_gifts 表里的赠品绑定聚合到商品上。
+ *
+ * 设计说明：赠品关系存在独立的 product_gifts 表（一行一个可赠商品），
+ * 列表接口一次性把全部绑定读出来再分发（避免 N+1 查询）。
+ * 前台只需读 product.giftProductIds 就能决定要不要渲染赠品区。
+ */
+export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
+  if (!products.length) return products
+  try {
+    const rows = db.prepare(
+      'SELECT productId, giftProductId, quantity, sortOrder FROM product_gifts ORDER BY productId, sortOrder'
+    ).all() as any[]
+    if (!rows.length) return products
+    const map = new Map<string, { ids: string[]; qty: number }>()
+    for (const r of rows) {
+      const cur = map.get(r.productId) || { ids: [], qty: 1 }
+      cur.ids.push(r.giftProductId)
+      cur.qty = Math.max(1, Number(r.quantity) || 1)
+      map.set(r.productId, cur)
+    }
+    for (const p of products) {
+      const g = map.get(p.id)
+      if (g) {
+        p.giftProductIds = g.ids
+        p.giftQuantity = g.qty
+      }
+    }
+  } catch {
+    // 表还没建（旧库首次启动）—— 静默跳过，不影响商品读取
+  }
+  return products
 }
 
 function rowToSupplier(row: any): Supplier {
@@ -227,7 +263,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return products
+    return attachGiftsToProducts(db, products)
   },
 
   listActive(): Product[] {
@@ -235,7 +271,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return products
+    return attachGiftsToProducts(db, products)
   },
 
   getById(id: string): Product | undefined {
@@ -244,6 +280,7 @@ export const productRepo = {
     if (!row) return undefined
     const product = rowToProduct(row)
     loadProductRelations(product)
+    attachGiftsToProducts(db, [product])
     return product
   },
 
@@ -252,7 +289,62 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE category = ? AND active = 1 ORDER BY sortOrder DESC, createdAt DESC').all(slug) as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return products
+    return attachGiftsToProducts(db, products)
+  },
+
+  /** 读取某商品绑定的赠品（完整商品对象，供前台渲染赠品区） */
+  listGifts(productId: string): Product[] {
+    const db = getDb()
+    try {
+      const rows = db.prepare(
+        'SELECT p.* FROM product_gifts g JOIN products p ON p.id = g.giftProductId WHERE g.productId = ? ORDER BY g.sortOrder'
+      ).all(productId) as any[]
+      const gifts = rows.map(rowToProduct)
+      gifts.forEach(loadProductRelations)
+      return gifts
+    } catch {
+      return []
+    }
+  },
+
+  /**
+   * 覆盖式设置赠品绑定。
+   * giftQuantity 存在每一行上（一份主商品送几件），取第一个主商品的设置写入全部行。
+   */
+  setGifts(productId: string, giftProductIds: string[], giftQuantity = 1): void {
+    const db = getDb()
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM product_gifts WHERE productId = ?').run(productId)
+      const ins = db.prepare(
+        'INSERT OR REPLACE INTO product_gifts (productId, giftProductId, quantity, sortOrder) VALUES (?, ?, ?, ?)'
+      )
+      const qty = Math.max(1, Number(giftQuantity) || 1)
+      const seen = new Set<string>()
+      let i = 0
+      for (const gid of giftProductIds) {
+        // 不给自己送自己，也不重复绑定
+        if (!gid || gid === productId || seen.has(gid)) continue
+        seen.add(gid)
+        ins.run(productId, gid, qty, i++)
+      }
+    })
+    tx()
+  },
+
+  /** 所有商品的赠品绑定（后台列表用，一次查完避免 N+1） */
+  allGiftBindings(): Record<string, string[]> {
+    const db = getDb()
+    try {
+      const rows = db.prepare('SELECT productId, giftProductId FROM product_gifts ORDER BY productId, sortOrder').all() as any[]
+      const out: Record<string, string[]> = {}
+      for (const r of rows) {
+        if (!out[r.productId]) out[r.productId] = []
+        out[r.productId].push(r.giftProductId)
+      }
+      return out
+    } catch {
+      return {}
+    }
   },
 
   add(product: Product): Product {
