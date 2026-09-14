@@ -572,11 +572,15 @@ export default function ProductDetailClient({
                     <>
                       <p className="flex items-center gap-2 font-sans text-[13px]" style={{ color: SOFT }}>
                         <Truck size={14} strokeWidth={1.6} style={{ color: GOLD }} />
-                        {sub > 0 ? (
-                          <>Add <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(remain, currency), currency)}</strong> more for free shipping</>
-                        ) : (
-                          <>Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(th, currency), currency)}</strong></>
-                        )}
+                        {/* 整句包在 span 里：父级是 flex，若 strong 直接当子元素会变成独立
+                            flex 项，导致 innerText/读屏把句子拆成两行 */}
+                        <span>
+                          {sub > 0 ? (
+                            <>Add <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(remain, currency), currency)}</strong> more for free shipping</>
+                          ) : (
+                            <>Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(th, currency), currency)}</strong></>
+                          )}
+                        </span>
                       </p>
                       {sub > 0 && (
                         <div className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
