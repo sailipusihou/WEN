@@ -142,20 +142,30 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
   const videoControls = !!hero.videoControls
   const videoFit = hero.videoFit === 'contain' ? 'contain' : 'cover'
 
-  // 主页展示亮度控制
+  // 主页展示亮度/色温控制
+  // 色温 50 与 亮度 100 都表示「原生」：此时必须彻底不套滤镜。
+  // 原实现即使在中性值也会输出 sepia(0) hue-rotate(0deg) saturate(1)，
+  // 虽然数学上是恒等变换，但仍会强制浏览器多建一层滤镜合成，画面容易发灰发黄。
   const heroBrightness = hero.heroBrightness ?? 100
   const heroTemperature = hero.heroTemperature ?? 50
 
   const getTemperatureFilter = () => {
     const t = (heroTemperature - 50) / 50
+    if (t === 0) return 'none'
     if (t < 0) {
       const coldIntensity = Math.abs(t)
       return `hue-rotate(${coldIntensity * 15}deg) saturate(${1 - coldIntensity * 0.2})`
-    } else {
-      const warmIntensity = t
-      return `sepia(${warmIntensity * 0.25}) hue-rotate(${-warmIntensity * 12}deg) saturate(${1 + warmIntensity * 0.15})`
     }
+    const warmIntensity = t
+    return `sepia(${warmIntensity * 0.25}) hue-rotate(${-warmIntensity * 12}deg) saturate(${1 + warmIntensity * 0.15})`
   }
+
+  /** 亮度 100% 且色温中性 → 不加任何滤镜，保持素材原色 */
+  const heroMediaFilter = (() => {
+    const temp = getTemperatureFilter()
+    if (Number(heroBrightness) === 100 && temp === 'none') return undefined
+    return `brightness(${heroBrightness}%)${temp === 'none' ? '' : ' ' + temp}`
+  })()
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0)
@@ -228,7 +238,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                       }}
                       style={{
                         backgroundImage: `url(${img})`,
-                        filter: `brightness(${heroBrightness}%) ${getTemperatureFilter()}`,
+                        ...(heroMediaFilter ? { filter: heroMediaFilter } : {}),
                       }}
                     />
                   )
@@ -260,7 +270,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                         className="absolute inset-0 w-full h-full"
                         style={{
                           objectFit: videoFit,
-                          filter: `brightness(${heroBrightness}%) ${getTemperatureFilter()}`,
+                          ...(heroMediaFilter ? { filter: heroMediaFilter } : {}),
                         }}
                       />
                     </motion.div>
@@ -269,8 +279,10 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               </AnimatePresence>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-ink-deep/70 via-ink-deep/30 to-ink-deep/80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink-deep/50 to-transparent" />
+          {/* 遮罩必须是中性黑：原先用暖棕 ink-deep，等于给视频整体加了一层黄棕滤镜，
+              素材被染成"泛黄"。改用中性黑只压亮度、不动色相，保住原生色彩。 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/10 to-black/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
         </motion.div>
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'0.3\'/%3E%3C/g%3E%3C/svg%3E")' }} />
         <motion.div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" style={{ opacity: heroOpacity }}>
