@@ -405,7 +405,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
           <div className="space-y-6">
             {referralInfo ? (
-              <div className="rounded-[24px] border border-[#A07C34]/20 bg-white/80 p-6">
+              <div className="rounded-[24px] border border-[#A07C34]/20 bg-[#FFFCF7]/80 p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8A6A2E]">Marketing Attribution Recorded</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#221E1A]">
                   This order is linked to your {referralInfo.platform} {referralInfo.platformUsername ? `@${referralInfo.platformUsername}` : ''} campaign.
@@ -427,7 +427,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-[24px] border border-[#DDCEB4] bg-white/80 p-6">
+              <div className="rounded-[24px] border border-[#DDCEB4] bg-[#FFFCF7]/80 p-6">
                 <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8A6A2E]">Organic Checkout</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#221E1A]">
                   This order carries no marketing referral and will be treated as organic traffic.
@@ -436,7 +436,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <div className="rounded-[24px] border border-[#DDCEB4] bg-white/80 p-6">
+            <div className="rounded-[24px] border border-[#DDCEB4] bg-[#FFFCF7]/80 p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8A6A2E]">What Happens Next</p>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {[
@@ -453,7 +453,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-[24px] border border-[#DDCEB4] bg-white/80 p-6">
+            <div className="rounded-[24px] border border-[#DDCEB4] bg-[#FFFCF7]/80 p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8A6A2E]">Fulfillment Snapshot</p>
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl bg-[#F1E9DC] px-4 py-3">
@@ -471,7 +471,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-[#DDCEB4] bg-white/80 p-6">
+            <div className="rounded-[24px] border border-[#DDCEB4] bg-[#FFFCF7]/80 p-6">
               <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-[#8A6A2E]">Next Actions</p>
               <div className="mt-4 flex flex-col gap-3">
                 {orderId && (
@@ -533,7 +533,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {referralInfo && (
-              <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8">
+              <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8">
                 <p className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-3">Attribution Active</p>
                 <div className="space-y-2">
                   <p className="font-sans text-sm text-[#221E1A]">
@@ -557,7 +557,7 @@ export default function CheckoutPage() {
               </div>
             )}
             {/* Shipping */}
-            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8">
+            <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8">
               <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-5">Shipping Information</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
@@ -597,7 +597,7 @@ export default function CheckoutPage() {
               </div>
             </div>
             {/* Payment */}
-            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8">
+            <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8">
               <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-5">Payment</h2>
               <p className="font-sans text-sm text-[#57503F]/60 mb-4">Secure payment options available</p>
               
@@ -724,7 +724,7 @@ export default function CheckoutPage() {
           </div>
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8 sticky top-24">
+            <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8 sticky top-24">
               <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-5">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {discountedItems.map((item: any) => (
@@ -747,7 +747,7 @@ export default function CheckoutPage() {
                     value={couponCode}
                     onChange={e => { setCouponCode(e.target.value); setCouponMsg(null) }}
                     placeholder="Coupon code"
-                    className="flex-1 min-w-0 px-3 py-2 border border-[#DDCEB4] bg-white text-xs font-sans text-[#221E1A] placeholder:text-[#57503F]/35 focus:outline-none focus:border-[#A07C34]/50 transition-colors"
+                    className="flex-1 min-w-0 px-3 py-2 border border-[#DDCEB4] bg-[#FFFCF7] text-xs font-sans text-[#221E1A] placeholder:text-[#57503F]/35 focus:outline-none focus:border-[#A07C34]/50 transition-colors"
                   />
                   <button
                     type="button"

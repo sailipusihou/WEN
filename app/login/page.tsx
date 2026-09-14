@@ -38,7 +38,7 @@ export default function LoginPage() {
           <h1 className="font-en text-3xl md:text-4xl text-[#221E1A] font-semibold tracking-tight mb-1">Sign In</h1>
           <p className="font-sans text-sm text-[#57503F]/60">Welcome back</p>
         </div>
-        <form onSubmit={handleSubmit} noValidate className="bg-white/80 border border-[#DDCEB4]/60 p-6 md:p-8 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/60 p-6 md:p-8 space-y-4">
           {error && <p className="text-sm text-red-500 font-sans bg-red-50 p-2.5">{error}</p>}
           <div>
             <label className="block text-[10px] font-sans text-[#57503F]/60 tracking-wider uppercase mb-1.5">Email</label>

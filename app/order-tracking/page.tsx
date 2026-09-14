@@ -89,7 +89,7 @@ export default function OrderTrackingPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8 mb-8">
+        <form onSubmit={handleSearch} className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8 mb-8">
           <div className="space-y-4">
             <div>
               <label className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium block mb-2">
@@ -100,7 +100,7 @@ export default function OrderTrackingPage() {
                 value={orderId}
                 onChange={e => setOrderId(e.target.value)}
                 placeholder="e.g. OTM-MRU9Z7RU-PCD9"
-                className="w-full px-4 py-3 border border-[#E5DED1] rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-[#A07C34]/50 transition-colors"
+                className="w-full px-4 py-3 border border-[#E5DED1] rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-[#A07C34]/50 transition-colors"
               />
             </div>
             <div>
@@ -112,7 +112,7 @@ export default function OrderTrackingPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 border border-[#E5DED1] rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-[#A07C34]/50 transition-colors"
+                className="w-full px-4 py-3 border border-[#E5DED1] rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-[#A07C34]/50 transition-colors"
               />
             </div>
             <button
@@ -146,13 +146,13 @@ export default function OrderTrackingPage() {
 
         {order && (
           <div className="space-y-6">
-            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8">
+            <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <p className="font-sans text-[10px] text-[#57503F]/40 tracking-[0.15em] uppercase mb-1">Order</p>
                   <h2 className="font-en text-xl font-semibold text-[#221E1A]">#{order.id}</h2>
                 </div>
-                <span className={`font-sans text-[10px] px-3 py-1 rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                <span className={`font-sans text-[10px] px-3 py-1 rounded-full ${statusColors[order.status] || 'bg-paper text-ink'}`}>
                   {statusLabels[order.status] || order.status}
                 </span>
               </div>
@@ -230,7 +230,7 @@ export default function OrderTrackingPage() {
             </div>
 
             {order.statusHistory && order.statusHistory.length > 0 && (
-              <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 md:p-8">
+              <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 md:p-8">
                 <p className="font-sans text-[10px] text-[#57503F]/40 tracking-[0.15em] uppercase mb-4">Status History</p>
                 <div className="space-y-3">
                   {[...order.statusHistory].reverse().map((h: any, idx: number) => (

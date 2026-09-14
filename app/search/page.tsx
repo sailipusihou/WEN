@@ -169,7 +169,7 @@ export default function SearchPage() {
               onChange={e => setQuery(e.target.value)}
               autoFocus
               placeholder="Search for products..."
-              className="w-full pl-12 pr-12 py-4 text-base border border-[#DDCEB4] bg-white/80 font-sans text-[#221E1A] placeholder:text-[#57503F]/30 focus:outline-none focus:border-[#A07C34]/50 transition-colors"
+              className="w-full pl-12 pr-12 py-4 text-base border border-[#DDCEB4] bg-[#FFFCF7]/80 font-sans text-[#221E1A] placeholder:text-[#57503F]/30 focus:outline-none focus:border-[#A07C34]/50 transition-colors"
             />
             {query && (
               <button
@@ -207,7 +207,7 @@ export default function SearchPage() {
                       key={i}
                       type="button"
                       onClick={() => handleHistoryClick(term)}
-                      className="px-3 py-1.5 bg-white/80 border border-[#DDCEB4] text-xs font-sans text-[#403A31] hover:border-[#A07C34]/50 hover:text-[#221E1A] transition-colors"
+                      className="px-3 py-1.5 bg-[#FFFCF7]/80 border border-[#DDCEB4] text-xs font-sans text-[#403A31] hover:border-[#A07C34]/50 hover:text-[#221E1A] transition-colors"
                     >
                       {term}
                     </button>

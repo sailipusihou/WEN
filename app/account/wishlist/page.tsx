@@ -63,8 +63,8 @@ export default function WishlistPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map(item => (
-            <div key={item.id} className="bg-white/70 border border-otb-sand/50 rounded-sm overflow-hidden group relative">
-              <button onClick={() => removeFromWishlist(item.id)} className="absolute top-2 right-2 w-7 h-7 bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors z-10"><X size={12} className="text-otb-ink/40" /></button>
+            <div key={item.id} className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm overflow-hidden group relative">
+              <button onClick={() => removeFromWishlist(item.id)} className="absolute top-2 right-2 w-7 h-7 bg-[#FFFCF7]/80 rounded-full flex items-center justify-center hover:bg-[#FFFCF7] transition-colors z-10"><X size={12} className="text-otb-ink/40" /></button>
               <Link href={"/products/" + item.id}>
                 <div className="aspect-square bg-otb-sand/20 flex items-center justify-center p-4 overflow-hidden">
                   {item.image ? <img src={item.image} alt={item.nameEn || item.name} className="w-full h-full object-contain" /> : <Heart size={32} className="text-otb-ink/10" />}

@@ -267,11 +267,11 @@ body {
 [data-admin-panel-style="glass"] .bg-gray-900\/50,
 [data-admin-panel-style="glass"] .bg-slate-800,
 [data-admin-panel-style="glass"] .bg-slate-900,
-[data-admin-panel-style="glass"] .bg-white,
-[data-admin-panel-style="glass"] .bg-white\/5,
-[data-admin-panel-style="glass"] .bg-white\/10,
+[data-admin-panel-style="glass"] .bg-[#FFFCF7],
+[data-admin-panel-style="glass"] .bg-[#FFFCF7]\/5,
+[data-admin-panel-style="glass"] .bg-[#FFFCF7]\/10,
 [data-admin-panel-style="glass"] .bg-slate-50,
-[data-admin-panel-style="glass"] .bg-gray-50,
+[data-admin-panel-style="glass"] .bg-paper-light,
 [data-admin-panel-style="glass"] .bg-indigo-500\/10,
 [data-admin-panel-style="glass"] .bg-indigo-500\/5,
 [data-admin-panel-style="glass"] .adm-dropdown-menu,
@@ -1382,7 +1382,7 @@ body {
 }
 
 /* === 亮色主题下硬编码暗色类的修正补丁 ===
-   问题: 多个 admin 页面直接用了 bg-gray-800/700, bg-white/5, text-gray-200/400 等硬编码暗色类,
+   问题: 多个 admin 页面直接用了 bg-gray-800/700, bg-[#FFFCF7]/5, text-gray-200/400 等硬编码暗色类,
    切到亮色主题后仍保持深灰背景+浅灰文字, 导致面板与白光主题不对照。
    方案: 在 [data-admin-theme="light"] 下把这些类强制映射到浅色, 暗色主题完全不受影响。 */
 [data-admin-theme="light"] {
@@ -1419,9 +1419,9 @@ body {
   border-color: var(--patch-card-border) !important;
 }
 
-/* 半透明白色背景 (bg-white/5, bg-white/10) — 暗色下是浅色叠加, 亮色下应是浅灰 */
-[data-admin-theme="light"] .bg-white\/5,
-[data-admin-theme="light"] .bg-white\/10 {
+/* 半透明白色背景 (bg-[#FFFCF7]/5, bg-[#FFFCF7]/10) — 暗色下是浅色叠加, 亮色下应是浅灰 */
+[data-admin-theme="light"] .bg-[#FFFCF7]\/5,
+[data-admin-theme="light"] .bg-[#FFFCF7]\/10 {
   background-color: var(--patch-hover-bg) !important;
 }
 
@@ -1429,17 +1429,17 @@ body {
 [data-admin-theme="light"] .text-gray-200 {
   color: var(--patch-text) !important;
 }
-/* text-gray-400 (次文字) */
-[data-admin-theme="light"] .text-gray-400 {
+/* text-ink-faint (次文字) */
+[data-admin-theme="light"] .text-ink-faint {
   color: var(--patch-text-secondary) !important;
 }
-/* text-gray-500, text-gray-600 (弱文字) */
-[data-admin-theme="light"] .text-gray-500,
-[data-admin-theme="light"] .text-gray-600 {
+/* text-ink-soft, text-ink-mid (弱文字) */
+[data-admin-theme="light"] .text-ink-soft,
+[data-admin-theme="light"] .text-ink-mid {
   color: var(--patch-text-muted) !important;
 }
 /* placeholder 文字 */
-[data-admin-theme="light"] .placeholder\:text-gray-500::placeholder {
+[data-admin-theme="light"] .placeholder\:text-ink-soft::placeholder {
   color: var(--patch-text-muted) !important;
 }
 
@@ -1448,25 +1448,25 @@ body {
 [data-admin-theme="light"] .text-indigo-400\/80 { color: #4338ca !important; }
 [data-admin-theme="light"] .bg-indigo-500\/20 { background-color: rgba(79, 70, 229, 0.12) !important; }
 [data-admin-theme="light"] .bg-indigo-500\/10 { background-color: rgba(79, 70, 229, 0.08) !important; }
-[data-admin-theme="light"] .hover\:bg-gray-50:hover { background-color: var(--patch-hover-bg) !important; }
+[data-admin-theme="light"] .hover\:bg-paper-light:hover { background-color: var(--patch-hover-bg) !important; }
 [data-admin-theme="light"] .hover\:bg-gray-700\/50:hover { background-color: var(--patch-hover-bg) !important; }
-[data-admin-theme="light"] .hover\:bg-white\/5:hover { background-color: var(--patch-hover-bg) !important; }
+[data-admin-theme="light"] .hover\:bg-[#FFFCF7]\/5:hover { background-color: var(--patch-hover-bg) !important; }
 
 /* products 页 status badge 在亮色下的绿色/灰色 */
 [data-admin-theme="light"] .bg-green-100 { background-color: #dcfce7 !important; }
 [data-admin-theme="light"] .text-green-700 { color: #15803d !important; }
 [data-admin-theme="light"] .hover\:bg-green-200:hover { background-color: #bbf7d0 !important; }
-[data-admin-theme="light"] .bg-gray-100 { background-color: #f3f4f6 !important; }
-[data-admin-theme="light"] .text-gray-500 { color: var(--patch-text-muted) !important; }
-[data-admin-theme="light"] .hover\:bg-gray-200:hover { background-color: #e5e7eb !important; }
-[data-admin-theme="light"] .bg-gray-200 { background-color: #e5e7eb !important; }
+[data-admin-theme="light"] .bg-paper { background-color: #f3f4f6 !important; }
+[data-admin-theme="light"] .text-ink-soft { color: var(--patch-text-muted) !important; }
+[data-admin-theme="light"] .hover\:bg-paper-dark:hover { background-color: #e5e7eb !important; }
+[data-admin-theme="light"] .bg-paper-dark { background-color: #e5e7eb !important; }
 [data-admin-theme="light"] .hover\:bg-gray-700:hover { background-color: var(--patch-hover-bg) !important; }
-[data-admin-theme="light"] .bg-gray-50 { background-color: #f9fafb !important; }
+[data-admin-theme="light"] .bg-paper-light { background-color: #f9fafb !important; }
 
 /* login 页输入框 — 暗色硬编码, 亮色下改为浅色 */
 [data-admin-theme="light"] .bg-gray-700 { background-color: var(--patch-input-bg) !important; }
 [data-admin-theme="light"] .border-gray-600 { border-color: var(--patch-input-border) !important; }
-[data-admin-theme="light"] .placeholder\:text-gray-500::placeholder { color: #9ca3af !important; }
+[data-admin-theme="light"] .placeholder\:text-ink-soft::placeholder { color: #9ca3af !important; }
 
 /* ===== Layered Glass Cards (分层玻璃卡片) — theme-aware, off by default ===== */
 [data-glass-layered="true"] .adm-card,

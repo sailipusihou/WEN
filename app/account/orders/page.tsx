@@ -18,7 +18,7 @@ export default function AccountOrdersPage() {
 
   function statusBadge(s: string) {
     const m: any = { pending: "bg-yellow-100 text-yellow-700", confirmed: "bg-blue-100 text-blue-700", shipped: "bg-purple-100 text-purple-700", delivered: "bg-green-100 text-green-700", cancelled: "bg-red-100 text-red-700" }
-    return m[s] || "bg-gray-100 text-gray-700"
+    return m[s] || "bg-paper text-ink"
   }
 
   const filtered = orders.filter(o => {
@@ -52,7 +52,7 @@ export default function AccountOrdersPage() {
       <div className="relative mb-4">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-otb-ink/30" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by order ID..."
-          className="w-full pl-8 pr-3 py-2 border border-otb-sand/50 rounded-sm bg-white text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
+          className="w-full pl-8 pr-3 py-2 border border-otb-sand/50 rounded-sm bg-[#FFFCF7] text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />
       </div>
 
       {/* Status Tabs */}
@@ -74,7 +74,7 @@ export default function AccountOrdersPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map(order => (
-            <Link key={order.id} href={"/account/orders/" + order.id} className="bg-white/70 border border-otb-sand/50 rounded-sm p-4 flex items-center justify-between hover:shadow-sm transition-shadow group">
+            <Link key={order.id} href={"/account/orders/" + order.id} className="bg-[#FFFCF7]/70 border border-otb-sand/50 rounded-sm p-4 flex items-center justify-between hover:shadow-sm transition-shadow group">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-sans text-sm font-medium text-otb-ink truncate group-hover:text-otb-terracotta transition-colors">Order #{order.id}</p>

@@ -115,7 +115,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <button
             onClick={handleToggleWishlist}
             type="button"
-            className="absolute top-3 right-3 w-9 h-9 bg-white/85 hover:bg-white text-[#221E1A] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
+            className="absolute top-3 right-3 w-9 h-9 bg-[#FFFCF7]/85 hover:bg-[#FFFCF7] text-[#221E1A] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
             aria-label="Add to wishlist"
           >
             <Heart size={15} strokeWidth={1.5} />
@@ -126,7 +126,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <button
             onClick={handleAddToCart}
             type="button"
-            className="absolute bottom-3 right-3 w-9 h-9 bg-white/85 hover:bg-white text-[#221E1A] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
+            className="absolute bottom-3 right-3 w-9 h-9 bg-[#FFFCF7]/85 hover:bg-[#FFFCF7] text-[#221E1A] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
             aria-label="Add to cart"
           >
             <Plus size={15} strokeWidth={1.5} />

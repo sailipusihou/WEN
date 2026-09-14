@@ -95,7 +95,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           style={tilt as React.CSSProperties}
-          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#E2D5C0] bg-white shadow-soft will-change-transform"
+          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#E2D5C0] bg-[#FFFCF7] shadow-soft will-change-transform"
         >
           {/* Cursor glow */}
           <div
@@ -150,7 +150,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             onClick={handleToggleWishlist}
             type="button"
             aria-label="Add to wishlist"
-            className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-white shadow-soft"
+            className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-[#FFFCF7]/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-[#FFFCF7] shadow-soft"
           >
             <Heart size={14} strokeWidth={1.5} />
           </button>
@@ -160,13 +160,13 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             onClick={handleAddToCart}
             type="button"
             aria-label="Add to cart"
-            className="absolute bottom-16 right-2.5 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-white shadow-soft"
+            className="absolute bottom-16 right-2.5 z-10 w-9 h-9 rounded-full bg-[#FFFCF7]/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-[#FFFCF7] shadow-soft"
           >
             <Plus size={15} strokeWidth={1.5} />
           </button>
 
           {/* Glass info bar */}
-          <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-white/85 backdrop-blur-md border-t border-[#D8C9AE]">
+          <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-[#FFFCF7]/85 backdrop-blur-md border-t border-[#D8C9AE]">
             <div className="min-w-0">
               <h3 className="font-en text-sm md:text-base text-[#221E1A] font-medium truncate">
                 {product.nameEn || product.name}

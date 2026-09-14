@@ -52,7 +52,7 @@ export default function LinkInBioClient({
 
   return (
     <div className="min-h-screen bg-[#F1E9DC] text-[#221E1A]">
-      <section className="border-b border-[#E7E1D7] bg-white/70">
+      <section className="border-b border-[#E7E1D7] bg-[#FFFCF7]/70">
         <div className="mx-auto max-w-6xl px-6 py-4 sm:px-8 lg:px-12">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -65,7 +65,7 @@ export default function LinkInBioClient({
                   : 'No valid referral detected — showing default featured content.'}
               </p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D8CEBD] bg-white px-4 py-2 text-xs text-[#57503F]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D8CEBD] bg-[#FFFCF7] px-4 py-2 text-xs text-[#57503F]">
               <CheckCircle2 size={14} className="text-[#8A6A2E]" />
               Attribution code: {referralCode || 'none'}
             </div>
@@ -75,7 +75,7 @@ export default function LinkInBioClient({
 
       <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-14">
         <div className="space-y-6">
-          <div className="rounded-[28px] border border-[#E7E1D7] bg-white p-6 shadow-sm md:p-8">
+          <div className="rounded-[28px] border border-[#E7E1D7] bg-[#FFFCF7] p-6 shadow-sm md:p-8">
             <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8A6A2E]">
               Featured Drop
             </p>
@@ -134,7 +134,7 @@ export default function LinkInBioClient({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-[#E7E1D7] bg-white p-6 shadow-sm md:p-8">
+          <div className="rounded-[28px] border border-[#E7E1D7] bg-[#FFFCF7] p-6 shadow-sm md:p-8">
             <div className="flex items-center gap-2">
               <Link2 size={16} className="text-[#8A6A2E]" />
               <p className="font-sans text-sm font-medium text-[#221E1A]">How this flow works</p>
@@ -155,7 +155,7 @@ export default function LinkInBioClient({
 
         <div className="space-y-6">
           {heroProduct && (
-            <div className="overflow-hidden rounded-[28px] border border-[#E7E1D7] bg-white shadow-sm">
+            <div className="overflow-hidden rounded-[28px] border border-[#E7E1D7] bg-[#FFFCF7] shadow-sm">
               <div className="relative aspect-[4/5] bg-[#DDCEB4]">
                 <OptimizedImage
                   src={heroProduct.image}
@@ -187,7 +187,7 @@ export default function LinkInBioClient({
             </div>
           )}
 
-          <div className="rounded-[28px] border border-[#E7E1D7] bg-white p-6 shadow-sm md:p-8">
+          <div className="rounded-[28px] border border-[#E7E1D7] bg-[#FFFCF7] p-6 shadow-sm md:p-8">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8A6A2E]">Curated Picks</p>

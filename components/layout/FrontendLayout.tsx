@@ -15,7 +15,7 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
     <div className="flex min-h-screen flex-col bg-paper-light text-ink antialiased">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[90] focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-soft"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[90] focus:bg-[#FFFCF7] focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-soft"
       >
         Skip to content
       </a>

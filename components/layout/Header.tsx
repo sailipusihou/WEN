@@ -133,9 +133,9 @@ export default function Header() {
   const navText = overlayTop ? 'text-white/90 hover:text-white' : 'text-[#403A31] hover:text-[#5F7D72]'
   const navChip = overlayTop
     ? 'hover:bg-black/25 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]'
-    : 'hover:bg-white/45 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
+    : 'hover:bg-[#FFFCF7]/45 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
   const iconText = overlayTop ? 'text-white/85 hover:text-white' : 'text-[#57503F] hover:text-[#221E1A]'
-  const iconChip = overlayTop ? 'hover:bg-black/25 hover:backdrop-blur-md' : 'hover:bg-white/45 hover:backdrop-blur-md'
+  const iconChip = overlayTop ? 'hover:bg-black/25 hover:backdrop-blur-md' : 'hover:bg-[#FFFCF7]/45 hover:backdrop-blur-md'
 
   return (
     <>
@@ -174,7 +174,7 @@ export default function Header() {
                       onClick={() => setMegaOpen(!megaOpen)}
                       aria-expanded={megaOpen}
                       aria-haspopup="true"
-                      className={`flex items-center gap-1 rounded-full border border-transparent px-3 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium transition-all duration-300 ${navText} ${navChip} ${megaOpen ? (overlayTop ? 'bg-black/25 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]' : 'bg-white/45 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]') : ''}`}
+                      className={`flex items-center gap-1 rounded-full border border-transparent px-3 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium transition-all duration-300 ${navText} ${navChip} ${megaOpen ? (overlayTop ? 'bg-black/25 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]' : 'bg-[#FFFCF7]/45 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]') : ''}`}
                     >
                       {item.label}
                       <ChevronDown size={10} strokeWidth={1.5} className={`transition-transform duration-300 ${megaOpen ? 'rotate-180' : ''}`} />
@@ -221,7 +221,7 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#D8C9AE] text-[#221E1A] hover:bg-white/45 hover:backdrop-blur-md hover:border-[#5F7D72] hover:text-[#5F7D72]'}`}>
+              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#D8C9AE] text-[#221E1A] hover:bg-[#FFFCF7]/45 hover:backdrop-blur-md hover:border-[#5F7D72] hover:text-[#5F7D72]'}`}>
                 Explore
               </Link>
             </div>

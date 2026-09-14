@@ -333,7 +333,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                   }}>
                   {idx === currentSlide && (
                     <motion.div
-                      className="absolute inset-y-0 left-0 bg-white/80"
+                      className="absolute inset-y-0 left-0 bg-[#FFFCF7]/80"
                       initial={{ width: "0%" }}
                       animate={{ width: isPaused ? "0%" : "100%" }}
                       transition={{ duration: slideshowInterval, ease: "linear" }}
@@ -356,13 +356,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           <span className="font-sans text-[12px] text-white/79 tracking-[0.25em] uppercase">Scroll</span>
           <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
             className="w-4 h-7 border border-white/10 rounded-full flex justify-center pt-1">
-            <div className="w-0.5 h-1.5 bg-white/20 rounded-full" />
+            <div className="w-0.5 h-1.5 bg-[#FFFCF7]/20 rounded-full" />
           </motion.div>
         </motion.div>
       </section>
 
       {/* PHILOSOPHY STRIP */}
-      <section className="py-14 md:py-18 border-b border-gray-100 bg-white">
+      <section className="py-14 md:py-18 border-b border-paper bg-[#FFFCF7]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             {(philosophyStrip.length > 0 ? philosophyStrip : [
@@ -382,7 +382,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* COLLECTIONS CAROUSEL */}
-      <section className="py-20 md:py-28 bg-white overflow-hidden">
+      <section className="py-20 md:py-28 bg-[#FFFCF7] overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">Curated by Heritage</span>
@@ -404,7 +404,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* FEATURED PRODUCTS - 3D Showroom */}
-      <section id="products" ref={featuredRef} className="py-20 md:py-28 bg-gray-50">
+      <section id="products" ref={featuredRef} className="py-20 md:py-28 bg-paper-light">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} style={{ y: featuredHeadY }} className="flex items-end justify-between mb-10">
             <div>
@@ -422,11 +422,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* ARTISAN STORY */}
-      <section className="py-20 md:py-28 bg-white">
+      <section className="py-20 md:py-28 bg-[#FFFCF7]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="relative">
-              <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+              <div className="relative aspect-[4/5] overflow-hidden bg-paper">
                 <OptimizedImage
                   src={artisanStory.image || "https://images.unsplash.com/photo-1525123996019-3a89eb3aee80?w=800&q=80"}
                   alt={artisanStory.headline || "Artisan story"}
@@ -436,7 +436,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                   placeholder="blur"
                 />
               </div>
-              <div className="absolute -bottom-4 -right-4 bg-white p-5 md:p-6 shadow-soft-lg max-w-[170px]">
+              <div className="absolute -bottom-4 -right-4 bg-[#FFFCF7] p-5 md:p-6 shadow-soft-lg max-w-[170px]">
                 <span className="font-en text-2xl font-semibold text-ink-deep">{artisanStory.badgeNumber || "45+"}</span>
                 <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
               </div>
@@ -483,7 +483,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* JOURNAL */}
-      <section id="journal" className="py-20 md:py-28 bg-gray-50">
+      <section id="journal" className="py-20 md:py-28 bg-paper-light">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{journal.eyebrow || "Stories & Essays"}</span>
@@ -495,7 +495,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               // 修复 M10: 有链接的文章可点击跳转, 无链接不再显示假 cursor-pointer
               const cardInner = (
                 <>
-                  <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-paper mb-4">
                     {entry.image && (
                       <OptimizedImage
                         src={entry.image}
@@ -562,7 +562,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* NEWSLETTER */}
-      <section className="py-16 md:py-20 bg-white border-b border-gray-100">
+      <section className="py-16 md:py-20 bg-[#FFFCF7] border-b border-paper">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{newsletter.eyebrow || "Stay Connected"}</span>
@@ -654,7 +654,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
         </span>
 
         {/* Glass info card */}
-        <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-white/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
+        <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-[#FFFCF7]/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
           <span className="font-sans text-[11px] text-coral tracking-[0.15em] uppercase">{current.subtitle}</span>
           <h3 className="font-en text-xl md:text-2xl text-ink-deep font-semibold mt-1.5">{current.title}</h3>
           <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>

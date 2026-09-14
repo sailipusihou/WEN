@@ -47,7 +47,7 @@ export default function ChatWidget({ productContext }: { productContext?: string
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && !minimized && (
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 w-80 md:w-96 overflow-hidden">
+        <div className="bg-[#FFFCF7] rounded-xl shadow-2xl border border-paper w-80 md:w-96 overflow-hidden">
           <div className="bg-otb-terracotta px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2"><MessageCircle size={16} className="text-white" /><span className="text-white font-serif text-sm font-medium">Customer Service</span></div>
             <div className="flex items-center gap-1">
@@ -68,7 +68,7 @@ export default function ChatWidget({ productContext }: { productContext?: string
                     </div>
                     {m.adminReply && (
                       <div className="flex justify-start">
-                        <div className="bg-gray-100 text-otb-ink text-xs font-sans px-3 py-2 rounded-lg rounded-bl-sm max-w-[80%]">{m.adminReply}</div>
+                        <div className="bg-paper text-otb-ink text-xs font-sans px-3 py-2 rounded-lg rounded-bl-sm max-w-[80%]">{m.adminReply}</div>
                       </div>
                     )}
                   </div>
@@ -83,9 +83,9 @@ export default function ChatWidget({ productContext }: { productContext?: string
               <div className="space-y-2.5">
                 {userEmail && <p className="text-xs font-sans text-otb-ink/40 mb-1">Reply to: <span className="font-medium">{userEmail}</span></p>}
                 {error && <p className="text-xs text-red-500 font-sans bg-red-50 p-2 rounded-lg">{error}</p>}
-                {!userEmail && <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your Name *" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />}
-                {!userEmail && <input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="Your Email *" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />}
-                <textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} placeholder="Your message *" rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50 resize-none" />
+                {!userEmail && <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your Name *" className="w-full px-3 py-2 border border-paper-dark rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />}
+                {!userEmail && <input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="Your Email *" className="w-full px-3 py-2 border border-paper-dark rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50" />}
+                <textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} placeholder="Your message *" rows={3} className="w-full px-3 py-2 border border-paper-dark rounded-lg text-sm font-sans focus:outline-none focus:border-otb-terracotta/50 resize-none" />
                 <button onClick={handleSend} disabled={sending} className="w-full py-2.5 bg-otb-terracotta text-white text-sm font-serif rounded-lg hover:bg-otb-terracotta/90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-colors">{sending ? "Sending..." : <><Send size={14} /> Send Message</>}</button>
               </div>
             )}

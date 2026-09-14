@@ -388,7 +388,7 @@ export default function ProductDetailClient({
         </nav>
 
         {referralCode && (
-          <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-white/70 px-5 py-4">
+          <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-[#FFFCF7]/70 px-5 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8A6A2E]">
@@ -801,7 +801,7 @@ export default function ProductDetailClient({
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.06 }}
                       className="p-5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(35,31,28,0.35)]"
-                      style={{ backgroundColor: '#FFFFFF', border: `1px solid ${LINE}`, borderRadius: 3 }}
+                      style={{ backgroundColor: '#FFFCF7', border: `1px solid ${LINE}`, borderRadius: 3 }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">

@@ -103,7 +103,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-3">
             {discountedItems.map((item, i) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="bg-white/80 border border-[#DDCEB4]/50 p-4 md:p-6 flex gap-4 md:gap-6">
+                className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-4 md:p-6 flex gap-4 md:gap-6">
                 <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#DDCEB4]/30 overflow-hidden relative">
                   <OptimizedImage src={item.image} alt={item.nameEn || item.name} fill sizes="(max-width: 768px) 80px, 96px" objectFit="cover" placeholder="blur" />
                 </Link>
@@ -138,7 +138,7 @@ export default function CartPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 sticky top-24">
+            <div className="bg-[#FFFCF7]/80 border border-[#DDCEB4]/50 p-6 sticky top-24">
               <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-6">Order Summary</h2>
               <div className="space-y-3 font-sans text-sm">
                 <div className="flex justify-between text-[#57503F]/70">

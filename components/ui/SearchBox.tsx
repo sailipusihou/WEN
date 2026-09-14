@@ -138,7 +138,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
       </div>
 
       {isOpen && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E2D5C0] shadow-lg max-h-[400px] overflow-y-auto z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-[#FFFCF7] border border-[#E2D5C0] shadow-lg max-h-[400px] overflow-y-auto z-50">
           {suggestions.length > 0 ? (
             <>
               {suggestions.map((item, index) => (
