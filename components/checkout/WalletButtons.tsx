@@ -76,6 +76,9 @@ export default function WalletButtons({
   const [showApplePay, setShowApplePay] = useState(false)
   const googleBtnRef = useRef<HTMLDivElement | null>(null)
   const probedRef = useRef(false)
+  // Apple Pay 的 config 结果：必须在渲染探测阶段就取好缓存起来，
+  // 点击时要同步建 session + begin()，不能等到点击后再 await。
+  const appleCfgRef = useRef<any>(null)
 
   // ---------------- 探测 + 渲染 ----------------
   useEffect(() => {
@@ -121,9 +124,12 @@ export default function WalletButtons({
             onClick: async () => {
               try {
                 setProcessing(true)
-                // 先建站内订单 + PayPal 订单，再拉支付面板
-                const paypalOrderId = await createOrderId()
+                // ⚠️ 顺序很重要：loadPaymentData 必须在用户手势里「第一件事」做。
+                // 如果先 await 建单再去拉支付面板，手势上下文已经过期，
+                // Chrome 会直接拒绝弹出（表现为点了没反应）。
+                // 而且先弹面板再建单还有个好处：用户取消时不会留下孤儿订单。
                 const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
+                const paypalOrderId = await createOrderId()
                 const { orderId } = await paypal.Googlepay().confirmOrder({
                   orderId: paypalOrderId,
                   paymentSource: paymentData.paymentMethodData,
@@ -157,6 +163,9 @@ export default function WalletButtons({
           if (cancelled) return
           // 域名没注册 / 设备不支持时 isEligible 为 false
           if (cfg && cfg.isEligible === false) return
+          // 配置先缓存起来：点击时必须「同步」建 session 并 begin()，
+          // 不能等到点击后再 await 一次 config()，否则用户手势已经过期。
+          appleCfgRef.current = cfg
           setShowApplePay(true)
         } catch {
           if (!cancelled) setShowApplePay(false)
@@ -169,15 +178,32 @@ export default function WalletButtons({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterEnabled, paypal, allowApplePay, allowGooglePay])
 
-  const startApplePay = async () => {
+  /**
+   * Apple Pay 点击处理。
+   *
+   * ⚠️ 时序是这里最容易踩的坑（Apple 官方明确要求）：
+   *   1. 在用户手势里**同步**创建 ApplePaySession 并立刻 begin()；
+   *   2. 任何 await（config / 建单 / 商家校验）都必须放到会话回调里面。
+   * 之前的写法是在 begin() 之前先 await 了 config() 和建单，
+   * 手势上下文过期后 Safari 会直接报
+   * "Attempting to start a new Apple Pay session without a user gesture"，
+   * 表现为「点了 Apple Pay 按钮没反应」。
+   */
+  const startApplePay = () => {
+    const applePayClient = paypal.ApplePay || paypal.Applepay
+    const cfg = appleCfgRef.current
+    if (!cfg) {
+      onError('Apple Pay is unavailable right now. Please try another method.')
+      return
+    }
+
+    setProcessing(true)
+    // 订单号在 onvalidatemerchant 里异步建好后存这里，供 onpaymentauthorized 使用
+    let paypalOrderId: string | null = null
+
+    let session: any
     try {
-      setProcessing(true)
-      const applePayClient = paypal.ApplePay || paypal.Applepay
-      const cfg = await applePayClient().config()
-
-      const paypalOrderId = await createOrderId()
-
-      const session = new (window as any).ApplePaySession(4, {
+      session = new (window as any).ApplePaySession(4, {
         countryCode: cfg.countryCode || 'US',
         currencyCode: cfg.currencyCode || currency,
         merchantCapabilities: cfg.merchantCapabilities || ['supports3DS'],
@@ -185,47 +211,54 @@ export default function WalletButtons({
         total: { label: 'Low Flame', amount },
         requiredBillingContactFields: ['postalAddress'],
       })
-
-      session.onvalidatemerchant = async (event: any) => {
-        try {
-          const res = await applePayClient().validateMerchant({
-            validationUrl: event.validationURL,
-            displayName: 'Low Flame',
-          })
-          session.completeMerchantValidation(res.merchantSession)
-        } catch (e: any) {
-          session.abort()
-          onError(e?.message || 'Apple Pay validation failed.')
-        }
-      }
-
-      session.onpaymentauthorized = async (event: any) => {
-        try {
-          const { status } = await applePayClient().confirmOrder({
-            orderId: paypalOrderId,
-            paymentSource: event.payment,
-          })
-          if (status === 'APPROVED' || status === 'COMPLETED') {
-            session.completePayment((window as any).ApplePaySession.STATUS_SUCCESS)
-            await captureOrder(paypalOrderId)
-          } else {
-            session.completePayment((window as any).ApplePaySession.STATUS_FAILURE)
-            onError('Apple Pay could not be completed. Please try another method.')
-          }
-        } catch (e: any) {
-          session.completePayment((window as any).ApplePaySession.STATUS_FAILURE)
-          onError(e?.message || 'Apple Pay payment failed.')
-        } finally {
-          setProcessing(false)
-        }
-      }
-
-      session.oncancel = () => setProcessing(false)
-      session.begin()
     } catch (e: any) {
       setProcessing(false)
-      onError(e?.message || 'Apple Pay is unavailable right now.')
+      onError(e?.message || 'Apple Pay could not start.')
+      return
     }
+
+    // 商家校验 + 建单并行做，都在会话回调里，不占用手势
+    session.onvalidatemerchant = async (event: any) => {
+      try {
+        const [validated, orderId] = await Promise.all([
+          applePayClient().validateMerchant({ validationUrl: event.validationURL, displayName: 'Low Flame' }),
+          createOrderId(),
+        ])
+        paypalOrderId = orderId
+        session.completeMerchantValidation(validated.merchantSession)
+      } catch (e: any) {
+        try { session.abort() } catch { /* ignore */ }
+        setProcessing(false)
+        onError(e?.message || 'Apple Pay validation failed. Please try another method.')
+      }
+    }
+
+    session.onpaymentauthorized = async (event: any) => {
+      try {
+        if (!paypalOrderId) throw new Error('Order reference lost. Please refresh and try again.')
+        const { status } = await applePayClient().confirmOrder({
+          orderId: paypalOrderId,
+          paymentSource: event.payment,
+        })
+        if (status === 'APPROVED' || status === 'COMPLETED') {
+          session.completePayment((window as any).ApplePaySession.STATUS_SUCCESS)
+          await captureOrder(paypalOrderId)
+        } else {
+          session.completePayment((window as any).ApplePaySession.STATUS_FAILURE)
+          onError('Apple Pay could not be completed. Please try another method.')
+        }
+      } catch (e: any) {
+        try { session.completePayment((window as any).ApplePaySession.STATUS_FAILURE) } catch { /* ignore */ }
+        onError(e?.message || 'Apple Pay payment failed.')
+      } finally {
+        setProcessing(false)
+      }
+    }
+
+    session.oncancel = () => setProcessing(false)
+
+    // 同步 begin —— 关键的一行
+    session.begin()
   }
 
   if (!masterEnabled || (!showGooglePay && !showApplePay)) return null
