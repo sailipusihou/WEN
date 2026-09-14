@@ -804,7 +804,7 @@ export default function CheckoutPage() {
                         <p className="font-sans text-[11px] text-[#57503F]/70 mb-2">
                           Add <strong className="text-[#221E1A]">{formatPrice(convertPrice(freeThreshold - discountedSubtotal, currency), currency)}</strong> more for free shipping
                         </p>
-                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
+                        <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, Math.round((discountedSubtotal / freeThreshold) * 100))}%`, backgroundColor: '#5F7D72' }}

@@ -583,7 +583,7 @@ export default function ProductDetailClient({
                         </span>
                       </p>
                       {sub > 0 && (
-                        <div className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
+                        <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${pct}%`, backgroundColor: '#5F7D72' }}
