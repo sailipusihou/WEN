@@ -361,14 +361,36 @@ export default function CheckoutPage() {
         setPaypalError('PayPal is not available at the moment.')
         return
       }
-      const locale = navigator.language || 'en_US'
+
+      // ⚠️ locale 必须用下划线。
+      // navigator.language 在所有真实浏览器里返回的是连字符格式（en-US / zh-CN / de-DE），
+      // 而 PayPal SDK 只认下划线（en_US / zh_CN）。实测传连字符会直接 400：
+      //   locale=zh-CN → HTTP 400   locale=en-US → HTTP 400
+      //   locale=zh_CN → HTTP 200   locale=en_US → HTTP 200
+      // SDK 拿不到 400 就 onerror，paypal.Buttons() 永远不执行 —— 结算页一个支付按钮都没有。
+      const locale = (navigator.language || 'en_US').replace('-', '_')
       // 开通了钱包就把 applepay / googlepay 组件一起拉进来（没开通时 SDK 也不会挂上这俩对象）
       const walletParam = config.wallets?.enabled ? '&components=buttons,applepay,googlepay' : ''
-      const script = document.createElement('script')
-      script.src = `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture&locale=${locale}${walletParam}`
-      script.onload = () => setPaypalReady(true)
-      script.onerror = () => setPaypalError('Failed to load PayPal. Please try again.')
-      document.body.appendChild(script)
+      const buildSrc = (useLocale: boolean) =>
+        `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD&intent=capture` +
+        `${useLocale ? `&locale=${locale}` : ''}${walletParam}`
+
+      // 先带 locale 试；万一是 PayPal 不支持的语种，去掉 locale 重试一次兜底。
+      const mount = (useLocale: boolean, isRetry: boolean) => {
+        const script = document.createElement('script')
+        script.src = buildSrc(useLocale)
+        script.onload = () => {
+          if (typeof (window as any).paypal?.Buttons === 'function') setPaypalReady(true)
+          else setPaypalError('PayPal failed to initialize. Please try again.')
+        }
+        script.onerror = () => {
+          script.remove()
+          if (!isRetry) mount(false, true)
+          else setPaypalError('Failed to load PayPal. Please try again.')
+        }
+        document.body.appendChild(script)
+      }
+      mount(true, false)
     } catch {
       setPaypalError('PayPal configuration error.')
     }
