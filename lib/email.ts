@@ -64,7 +64,7 @@ export function buildWelcomeEmail(name: string): { subject: string; html: string
           <p style="color:#333;font-size:14px;line-height:1.6">Discover authentic Chinese craftsmanship — hand-selected ceramics, silk embroidery, bamboo weaving, and more, shipped directly to your door.</p>
           <div style="text-align:center;margin:25px 0">
             <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/#products"
-               style="display:inline-block;padding:12px 30px;background:#B8452E;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
+               style="display:inline-block;padding:12px 30px;background:#A83420;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
               Start Shopping
             </a>
           </div>
@@ -89,10 +89,10 @@ export function buildOrderConfirmationEmail(name: string, orderId: string, total
           <p style="margin:0 0 15px;color:#333"><strong>Order #${escapeHtml(orderId)}</strong></p>
           <p style="margin:0 0 5px;color:#666;font-size:14px">Items: ${items}</p>
           <p style="margin:0 0 5px;color:#666;font-size:14px">Total: $${total.toFixed(2)}</p>
-          <p style="margin:0;color:#666;font-size:14px">Status: <strong style="color:#B8452E">Processing</strong></p>
+          <p style="margin:0;color:#666;font-size:14px">Status: <strong style="color:#A83420">Processing</strong></p>
           <div style="text-align:center;margin:25px 0">
             <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/account/orders"
-               style="display:inline-block;padding:12px 30px;background:#B8452E;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
+               style="display:inline-block;padding:12px 30px;background:#A83420;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
               View Order
             </a>
           </div>
@@ -135,7 +135,7 @@ export function buildShipmentNotificationEmail(data: ShipmentNotificationData): 
   const trackingBlock = data.trackingUrl
     ? `<div style="text-align:center;margin:22px 0">
          <a href="${escapeHtml(data.trackingUrl)}"
-            style="display:inline-block;padding:12px 30px;background:#B8452E;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
+            style="display:inline-block;padding:12px 30px;background:#A83420;color:#fff;text-decoration:none;border-radius:4px;font-size:14px">
            Track Your Package
          </a>
        </div>`
@@ -163,7 +163,7 @@ export function buildShipmentNotificationEmail(data: ShipmentNotificationData): 
           ${trackingBlock}
           <div style="text-align:center;margin-top:10px">
             <a href="${escapeHtml(site)}/account/orders"
-               style="color:#B8452E;font-size:13px;text-decoration:underline">View your order</a>
+               style="color:#A83420;font-size:13px;text-decoration:underline">View your order</a>
           </div>
         </div>
         <p style="color:#999;font-size:12px;line-height:1.6;text-align:center">

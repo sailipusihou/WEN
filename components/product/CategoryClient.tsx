@@ -16,16 +16,16 @@ export default function CategoryClient({
 }) {
   if (!category) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-[#F8F5F0]">
-        <p className="font-en text-2xl text-[#6B6B6B]">Collection not found</p>
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#F1E9DC]">
+        <p className="font-en text-2xl text-[#57503F]">Collection not found</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-[#F8F5F0]">
+    <div className="bg-[#F1E9DC]">
       {/* Hero Banner */}
-      <section className="relative py-20 md:py-28 overflow-hidden bg-[#2C2C2C]">
+      <section className="relative py-20 md:py-28 overflow-hidden bg-[#221E1A]">
         {category.image && (
           <OptimizedImage
             src={category.image}
@@ -58,10 +58,10 @@ export default function CategoryClient({
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#6B6B6B]/50 tracking-wider uppercase mb-10">
-            <Link href="/" className="hover:text-[#2C2C2C] transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#57503F]/50 tracking-wider uppercase mb-10">
+            <Link href="/" className="hover:text-[#221E1A] transition-colors">Home</Link>
             <span>/</span>
-            <span className="text-[#8B7D5C]">{category.nameEn || category.name}</span>
+            <span className="text-[#8A6A2E]">{category.nameEn || category.name}</span>
           </nav>
 
           {products.length > 0 ? (
@@ -72,13 +72,13 @@ export default function CategoryClient({
             </div>
           ) : (
             <div className="text-center py-20">
-              <p className="font-sans text-sm text-[#6B6B6B]/50">This collection is being curated. Check back soon.</p>
+              <p className="font-sans text-sm text-[#57503F]/50">This collection is being curated. Check back soon.</p>
             </div>
           )}
 
           <div className="mt-16 text-center">
             <Link href="/products"
-              className="inline-flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors tracking-wider uppercase font-sans font-medium">
+              className="inline-flex items-center gap-1.5 text-xs text-[#57503F] hover:text-[#221E1A] transition-colors tracking-wider uppercase font-sans font-medium">
               <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to All Products
             </Link>
           </div>

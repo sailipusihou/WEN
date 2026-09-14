@@ -58,11 +58,11 @@ export default function OptimizedImage({
   if (hasError || !src) {
     return (
       <div
-        className={`bg-[#EDE8E0] flex items-center justify-center ${className}`}
+        className={`bg-[#E2D5C0] flex items-center justify-center ${className}`}
         style={style}
       >
         <svg
-          className="w-8 h-8 text-[#8BA8A0]/30"
+          className="w-8 h-8 text-[#5F7D72]/30"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -87,7 +87,7 @@ export default function OptimizedImage({
   return (
     <div className={`relative overflow-hidden ${className}`} style={style}>
       {isLoading && placeholder === 'blur' && (
-        <div className="absolute inset-0 bg-gradient-to-r from-[#EDE8E0] via-[#F5F1EA] to-[#EDE8E0] bg-[length:200%_100%] animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#E2D5C0] via-[#EDE3D2] to-[#E2D5C0] bg-[length:200%_100%] animate-pulse" />
       )}
       <Image
         src={src}

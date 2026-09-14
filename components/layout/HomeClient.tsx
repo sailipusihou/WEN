@@ -620,7 +620,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
       {/* Left: large image + glass info card */}
       <div
-        className="relative lg:col-span-7 overflow-hidden rounded-xl bg-[#EDE8E0] min-h-[420px] md:min-h-[560px]"
+        className="relative lg:col-span-7 overflow-hidden rounded-xl bg-[#E2D5C0] min-h-[420px] md:min-h-[560px]"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -658,7 +658,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
           <span className="font-sans text-[11px] text-coral tracking-[0.15em] uppercase">{current.subtitle}</span>
           <h3 className="font-en text-xl md:text-2xl text-ink-deep font-semibold mt-1.5">{current.title}</h3>
           <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E5DFD5]/60">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#D8C9AE]/60">
             <span className="font-sans text-[12px] text-ink-soft/76">{current.productCount ?? 0} items</span>
             <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.1em] uppercase font-sans font-medium hover:text-coral transition-colors">
               View Collection <ArrowUpRight size={11} strokeWidth={1.5} />
@@ -669,7 +669,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
 
       {/* Right: category list */}
       <div className="lg:col-span-5 flex flex-col justify-center">
-        <div className="divide-y divide-[#EDE8E0] border-y border-[#EDE8E0]">
+        <div className="divide-y divide-[#E2D5C0] border-y border-[#E2D5C0]">
           {items.map((item, i) => {
             const isActive = i === active
             return (
@@ -679,7 +679,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
                 onMouseEnter={() => { setActive(i); setPaused(true) }}
                 onMouseLeave={() => setPaused(false)}
                 onClick={() => setActive(i)}
-                className={`group w-full text-left transition-colors duration-300 ${isActive ? 'bg-[#F8F6F2] px-3' : 'px-1 hover:bg-[#F8F6F2]/60'}`}
+                className={`group w-full text-left transition-colors duration-300 ${isActive ? 'bg-[#EFE6D6] px-3' : 'px-1 hover:bg-[#EFE6D6]/60'}`}
               >
                 <div className="py-4 md:py-5 flex items-baseline justify-between gap-4">
                   <div className="flex items-baseline gap-2.5 min-w-0">

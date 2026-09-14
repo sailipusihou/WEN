@@ -9,7 +9,7 @@
  *   - 有关闭 ×，手动关闭后本页会话内不再打扰（刷新后重新出现，因为状态只存内存）
  *   - 购物车页 / 结算页不显示（这两页自己就有主 CTA，避免重复）
  *
- * 视觉沿用详情页吸底栏的规格：白底 #FAFAFA、上边框、柔和阴影、
+ * 视觉沿用详情页吸底栏的规格：白底 #FBF7EF、上边框、柔和阴影、
  * transform .4s cubic-bezier(.165,.84,.44,1) 从底部推入。
  */
 import { useState, useEffect } from 'react'
@@ -21,7 +21,7 @@ import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useDiscountedCartSubtotal } from '@/lib/promotion-client'
 
-const INK = '#231F1C'
+const INK = '#1C1814'
 
 export default function GlobalCartBar() {
   const { items, totalItems } = useCart()
@@ -56,9 +56,9 @@ export default function GlobalCartBar() {
     >
       <div
         style={{
-          backgroundColor: '#FAFAFA',
-          borderTop: '1px solid rgba(35,31,28,0.10)',
-          boxShadow: 'rgba(35,31,28,0.10) 0 0 14px',
+          backgroundColor: '#FBF7EF',
+          borderTop: '1px solid rgba(58,44,26,0.22)',
+          boxShadow: 'rgba(58,44,26,0.22) 0 0 14px',
         }}
       >
         <div className="max-w-[1560px] mx-auto px-4 sm:px-8 lg:px-12 py-2.5 flex items-center gap-4">
@@ -72,16 +72,16 @@ export default function GlobalCartBar() {
                 alt=""
                 className="w-11 h-11 object-cover"
                 style={{
-                  border: '2px solid #FAFAFA',
+                  border: '2px solid #FBF7EF',
                   borderRadius: 2,
                   marginLeft: i === 0 ? 0 : -12,
-                  backgroundColor: '#F2EAE0',
+                  backgroundColor: '#E6D8C2',
                   zIndex: 10 - i,
                 }}
               />
             ))}
             {items.length > 3 && (
-              <span className="ml-2 font-sans text-[12px] font-semibold" style={{ color: 'rgba(35,31,28,0.55)' }}>
+              <span className="ml-2 font-sans text-[12px] font-semibold" style={{ color: 'rgba(58,44,26,0.62)' }}>
                 +{items.length - 3}
               </span>
             )}
@@ -92,7 +92,7 @@ export default function GlobalCartBar() {
             <p className="font-sans text-[13px] font-semibold leading-tight" style={{ color: INK }}>
               {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
             </p>
-            <p className="font-sans text-[12px] leading-tight mt-0.5" style={{ color: 'rgba(35,31,28,0.55)' }}>
+            <p className="font-sans text-[12px] leading-tight mt-0.5" style={{ color: 'rgba(58,44,26,0.62)' }}>
               Subtotal {formatPrice(convertPrice(subtotal, currency), currency)}
             </p>
           </div>
@@ -115,7 +115,7 @@ export default function GlobalCartBar() {
             onClick={() => setClosed(true)}
             aria-label="Close cart bar"
             className="shrink-0 w-9 h-9 flex items-center justify-center transition-colors duration-200 hover:bg-black/5"
-            style={{ color: 'rgba(35,31,28,0.45)', borderRadius: 2 }}
+            style={{ color: 'rgba(58,44,26,0.55)', borderRadius: 2 }}
           >
             <X size={17} strokeWidth={1.8} />
           </button>

@@ -9,7 +9,7 @@ import type { Category } from "@/lib/products"
 const ON_DARK = 'rgba(248,246,242,0.92)'      // 主
 const ON_DARK_SOFT = 'rgba(248,246,242,0.68)' // 次（仍清晰）
 const ON_DARK_FAINT = 'rgba(248,246,242,0.55)' // 弱但仍达 WCAG AA
-const ACCENT = '#8BA8A0'                       // jade 强调
+const ACCENT = '#5F7D72'                       // jade 强调
 
 /** 真实品牌图标（内联 SVG，替代此前的 X/IG/FB 文字圆圈） */
 function SocialIcon({ label, size = 17 }: { label: string; size?: number }) {
@@ -92,7 +92,7 @@ export default function Footer() {
           {/* 品牌列 */}
           <div className="lg:col-span-5">
             <Link href="/" className="inline-flex items-center gap-3 group mb-5">
-              <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: '#F5F1EA' }}>
+              <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: '#EDE3D2' }}>
                 <img src="/images/low-flame-logo.png" alt="Low Flame" className="h-[70%] w-auto object-contain" />
               </div>
               <span className="font-en text-[22px] tracking-[0.02em] font-medium transition-colors" style={{ color: ON_DARK }}>Low Flame</span>

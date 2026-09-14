@@ -71,14 +71,14 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-[#F8F5F0]">
+      <div className="min-h-[70vh] flex items-center justify-center bg-[#F1E9DC]">
         <div className="text-center max-w-md mx-auto px-6">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#EDE8DC]/50 flex items-center justify-center">
-            <ShoppingBag size={32} strokeWidth={1} className="text-[#6B6B6B]/30" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#DDCEB4]/50 flex items-center justify-center">
+            <ShoppingBag size={32} strokeWidth={1} className="text-[#57503F]/30" />
           </div>
-          <h1 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold tracking-tight mb-2">Your cart is empty</h1>
-          <p className="font-sans text-sm text-[#6B6B6B]/60 mb-8">Discover our collection of handcrafted objects.</p>
-          <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#2C2C2C] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
+          <h1 className="font-en text-2xl md:text-3xl text-[#221E1A] font-semibold tracking-tight mb-2">Your cart is empty</h1>
+          <p className="font-sans text-sm text-[#57503F]/60 mb-8">Discover our collection of handcrafted objects.</p>
+          <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#221E1A] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
             <ArrowLeft size={14} strokeWidth={1.5} /> Browse Collection
           </Link>
         </div>
@@ -87,14 +87,14 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-[#F8F5F0] min-h-screen">
+    <div className="bg-[#F1E9DC] min-h-screen">
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-en text-3xl md:text-4xl text-[#2C2C2C] font-semibold tracking-tight">Cart</h1>
-            <p className="font-sans text-sm text-[#6B6B6B]/60 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
+            <h1 className="font-en text-3xl md:text-4xl text-[#221E1A] font-semibold tracking-tight">Cart</h1>
+            <p className="font-sans text-sm text-[#57503F]/60 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
           </div>
-          <button onClick={clearCart} className="font-sans text-[10px] text-[#6B6B6B]/40 hover:text-[#2C2C2C] transition-colors tracking-wider uppercase">
+          <button onClick={clearCart} className="font-sans text-[10px] text-[#57503F]/40 hover:text-[#221E1A] transition-colors tracking-wider uppercase">
             Clear
           </button>
         </div>
@@ -103,32 +103,32 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-3">
             {discountedItems.map((item, i) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="bg-white/80 border border-[#EDE8DC]/50 p-4 md:p-6 flex gap-4 md:gap-6">
-                <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#EDE8DC]/30 overflow-hidden relative">
+                className="bg-white/80 border border-[#DDCEB4]/50 p-4 md:p-6 flex gap-4 md:gap-6">
+                <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#DDCEB4]/30 overflow-hidden relative">
                   <OptimizedImage src={item.image} alt={item.nameEn || item.name} fill sizes="(max-width: 768px) 80px, 96px" objectFit="cover" placeholder="blur" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <Link href={`/products/${item.id}`} className="font-en text-sm md:text-base text-[#2C2C2C] hover:text-[#8B7D5C] transition-colors font-medium">
+                      <Link href={`/products/${item.id}`} className="font-en text-sm md:text-base text-[#221E1A] hover:text-[#8A6A2E] transition-colors font-medium">
                         {item.nameEn || item.name}
                       </Link>
                     </div>
-                    <button onClick={() => removeItem(item.id)} className="p-1 text-[#6B6B6B]/30 hover:text-red-400 transition-colors shrink-0">
+                    <button onClick={() => removeItem(item.id)} className="p-1 text-[#57503F]/30 hover:text-red-400 transition-colors shrink-0">
                       <Trash2 size={14} strokeWidth={1.5} />
                     </button>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center border border-[#EDE8DC]">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-[#6B6B6B]/50 hover:text-[#2C2C2C] transition-colors">
+                    <div className="flex items-center border border-[#DDCEB4]">
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-[#57503F]/50 hover:text-[#221E1A] transition-colors">
                         <Minus size={12} strokeWidth={1.5} />
                       </button>
-                      <span className="w-8 text-center font-sans text-sm text-[#2C2C2C]">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-[#6B6B6B]/50 hover:text-[#2C2C2C] transition-colors">
+                      <span className="w-8 text-center font-sans text-sm text-[#221E1A]">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-[#57503F]/50 hover:text-[#221E1A] transition-colors">
                         <Plus size={12} strokeWidth={1.5} />
                       </button>
                     </div>
-                    <span className="font-en text-base font-medium text-[#2C2C2C]">
+                    <span className="font-en text-base font-medium text-[#221E1A]">
                       {formatPrice(convertPrice(item.price * item.quantity, currency), currency)}
                     </span>
                   </div>
@@ -138,28 +138,28 @@ export default function CartPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white/80 border border-[#EDE8DC]/50 p-6 sticky top-24">
-              <h2 className="font-sans text-[10px] text-[#B8A06C] tracking-[0.15em] uppercase font-medium mb-6">Order Summary</h2>
+            <div className="bg-white/80 border border-[#DDCEB4]/50 p-6 sticky top-24">
+              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium mb-6">Order Summary</h2>
               <div className="space-y-3 font-sans text-sm">
-                <div className="flex justify-between text-[#6B6B6B]/70">
+                <div className="flex justify-between text-[#57503F]/70">
                   <span>Subtotal</span>
-                  <span className="text-[#2C2C2C]">{formatPrice(subtotalConverted, currency)}</span>
+                  <span className="text-[#221E1A]">{formatPrice(subtotalConverted, currency)}</span>
                 </div>
-                <div className="flex justify-between text-[#6B6B6B]/70">
+                <div className="flex justify-between text-[#57503F]/70">
                   <span>Shipping</span>
-                  <span className="text-[#2C2C2C]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
+                  <span className="text-[#221E1A]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
                 {shipping > 0 ? (
                   <div className="pt-1">
-                    <p className="font-sans text-[11px] text-[#6B6B6B]/70 mb-2">
-                      Add <strong className="text-[#2C2C2C]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
+                    <p className="font-sans text-[11px] text-[#57503F]/70 mb-2">
+                      Add <strong className="text-[#221E1A]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
                     </p>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min(100, Math.round((subtotal / freeThreshold) * 100))}%`,
-                          backgroundColor: '#8BA8A0',
+                          backgroundColor: '#5F7D72',
                         }}
                       />
                     </div>
@@ -169,16 +169,16 @@ export default function CartPage() {
                     <Check size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
                   </p>
                 )}
-                <div className="border-t border-[#EDE8DC]/60 pt-3 flex justify-between font-medium text-[#2C2C2C]">
+                <div className="border-t border-[#DDCEB4]/60 pt-3 flex justify-between font-medium text-[#221E1A]">
                   <span className="font-sans text-sm">Total</span>
                   <span className="font-en text-lg font-semibold">{formatPrice(totalConverted, currency)}</span>
                 </div>
               </div>
               <Link href="/checkout"
-                className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#2C2C2C] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
+                className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#221E1A] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
                 Proceed to Checkout <ArrowRight size={14} strokeWidth={1.5} />
               </Link>
-              <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-[#6B6B6B]/50 hover:text-[#2C2C2C] transition-colors">
+              <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-[#57503F]/50 hover:text-[#221E1A] transition-colors">
                 <ArrowLeft size={12} strokeWidth={1.5} /> Continue Shopping
               </Link>
             </div>
@@ -194,8 +194,8 @@ export default function CartPage() {
             className="mt-20 md:mt-28"
           >
             <div className="flex items-end justify-between mb-8">
-              <h2 className="font-en text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: '#231F1C' }}>You May Also Like</h2>
-              <Link href="/products" className="font-sans text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: '#8B7D5C' }}>
+              <h2 className="font-en text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: '#1C1814' }}>You May Also Like</h2>
+              <Link href="/products" className="font-sans text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: '#8A6A2E' }}>
                 View all →
               </Link>
             </div>
@@ -212,28 +212,28 @@ export default function CartPage() {
       <div
         data-cart-bottom-bar="1"
         className="fixed left-0 right-0 bottom-0 z-[101]"
-        style={{ backgroundColor: '#FAFAFA', borderTop: '1px solid rgba(35,31,28,0.10)', boxShadow: 'rgba(35,31,28,0.10) 0 0 14px' }}
+        style={{ backgroundColor: '#FBF7EF', borderTop: '1px solid rgba(58,44,26,0.22)', boxShadow: 'rgba(58,44,26,0.22) 0 0 14px' }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4">
           <div className="flex items-center shrink-0">
             {discountedItems.slice(0, 3).map((it, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={it.id + i} src={it.image} alt="" className="w-11 h-11 object-cover"
-                style={{ border: '2px solid #FAFAFA', borderRadius: 2, marginLeft: i === 0 ? 0 : -12, backgroundColor: '#F2EAE0', zIndex: 10 - i }} />
+                style={{ border: '2px solid #FBF7EF', borderRadius: 2, marginLeft: i === 0 ? 0 : -12, backgroundColor: '#E6D8C2', zIndex: 10 - i }} />
             ))}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-sans text-[13px] font-semibold leading-tight" style={{ color: '#231F1C' }}>
+            <p className="font-sans text-[13px] font-semibold leading-tight" style={{ color: '#1C1814' }}>
               {items.length} {items.length === 1 ? 'piece' : 'pieces'} · {formatPrice(totalConverted, currency)}
             </p>
-            <p className="font-sans text-[12px] leading-tight mt-0.5 hidden sm:block" style={{ color: 'rgba(35,31,28,0.55)' }}>
+            <p className="font-sans text-[12px] leading-tight mt-0.5 hidden sm:block" style={{ color: 'rgba(58,44,26,0.62)' }}>
               Total includes {shipping === 0 ? 'free shipping' : `shipping ${formatPrice(shippingConverted, currency)}`}
             </p>
           </div>
           <Link
             href="/checkout"
             className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 font-sans text-[11px] font-bold tracking-[0.16em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
-            style={{ backgroundColor: '#231F1C', borderRadius: 2 }}
+            style={{ backgroundColor: '#1C1814', borderRadius: 2 }}
           >
             Checkout <ArrowRight size={14} strokeWidth={2.2} />
           </Link>

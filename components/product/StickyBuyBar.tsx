@@ -4,7 +4,7 @@
  * 商品详情页「吸底加购栏」
  *
  * 对标参考站实测规格：
- *   高度 92px / 白底 #FAFAFA / 底部固定 / z-index 102
+ *   高度 92px / 白底 #FBF7EF / 底部固定 / z-index 102
  *   阴影 rgba(74,52,34,0.08) 0 0 12px
  *   进场 transform 0.4s cubic-bezier(0.165,0.84,0.44,1)（从下往上推入）
  *   内容：[缩略图 68px] [现价 24px/700 红 + 原价 18px 划线 + 标题 18px/700] [数量] [加购按钮]
@@ -24,8 +24,8 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import type { Product } from '@/lib/products'
 
-const INK = '#231F1C'
-const GOLD = '#8B7D5C'
+const INK = '#1C1814'
+const GOLD = '#8A6A2E'
 
 export default function StickyBuyBar({
   product, effPrice, originalPrice, discount, visible, freeThreshold,
@@ -92,7 +92,7 @@ export default function StickyBuyBar({
     >
       {/* 免邮进度提示条 */}
       {showShip && (
-        <div className="font-sans text-[11px] text-center py-1.5 tracking-[0.02em]" style={{ backgroundColor: '#F0E9DC', color: INK }}>
+        <div className="font-sans text-[11px] text-center py-1.5 tracking-[0.02em]" style={{ backgroundColor: '#EFE4CE', color: INK }}>
           Add <strong>{formatPrice(convertPrice(remain, currency), currency)}</strong> more for <strong>free shipping</strong>
         </div>
       )}
@@ -100,14 +100,14 @@ export default function StickyBuyBar({
       <div
         className="w-full"
         style={{
-          backgroundColor: '#FAFAFA',
-          borderTop: '1px solid rgba(35,31,28,0.08)',
-          boxShadow: 'rgba(35,31,28,0.08) 0 0 12px',
+          backgroundColor: '#FBF7EF',
+          borderTop: '1px solid rgba(58,44,26,0.18)',
+          boxShadow: 'rgba(58,44,26,0.18) 0 0 12px',
         }}
       >
         <div className="max-w-[1560px] mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4 lg:gap-6">
           {/* 缩略图 */}
-          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: '#F2EAE0', borderRadius: 2 }}>
+          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: '#E6D8C2', borderRadius: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={product.image} alt={product.nameEn || product.name} className="w-full h-full object-cover" />
           </div>
@@ -119,7 +119,7 @@ export default function StickyBuyBar({
                 {formatPrice(convertPrice(effPrice, currency), currency)}
               </span>
               {(originalPrice || product.originalPrice) && (
-                <span className="font-sans text-[14px] sm:text-[16px] line-through leading-none hidden sm:inline" style={{ color: 'rgba(35,31,28,0.40)' }}>
+                <span className="font-sans text-[14px] sm:text-[16px] line-through leading-none hidden sm:inline" style={{ color: 'rgba(58,44,26,0.50)' }}>
                   {formatPrice(convertPrice(originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}
@@ -130,7 +130,7 @@ export default function StickyBuyBar({
           </div>
 
           {/* 数量 */}
-          <div className="hidden md:flex items-center shrink-0" style={{ border: '1px solid rgba(35,31,28,0.14)', borderRadius: 2 }}>
+          <div className="hidden md:flex items-center shrink-0" style={{ border: '1px solid rgba(58,44,26,0.26)', borderRadius: 2 }}>
             <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2.5 transition-opacity hover:opacity-60" style={{ color: '#5F5A54' }} aria-label="Decrease quantity">
               <Minus size={13} strokeWidth={1.8} />
             </button>

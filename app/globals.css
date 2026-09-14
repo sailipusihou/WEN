@@ -11,33 +11,37 @@
   --font-noto-sans-sc: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
   --font-noto-serif-sc: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', Georgia, serif;
 
-  --ink-deep: #1A1C1E;
-  --ink: #2D2F33;
-  --ink-mid: #4A4D52;
-  --ink-soft: #6B6F75;
-  --ink-faint: #8E9298;
-  --paper: #F2EFEA;
-  --paper-light: #F8F6F2;
-  --paper-warm: #EDE8E0;
-  --paper-dark: #E5DFD5;
-  --jade: #8BA8A0;
-  --jade-light: #A8C4BC;
-  --jade-dark: #6E8B83;
-  --jade-pale: #CBDCD6;
-  --bronze: #A0885A;
-  --bronze-light: #C4B08C;
-  --bronze-dark: #7D6A44;
-  --bronze-pale: #E0D4BE;
+  /* —— 色彩（2026-09 压实重制）——
+     原来的问题：画面 79% 面积是明度≥90 的近白，背景平均饱和度仅 19.6%，
+     次要文字 #6C6F75 饱和度只有 4%（纯灰）→ 整页发浅发灰显廉价。
+     现在：底子下沉到暖调羊皮纸，文字去灰改暖深色，品牌色加饱和。 */
+  --ink-deep: #171310;
+  --ink: #221E1A;
+  --ink-mid: #403A31;
+  --ink-soft: #57503F;   /* 原 #6C6F75 饱和4% —— 纯灰是"发灰"的元凶 */
+  --ink-faint: #8A8071;
+  --paper: #EAE0CE;
+  --paper-light: #EFE6D6;
+  --paper-warm: #E2D5C0;
+  --paper-dark: #D8C9AE;
+  --jade: #5F7D72;       /* 原 #8BA8A0 饱和14% —— 淡到没记忆点 */
+  --jade-light: #7D9B8F;
+  --jade-dark: #4A665D;
+  --jade-pale: #B9CFC6;
+  --bronze: #A07C34;
+  --bronze-light: #BFA06A;
+  --bronze-dark: #6B5424;
+  --bronze-pale: #D6C49E;
   --indigo: #3B4252;
   --indigo-light: #4F5A6E;
   --indigo-dark: #2A3040;
   --indigo-pale: #D5DAE4;
-  --amber: #C49A5E;
-  --amber-light: #D8B88A;
-  --amber-dark: #A37E48;
-  --coral: #C46A54;
-  --coral-light: #D48874;
-  --coral-dark: #A55440;
+  --amber: #A87C2E;
+  --amber-light: #C79A4A;
+  --amber-dark: #8A6522;
+  --coral: #A8472E;
+  --coral-light: #C4694F;
+  --coral-dark: #8E3C28;
 }
 
 * { box-sizing: border-box; }

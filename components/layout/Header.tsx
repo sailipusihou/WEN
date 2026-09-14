@@ -130,11 +130,11 @@ export default function Header() {
   // header, so text flips to white until the user scrolls (glass appears).
   const pathname = usePathname()
   const overlayTop = pathname === '/' && !scrolled
-  const navText = overlayTop ? 'text-white/90 hover:text-white' : 'text-[#4A4D52] hover:text-[#8BA8A0]'
+  const navText = overlayTop ? 'text-white/90 hover:text-white' : 'text-[#403A31] hover:text-[#5F7D72]'
   const navChip = overlayTop
     ? 'hover:bg-black/25 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]'
     : 'hover:bg-white/45 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
-  const iconText = overlayTop ? 'text-white/85 hover:text-white' : 'text-[#6B6F75] hover:text-[#2D2F33]'
+  const iconText = overlayTop ? 'text-white/85 hover:text-white' : 'text-[#57503F] hover:text-[#221E1A]'
   const iconChip = overlayTop ? 'hover:bg-black/25 hover:backdrop-blur-md' : 'hover:bg-white/45 hover:backdrop-blur-md'
 
   return (
@@ -144,19 +144,19 @@ export default function Header() {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo - refined symbol */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="h-9 md:h-11 w-9 md:w-11 rounded-full bg-[#F5F1EA]/95 shadow-soft overflow-hidden flex items-center justify-center shrink-0">
+              <div className="h-9 md:h-11 w-9 md:w-11 rounded-full bg-[#EDE3D2]/95 shadow-soft overflow-hidden flex items-center justify-center shrink-0">
                 <img
                   src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                   alt="Low Flame"
                   className="h-[72%] w-auto object-contain"
                 />
               </div>
-              <div className={`flex flex-col leading-tight border-l pl-2.5 ${overlayTop ? 'border-white/30' : 'border-[#E5DFD5]'}`}>
-                <span className={`font-en text-sm md:text-base tracking-[0.12em] font-semibold group-hover:text-[#8BA8A0] transition-colors duration-300 ${overlayTop ? 'text-white' : 'text-[#2D2F33]'}`}>
+              <div className={`flex flex-col leading-tight border-l pl-2.5 ${overlayTop ? 'border-white/30' : 'border-[#D8C9AE]'}`}>
+                <span className={`font-en text-sm md:text-base tracking-[0.12em] font-semibold group-hover:text-[#5F7D72] transition-colors duration-300 ${overlayTop ? 'text-white' : 'text-[#221E1A]'}`}>
                   {siteSettings?.siteName ? siteSettings.siteName.toUpperCase() : "LOW FLAME"}
                 </span>
                 {siteSettings?.siteTagline && (
-                  <span className={`font-sans text-[11px] tracking-wider ${overlayTop ? 'text-white/80' : 'text-[#6B6F75]/80'}`}>
+                  <span className={`font-sans text-[11px] tracking-wider ${overlayTop ? 'text-white/80' : 'text-[#57503F]/80'}`}>
                     {siteSettings.siteTagline}
                   </span>
                 )}
@@ -208,7 +208,7 @@ export default function Header() {
               <Link href="/messages" className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Messages">
                 <MessageCircle size={15} strokeWidth={1.5} />
                 {unreadReplies > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#8BA8A0] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#5F7D72] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
                     {unreadReplies > 9 ? '9+' : unreadReplies}
                   </span>
                 )}
@@ -216,18 +216,18 @@ export default function Header() {
               <Link href="/cart" className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Cart">
                 <ShoppingBag size={15} strokeWidth={1.5} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#2D2F33] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#221E1A] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
               </Link>
-              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#E5DFD5] text-[#2D2F33] hover:bg-white/45 hover:backdrop-blur-md hover:border-[#8BA8A0] hover:text-[#8BA8A0]'}`}>
+              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-[10px] tracking-[0.12em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#D8C9AE] text-[#221E1A] hover:bg-white/45 hover:backdrop-blur-md hover:border-[#5F7D72] hover:text-[#5F7D72]'}`}>
                 Explore
               </Link>
             </div>
 
             {/* Mobile Toggle */}
-            <button className={`md:hidden p-2 ${overlayTop ? 'text-white' : 'text-[#2D2F33]'}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            <button className={`md:hidden p-2 ${overlayTop ? 'text-white' : 'text-[#221E1A]'}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
               {menuOpen ? <X size={18} strokeWidth={1.5} /> : <Menu size={18} strokeWidth={1.5} />}
             </button>
           </div>
@@ -264,13 +264,13 @@ export default function Header() {
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
               <div className="flex items-center gap-2 mb-8">
-                <span className="text-[#8BA8A0] text-[10px]">◈</span>
-                <h3 className="font-sans text-[11px] text-[#6B6F75] tracking-[0.15em] uppercase font-medium">Curated Collections</h3>
+                <span className="text-[#5F7D72] text-[10px]">◈</span>
+                <h3 className="font-sans text-[11px] text-[#57503F] tracking-[0.15em] uppercase font-medium">Curated Collections</h3>
               </div>
               <div className={`grid grid-cols-2 sm:grid-cols-3 gap-4 ${MEGA_COLS[Math.min(Math.max(collections.length, 2), 6)]}`}>
                 {collections.map((col) => (
                   <Link key={col.label} href={col.href} onClick={() => setMegaOpen(false)} className="group block">
-                    <div className="relative aspect-[4/5] overflow-hidden bg-[#EDE8E0] mb-3">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-[#E2D5C0] mb-3">
                       <OptimizedImage
                         src={col.image}
                         alt={col.label}
@@ -281,18 +281,18 @@ export default function Header() {
                         placeholder="blur"
                       />
                     </div>
-                    <h4 className="font-sans text-[10px] font-medium text-[#2D2F33] tracking-wider uppercase group-hover:text-[#8BA8A0] transition-colors">{col.label}</h4>
-                    <p className="font-sans text-[11px] text-[#6B6F75]/72 mt-0.5">{col.desc}</p>
+                    <h4 className="font-sans text-[10px] font-medium text-[#221E1A] tracking-wider uppercase group-hover:text-[#5F7D72] transition-colors">{col.label}</h4>
+                    <p className="font-sans text-[11px] text-[#57503F]/72 mt-0.5">{col.desc}</p>
                   </Link>
                 ))}
               </div>
-              <div className="mt-8 pt-5 border-t border-[#E5DFD5]/40 flex items-center justify-between">
+              <div className="mt-8 pt-5 border-t border-[#D8C9AE]/40 flex items-center justify-between">
                 <Link href="/products" onClick={() => setMegaOpen(false)}
-                  className="text-[10px] text-[#6B6F75] hover:text-[#8BA8A0] transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                  className="text-[10px] text-[#57503F] hover:text-[#5F7D72] transition-colors tracking-[0.12em] uppercase font-sans font-medium">
                   View All Objects →
                 </Link>
                 <Link href="/#journal" onClick={() => setMegaOpen(false)}
-                  className="text-[10px] text-[#6B6F75] hover:text-[#8BA8A0] transition-colors tracking-[0.12em] uppercase font-sans font-medium">
+                  className="text-[10px] text-[#57503F] hover:text-[#5F7D72] transition-colors tracking-[0.12em] uppercase font-sans font-medium">
                   Read the Journal →
                 </Link>
               </div>
@@ -313,7 +313,7 @@ export default function Header() {
             transition={{ duration: 0.2 }}
             onClick={() => setMenuOpen(false)}
             aria-hidden="true"
-            className="fixed inset-0 z-[70] bg-[#2D2F33]/40 backdrop-blur-[2px] md:hidden"
+            className="fixed inset-0 z-[70] bg-[#221E1A]/40 backdrop-blur-[2px] md:hidden"
           />
         )}
       </AnimatePresence>
@@ -330,44 +330,44 @@ export default function Header() {
             aria-label="Mobile navigation"
             className="fixed top-0 right-0 bottom-0 z-[80] w-[85%] max-w-sm md:hidden glass-drawer overflow-y-auto"
           >
-            <div className="flex items-center justify-between px-5 h-16 border-b border-[#E5DFD5]/40 shrink-0">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-[#D8C9AE]/40 shrink-0">
               <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 group">
-                <div className="w-9 h-9 rounded-full bg-[#F5F1EA] shadow-soft overflow-hidden flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[#EDE3D2] shadow-soft overflow-hidden flex items-center justify-center shrink-0">
                   <img
                     src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                     alt="Low Flame"
                     className="h-[70%] w-auto object-contain"
                   />
                 </div>
-                <span className="font-en text-xs md:text-sm tracking-[0.12em] text-[#2D2F33] font-semibold group-hover:text-[#8BA8A0] transition-colors">
+                <span className="font-en text-xs md:text-sm tracking-[0.12em] text-[#221E1A] font-semibold group-hover:text-[#5F7D72] transition-colors">
                   {siteSettings?.siteName ? siteSettings.siteName.toUpperCase() : "LOW FLAME"}
                 </span>
               </Link>
-              <button className="p-2 text-[#2D2F33]" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+              <button className="p-2 text-[#221E1A]" onClick={() => setMenuOpen(false)} aria-label="Close menu">
                 <X size={18} strokeWidth={1.5} />
               </button>
             </div>
             <nav className="flex flex-col px-4 py-4 gap-0.5">
-              <p className="font-sans text-[11px] text-[#8BA8A0] tracking-[0.15em] uppercase px-4 pt-2 pb-1 font-medium">Collections</p>
+              <p className="font-sans text-[11px] text-[#5F7D72] tracking-[0.15em] uppercase px-4 pt-2 pb-1 font-medium">Collections</p>
               {collections.map((col) => (
                 <Link key={col.label} href={col.href}
-                  className="font-sans text-sm text-[#4A4D52] py-2.5 px-4 hover:bg-[#EDE8E0]/30 transition-colors flex items-center justify-between"
+                  className="font-sans text-sm text-[#403A31] py-2.5 px-4 hover:bg-[#E2D5C0]/30 transition-colors flex items-center justify-between"
                   onClick={() => setMenuOpen(false)}>
                   <span>{col.label}</span>
-                  <span className="text-[11px] text-[#6B6F75]/65">→</span>
+                  <span className="text-[11px] text-[#57503F]/65">→</span>
                 </Link>
               ))}
               <div className="divider-refined my-3" />
               {navItems.filter(n => !n.hasMega).map((item) => (
                 <Link key={item.href} href={item.href}
-                  className="font-sans text-sm text-[#4A4D52] py-2.5 px-4 hover:bg-[#EDE8E0]/30 transition-colors"
+                  className="font-sans text-sm text-[#403A31] py-2.5 px-4 hover:bg-[#E2D5C0]/30 transition-colors"
                   onClick={() => setMenuOpen(false)}>
                   {item.label}
                 </Link>
               ))}
-              <div className="flex items-center gap-2 px-4 pt-4 border-t border-[#E5DFD5]/30 mt-3">
-                <Link href="/search" className="flex-1 text-center py-3 border border-[#2D2F33] text-[#2D2F33] text-[10px] tracking-[0.12em] uppercase font-sans" onClick={() => setMenuOpen(false)}>Search</Link>
-                <Link href="/cart" className="flex-1 text-center py-3 bg-[#2D2F33] text-white text-[10px] tracking-[0.12em] uppercase font-sans flex items-center justify-center gap-1" onClick={() => setMenuOpen(false)}>
+              <div className="flex items-center gap-2 px-4 pt-4 border-t border-[#D8C9AE]/30 mt-3">
+                <Link href="/search" className="flex-1 text-center py-3 border border-[#221E1A] text-[#221E1A] text-[10px] tracking-[0.12em] uppercase font-sans" onClick={() => setMenuOpen(false)}>Search</Link>
+                <Link href="/cart" className="flex-1 text-center py-3 bg-[#221E1A] text-white text-[10px] tracking-[0.12em] uppercase font-sans flex items-center justify-center gap-1" onClick={() => setMenuOpen(false)}>
                   Cart {totalItems > 0 && `(${totalItems})`}
                 </Link>
               </div>

@@ -107,7 +107,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
         <Search
           size={16}
           strokeWidth={1.5}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6F75]/40 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#57503F]/40 pointer-events-none"
         />
         <input
           ref={inputRef}
@@ -117,13 +117,13 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search products..."
-          className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#F8F5F0] border border-[#EDE8E0] focus:border-[#8BA8A0] focus:outline-none transition-colors font-sans text-[#2D2F33]"
+          className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#F1E9DC] border border-[#E2D5C0] focus:border-[#5F7D72] focus:outline-none transition-colors font-sans text-[#221E1A]"
         />
         {query && (
           <button
             type="button"
             onClick={() => { setQuery(''); setSuggestions([]); inputRef.current?.focus() }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6F75]/40 hover:text-[#2D2F33] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#57503F]/40 hover:text-[#221E1A] transition-colors"
             aria-label="Clear search"
           >
             <X size={16} strokeWidth={1.5} />
@@ -132,13 +132,13 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
         {loading && (
           <Loader2
             size={16}
-            className="absolute right-10 top-1/2 -translate-y-1/2 text-[#8BA8A0] animate-spin"
+            className="absolute right-10 top-1/2 -translate-y-1/2 text-[#5F7D72] animate-spin"
           />
         )}
       </div>
 
       {isOpen && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#EDE8E0] shadow-lg max-h-[400px] overflow-y-auto z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E2D5C0] shadow-lg max-h-[400px] overflow-y-auto z-50">
           {suggestions.length > 0 ? (
             <>
               {suggestions.map((item, index) => (
@@ -146,11 +146,11 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
                   key={item.id}
                   href={`/products/${item.id}`}
                   onClick={() => { setIsOpen(false); onClose?.() }}
-                  className={`flex items-center gap-3 p-3 transition-colors border-b border-[#EDE8E0]/50 last:border-0 ${
-                    selectedIndex === index ? 'bg-[#F8F5F0]' : 'hover:bg-[#F8F5F0]'
+                  className={`flex items-center gap-3 p-3 transition-colors border-b border-[#E2D5C0]/50 last:border-0 ${
+                    selectedIndex === index ? 'bg-[#F1E9DC]' : 'hover:bg-[#F1E9DC]'
                   }`}
                 >
-                  <div className="relative w-12 h-12 shrink-0 overflow-hidden bg-[#EDE8E0]">
+                  <div className="relative w-12 h-12 shrink-0 overflow-hidden bg-[#E2D5C0]">
                     <OptimizedImage
                       src={item.image}
                       alt={item.name}
@@ -161,14 +161,14 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-en text-xs text-[#2D2F33] font-medium truncate">
+                    <h4 className="font-en text-xs text-[#221E1A] font-medium truncate">
                       {item.name}
                     </h4>
-                    <p className="font-sans text-[10px] text-[#6B6F75]/50 truncate">
+                    <p className="font-sans text-[10px] text-[#57503F]/50 truncate">
                       {item.subtitle}
                     </p>
                   </div>
-                  <span className="font-en text-xs font-medium text-[#2D2F33] shrink-0">
+                  <span className="font-en text-xs font-medium text-[#221E1A] shrink-0">
                     {formatPrice(convertPrice(item.price, currency), currency)}
                   </span>
                 </Link>
@@ -176,14 +176,14 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
               <Link
                 href={`/search?q=${encodeURIComponent(query)}`}
                 onClick={() => { setIsOpen(false); onClose?.() }}
-                className="block text-center py-3 text-[10px] text-[#8BA8A0] hover:bg-[#F8F5F0] transition-colors tracking-wider uppercase font-sans font-medium"
+                className="block text-center py-3 text-[10px] text-[#5F7D72] hover:bg-[#F1E9DC] transition-colors tracking-wider uppercase font-sans font-medium"
               >
                 View all results
               </Link>
             </>
           ) : !loading ? (
             <div className="p-6 text-center">
-              <p className="font-sans text-xs text-[#6B6F75]/50">
+              <p className="font-sans text-xs text-[#57503F]/50">
                 No products found for &ldquo;{query}&rdquo;
               </p>
             </div>

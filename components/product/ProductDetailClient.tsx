@@ -48,11 +48,11 @@ function getSessionId() {
  *   LINE   5%~10% 发丝分隔线，替代此前偏重的实线
  *   BTN    实心深色按钮（参考站是实心深橄榄 + 白字 + 700 字重）
  */
-const PANEL = '#FCFBF8'
-const INK = '#231F1C'
+const PANEL = '#F1E9DC'
+const INK = '#1C1814'
 const SOFT = '#5F5A54'
-const GOLD = '#8B7D5C'
-const LINE = 'rgba(35,31,28,0.10)'
+const GOLD = '#8A6A2E'
+const LINE = 'rgba(58,44,26,0.22)'
 
 /** 可折叠详情区块（右侧栏「下拉详情」） */
 function Accordion({
@@ -76,7 +76,7 @@ function Accordion({
         </span>
         <span
           className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full transition-all duration-300 group-hover:rotate-180"
-          style={{ backgroundColor: open ? INK : 'rgba(35,31,28,0.05)' }}
+          style={{ backgroundColor: open ? INK : 'rgba(58,44,26,0.10)' }}
         >
           <ChevronDown
             size={14}
@@ -375,12 +375,12 @@ export default function ProductDetailClient({
     <div className="min-h-screen" style={{ backgroundColor: PANEL }}>
       <div className="max-w-[1560px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         {/* Breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.14em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(35,31,28,0.42)' }}>
-          <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>Home</Link>
+        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.14em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(58,44,26,0.52)' }}>
+          <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>Home</Link>
           <span>/</span>
-          <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>All Objects</Link>
+          <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>All Objects</Link>
           <span>/</span>
-          <Link href={`/category/${product.category}`} className="transition-colors hover:opacity-100" style={{ color: 'rgba(35,31,28,0.55)' }}>
+          <Link href={`/category/${product.category}`} className="transition-colors hover:opacity-100" style={{ color: 'rgba(58,44,26,0.62)' }}>
             {labelFor(product.category)}
           </Link>
           <span>/</span>
@@ -388,20 +388,20 @@ export default function ProductDetailClient({
         </nav>
 
         {referralCode && (
-          <div className="mb-8 rounded-2xl border border-[#B8A06C]/20 bg-white/70 px-5 py-4">
+          <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-white/70 px-5 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8B7D5C]">
+                <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-[#8A6A2E]">
                   Social Attribution Active
                 </p>
-                <p className="mt-1 font-sans text-sm text-[#2C2C2C]">
+                <p className="mt-1 font-sans text-sm text-[#221E1A]">
                   This page is carrying social tracking parameters — your next order can be attributed back to the campaign.
                 </p>
               </div>
               <Link
                 href={buildReferralBioLandingUrl({ code: referralCode, productId: product.id, sourceChannel })}
                 className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-[11px] tracking-[0.12em] uppercase font-sans font-semibold transition-all duration-300"
-                style={{ border: `1px solid rgba(35,31,28,0.14)`, color: INK, borderRadius: 2 }}
+                style={{ border: `1px solid rgba(58,44,26,0.26)`, color: INK, borderRadius: 2 }}
               >
                 Back to Link in Bio
               </Link>
@@ -430,7 +430,7 @@ export default function ProductDetailClient({
                       aria-label={`View image ${i + 1}`}
                       className="relative aspect-[4/5] w-full overflow-hidden transition-all duration-300 hover:opacity-80"
                       style={{
-                        backgroundColor: '#F2EAE0',
+                        backgroundColor: '#E6D8C2',
                         border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                         borderRadius: 2,
                         opacity: i === selectedImage ? 1 : 0.72,
@@ -446,7 +446,7 @@ export default function ProductDetailClient({
               <div className="flex-1 min-w-0">
                 <div
                   className="pdp-media relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] overflow-hidden group cursor-zoom-in"
-                  style={{ backgroundColor: '#F2EAE0', borderRadius: 3 }}
+                  style={{ backgroundColor: '#E6D8C2', borderRadius: 3 }}
                   onClick={() => setLightbox(true)}
                 >
                   <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4 z-10" />
@@ -479,7 +479,7 @@ export default function ProductDetailClient({
                         aria-label={`View image ${i + 1}`}
                         className="relative w-16 h-16 overflow-hidden transition-opacity duration-300"
                         style={{
-                          backgroundColor: '#F2EAE0',
+                          backgroundColor: '#E6D8C2',
                           border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                           borderRadius: 2,
                           opacity: i === selectedImage ? 1 : 0.72,
@@ -523,7 +523,7 @@ export default function ProductDetailClient({
                     <Star
                       key={i}
                       size={13}
-                      className={i < Math.round(product.rating) ? 'fill-[#B8A06C] text-[#B8A06C]' : 'text-[#B8A06C]/25'}
+                      className={i < Math.round(product.rating) ? 'fill-[#A07C34] text-[#A07C34]' : 'text-[#A07C34]/25'}
                     />
                   ))}
                 </span>
@@ -541,13 +541,13 @@ export default function ProductDetailClient({
             <div className="flex items-baseline gap-3 mt-7">
               <span
                 className="font-en text-[34px] md:text-[40px] font-semibold tracking-[-0.01em]"
-                style={{ color: eff.discount > 0 ? '#B8452E' : INK }}
+                style={{ color: eff.discount > 0 ? '#A83420' : INK }}
               >
                 {formatPrice(convertPrice(eff.price, currency), currency)}
               </span>
               {eff.discount > 0 && <PromoSaleTag />}
               {(eff.originalPrice || product.originalPrice) && (
-                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(35,31,28,0.45)' }}>
+                <span className="font-sans text-[15px] line-through" style={{ color: 'rgba(58,44,26,0.55)' }}>
                   {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                 </span>
               )}
@@ -583,10 +583,10 @@ export default function ProductDetailClient({
                         </span>
                       </p>
                       {sub > 0 && (
-                        <div className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
+                        <div className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(58,44,26,0.18)' }}>
                           <div
                             className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%`, backgroundColor: '#8BA8A0' }}
+                            style={{ width: `${pct}%`, backgroundColor: '#5F7D72' }}
                           />
                         </div>
                       )}
@@ -599,7 +599,7 @@ export default function ProductDetailClient({
             {/* 库存 / 时效 */}
             <div className="mt-5 space-y-2.5">
               {lowStock ? (
-                <p className="flex items-center gap-2.5 font-sans text-[13px] font-medium" style={{ color: '#B8452E' }}>
+                <p className="flex items-center gap-2.5 font-sans text-[13px] font-medium" style={{ color: '#A83420' }}>
                   <Package size={14} strokeWidth={1.6} /> Only {stock} left in stock
                 </p>
               ) : (
@@ -619,7 +619,7 @@ export default function ProductDetailClient({
               <div className="grid grid-cols-3 gap-5 mt-7 py-6" style={{ borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
                 {specRows.map(([label, value]) => (
                   <div key={label}>
-                    <span className="font-sans text-[9px] tracking-[0.18em] uppercase font-semibold" style={{ color: 'rgba(35,31,28,0.42)' }}>{label}</span>
+                    <span className="font-sans text-[9px] tracking-[0.18em] uppercase font-semibold" style={{ color: 'rgba(58,44,26,0.52)' }}>{label}</span>
                     <p className="font-sans text-[14px] mt-1.5 leading-snug font-medium" style={{ color: INK }}>{value}</p>
                   </div>
                 ))}
@@ -628,7 +628,7 @@ export default function ProductDetailClient({
 
             {/* 数量 + 加购 */}
             <div ref={buyBoxRef} className="flex items-stretch gap-3 mt-7">
-              <div className="flex items-center" style={{ border: `1px solid rgba(35,31,28,0.14)` }}>
+              <div className="flex items-center" style={{ border: `1px solid rgba(58,44,26,0.26)` }}>
                 <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 transition-colors duration-200 hover:opacity-60" style={{ color: SOFT }} aria-label="Decrease quantity">
                   <Minus size={14} strokeWidth={1.8} />
                 </button>
@@ -651,9 +651,9 @@ export default function ProductDetailClient({
                 disabled={wishlistLoading}
                 className="px-4 transition-all duration-300 hover:-translate-y-px"
                 style={{
-                  border: `1px solid ${isWishlisted ? '#B85450' : 'rgba(35,31,28,0.14)'}`,
+                  border: `1px solid ${isWishlisted ? '#A83E33' : 'rgba(58,44,26,0.26)'}`,
                   backgroundColor: isWishlisted ? 'rgba(184,84,80,0.06)' : 'transparent',
-                  color: isWishlisted ? '#B85450' : SOFT,
+                  color: isWishlisted ? '#A83E33' : SOFT,
                   borderRadius: 2,
                 }}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -676,7 +676,7 @@ export default function ProductDetailClient({
             <Link
               href={'/messages?product=' + product.id}
               className="pdp-btn inline-flex items-center gap-2 mt-3 px-5 py-3 font-sans text-[12px] font-semibold tracking-[0.06em] transition-all duration-300 w-full justify-center hover:-translate-y-px"
-              style={{ border: `1px solid rgba(35,31,28,0.14)`, color: INK, borderRadius: 2 }}
+              style={{ border: `1px solid rgba(58,44,26,0.26)`, color: INK, borderRadius: 2 }}
             >
               <MessageCircle size={15} strokeWidth={1.7} style={{ color: GOLD }} />
               <span>Ask about this piece</span>
@@ -690,7 +690,7 @@ export default function ProductDetailClient({
                 { icon: Truck, text: 'Free Damaged Replacement' },
                 { icon: RotateCcw, text: '30-Day Money Back' },
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: 'rgba(35,31,28,0.55)' }}>
+                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: 'rgba(58,44,26,0.62)' }}>
                   <item.icon size={13} strokeWidth={1.7} style={{ color: GOLD }} /> {item.text}
                 </div>
               ))}
@@ -716,7 +716,7 @@ export default function ProductDetailClient({
                   <dl className="space-y-2.5">
                     {specRows.map(([label, value]) => (
                       <div key={label} className="flex gap-4">
-                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.18em] uppercase font-semibold pt-1" style={{ color: 'rgba(35,31,28,0.42)' }}>{label}</dt>
+                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.18em] uppercase font-semibold pt-1" style={{ color: 'rgba(58,44,26,0.52)' }}>{label}</dt>
                         <dd className="text-[14px] font-medium" style={{ color: INK }}>{value}</dd>
                       </div>
                     ))}
@@ -782,7 +782,7 @@ export default function ProductDetailClient({
                 </h2>
                 {product.reviewCount > 0 && (
                   <span className="flex items-center gap-1.5 font-sans text-[12px] font-medium" style={{ color: SOFT }}>
-                    <Star size={12} className="fill-[#B8A06C] text-[#B8A06C]" /> {product.rating}
+                    <Star size={12} className="fill-[#A07C34] text-[#A07C34]" /> {product.rating}
                   </span>
                 )}
               </div>
@@ -812,12 +812,12 @@ export default function ProductDetailClient({
                           </div>
                           <div className="min-w-0">
                             <p className="font-sans text-[13px] font-semibold truncate" style={{ color: INK }}>{review.author}</p>
-                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(35,31,28,0.42)' }}>{review.location} · {review.date}</p>
+                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(58,44,26,0.52)' }}>{review.location} · {review.date}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-[2px] shrink-0">
                           {Array(review.rating).fill(0).map((_, j) => (
-                            <Star key={j} size={11} className="fill-[#B8A06C] text-[#B8A06C]" />
+                            <Star key={j} size={11} className="fill-[#A07C34] text-[#A07C34]" />
                           ))}
                         </div>
                       </div>

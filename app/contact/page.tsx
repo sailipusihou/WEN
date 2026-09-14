@@ -19,40 +19,40 @@ export default function ContactPage() {
   }
 
   if (sent) return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-[#F8F5F0]">
+    <div className="min-h-[70vh] flex items-center justify-center bg-[#F1E9DC]">
       <div className="text-center max-w-md mx-auto px-6">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#EDE8DC]/50 flex items-center justify-center">
-          <Mail size={28} strokeWidth={1} className="text-[#8B7D5C]" />
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#DDCEB4]/50 flex items-center justify-center">
+          <Mail size={28} strokeWidth={1} className="text-[#8A6A2E]" />
         </div>
-        <h1 className="font-en text-2xl md:text-3xl text-[#2C2C2C] font-semibold tracking-tight mb-2">Message Sent</h1>
-        <p className="font-sans text-sm text-[#6B6B6B]/60 mb-8">Thank you for reaching out. We will respond within 24 hours.</p>
-        <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#2C2C2C] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">Back to Home</Link>
+        <h1 className="font-en text-2xl md:text-3xl text-[#221E1A] font-semibold tracking-tight mb-2">Message Sent</h1>
+        <p className="font-sans text-sm text-[#57503F]/60 mb-8">Thank you for reaching out. We will respond within 24 hours.</p>
+        <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#221E1A] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">Back to Home</Link>
       </div>
     </div>
   )
 
   return (
-    <div className="bg-[#F8F5F0] min-h-screen">
+    <div className="bg-[#F1E9DC] min-h-screen">
       <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 py-12 md:py-20">
-        <Link href="/" className="inline-flex items-center gap-1 font-sans text-xs text-[#6B6B6B]/50 hover:text-[#2C2C2C] transition-colors mb-8 tracking-wider uppercase">
+        <Link href="/" className="inline-flex items-center gap-1 font-sans text-xs text-[#57503F]/50 hover:text-[#221E1A] transition-colors mb-8 tracking-wider uppercase">
           <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Home
         </Link>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="font-sans text-[10px] text-[#B8A06C] tracking-[0.15em] uppercase font-medium">Get in Touch</span>
-            <h1 className="font-en text-3xl md:text-5xl text-[#2C2C2C] font-semibold mt-2 tracking-tight">Contact</h1>
-            <p className="font-sans text-sm text-[#6B6B6B]/60 mt-3 leading-relaxed max-w-sm">
+            <span className="font-sans text-[10px] text-[#A07C34] tracking-[0.15em] uppercase font-medium">Get in Touch</span>
+            <h1 className="font-en text-3xl md:text-5xl text-[#221E1A] font-semibold mt-2 tracking-tight">Contact</h1>
+            <p className="font-sans text-sm text-[#57503F]/60 mt-3 leading-relaxed max-w-sm">
               Questions about a piece, need help with an order, or want to learn more about our artisans? We would love to hear from you.
             </p>
             <div className="space-y-3 mt-8">
-              <div className="flex items-center gap-3 text-sm font-sans text-[#6B6B6B]/60">
-                <Mail size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> hello@lowflame.store
+              <div className="flex items-center gap-3 text-sm font-sans text-[#57503F]/60">
+                <Mail size={14} strokeWidth={1.5} className="text-[#8A6A2E] shrink-0" /> hello@lowflame.store
               </div>
-              <div className="flex items-center gap-3 text-sm font-sans text-[#6B6B6B]/60">
-                <MapPin size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> Shanghai, China
+              <div className="flex items-center gap-3 text-sm font-sans text-[#57503F]/60">
+                <MapPin size={14} strokeWidth={1.5} className="text-[#8A6A2E] shrink-0" /> Shanghai, China
               </div>
-              <div className="flex items-center gap-3 text-sm font-sans text-[#6B6B6B]/60">
-                <Clock size={14} strokeWidth={1.5} className="text-[#8B7D5C] shrink-0" /> Mon-Sat 9:00-18:00 CST
+              <div className="flex items-center gap-3 text-sm font-sans text-[#57503F]/60">
+                <Clock size={14} strokeWidth={1.5} className="text-[#8A6A2E] shrink-0" /> Mon-Sat 9:00-18:00 CST
               </div>
             </div>
           </motion.div>
@@ -62,7 +62,7 @@ export default function ContactPage() {
             <input type="text" value={form.subject} onChange={e => setForm(p => ({ ...p, subject: e.target.value }))} placeholder="Subject *" required className="input-premium" />
             <textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} placeholder="Your Message *" required rows={5} className="input-premium resize-none" />
             <button type="submit" disabled={sending}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#2C2C2C] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#221E1A] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors disabled:opacity-50">
               <Send size={14} strokeWidth={1.5} /> {sending ? 'Sending...' : 'Send Message'}
             </button>
           </motion.form>

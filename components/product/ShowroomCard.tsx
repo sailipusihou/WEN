@@ -95,7 +95,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           style={tilt as React.CSSProperties}
-          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#EDE8E0] bg-white shadow-soft will-change-transform"
+          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#E2D5C0] bg-white shadow-soft will-change-transform"
         >
           {/* Cursor glow */}
           <div
@@ -138,7 +138,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           )}
 
           {/* Number */}
-          <span className="absolute top-3 left-3 z-10 font-en text-[10px] tracking-[0.25em] text-[#A0885A]">
+          <span className="absolute top-3 left-3 z-10 font-en text-[10px] tracking-[0.25em] text-[#A07C34]">
             {String(index + 1).padStart(2, '0')}
           </span>
 
@@ -166,23 +166,23 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           </button>
 
           {/* Glass info bar */}
-          <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-white/85 backdrop-blur-md border-t border-[#E5DFD5]">
+          <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-white/85 backdrop-blur-md border-t border-[#D8C9AE]">
             <div className="min-w-0">
-              <h3 className="font-en text-sm md:text-base text-[#2D2F33] font-medium truncate">
+              <h3 className="font-en text-sm md:text-base text-[#221E1A] font-medium truncate">
                 {product.nameEn || product.name}
               </h3>
-              <p className="font-sans text-[10px] text-[#6B6F75]/60 truncate mt-0.5">
+              <p className="font-sans text-[10px] text-[#57503F]/60 truncate mt-0.5">
                 {product.subtitleEn || product.subtitle}
               </p>
             </div>
             <div className="shrink-0 text-right">
               {/* 促销价重点标注: 强调色 + SALE 标签 */}
-              <span className={`font-en text-sm block ${eff.discount > 0 ? 'text-[#B8452E] font-semibold' : 'text-[#A0885A]'}`}>
+              <span className={`font-en text-sm block ${eff.discount > 0 ? 'text-[#A83420] font-semibold' : 'text-[#A07C34]'}`}>
                 {formatPrice(convertPrice(eff.price, currency), currency)}
                 {eff.discount > 0 && <PromoSaleTag />}
               </span>
               {eff.originalPrice && (
-                <span className="font-sans text-[11px] text-[#6B6F75]/70 line-through block">
+                <span className="font-sans text-[11px] text-[#57503F]/70 line-through block">
                   {formatPrice(convertPrice(eff.originalPrice, currency), currency)}
                 </span>
               )}

@@ -30,7 +30,7 @@ export function PromoImageBadge({
       : 0
   return (
     <div
-      className={`absolute ${className} z-10 flex flex-col items-start gap-0.5 rounded-sm bg-[#B8452E]/95 px-2 py-1 shadow-md backdrop-blur-sm`}
+      className={`absolute ${className} z-10 flex flex-col items-start gap-0.5 rounded-sm bg-[#A83420]/95 px-2 py-1 shadow-md backdrop-blur-sm`}
     >
       <span className="font-sans text-[10px] font-bold tracking-[0.14em] text-white uppercase">
         Sale
@@ -48,7 +48,7 @@ export function PromoImageBadge({
 // 价格区 SALE 标签 (仅真实促销时渲染)
 export function PromoSaleTag() {
   return (
-    <span className="ml-1.5 inline-block align-middle rounded-sm bg-[#B8452E] px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-[0.12em] text-white uppercase">
+    <span className="ml-1.5 inline-block align-middle rounded-sm bg-[#A83420] px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-[0.12em] text-white uppercase">
       Sale
     </span>
   )
@@ -56,5 +56,5 @@ export function PromoSaleTag() {
 
 // 促销价颜色类: 有促销活动时用强调色 (红棕), 否则使用调用方传入的常规色
 export function promoPriceClass(eff: PromoEff | null | undefined, normal: string): string {
-  return eff && eff.discount > 0 ? 'text-[#B8452E] font-semibold' : normal
+  return eff && eff.discount > 0 ? 'text-[#A83420] font-semibold' : normal
 }

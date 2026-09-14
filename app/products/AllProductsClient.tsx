@@ -139,13 +139,13 @@ export default function AllProductsClient({ products: initialProducts }: { produ
   const hasActiveFilters = search || category || priceRange > 0 || featuredOnly
 
   return (
-    <div className="bg-[#F8F5F0] min-h-screen">
+    <div className="bg-[#F1E9DC] min-h-screen">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-8 pb-4">
-        <nav className="flex items-center gap-2 font-sans text-[10px] text-[#6B6B6B]/50 tracking-wider uppercase mb-6">
-          <Link href="/" className="hover:text-[#2C2C2C] transition-colors">Home</Link>
+        <nav className="flex items-center gap-2 font-sans text-[10px] text-[#57503F]/50 tracking-wider uppercase mb-6">
+          <Link href="/" className="hover:text-[#221E1A] transition-colors">Home</Link>
           <span>/</span>
-          <span className="text-[#8B7D5C]">All Objects</span>
+          <span className="text-[#8A6A2E]">All Objects</span>
         </nav>
       </div>
 
@@ -153,25 +153,25 @@ export default function AllProductsClient({ products: initialProducts }: { produ
         {/* Title + Controls */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-6">
           <div>
-            <h1 className="font-en text-3xl md:text-5xl text-[#2C2C2C] font-semibold tracking-tight">All Objects</h1>
-            <p className="font-sans text-sm text-[#6B6B6B]/60 mt-2">{total} pieces</p>
+            <h1 className="font-en text-3xl md:text-5xl text-[#221E1A] font-semibold tracking-tight">All Objects</h1>
+            <p className="font-sans text-sm text-[#57503F]/60 mt-2">{total} pieces</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {/* Search */}
             <div className="relative">
-              <Search size={14} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]/30" />
+              <Search size={14} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#57503F]/30" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-40 md:w-52 pl-9 pr-9 py-2.5 border border-[#EDE8DC] bg-white/80 text-sm font-sans text-[#2C2C2C] placeholder:text-[#6B6B6B]/30 focus:outline-none focus:border-[#B8A06C]/50 transition-colors"
+                className="w-40 md:w-52 pl-9 pr-9 py-2.5 border border-[#DDCEB4] bg-white/80 text-sm font-sans text-[#221E1A] placeholder:text-[#57503F]/30 focus:outline-none focus:border-[#A07C34]/50 transition-colors"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]/30 hover:text-[#2C2C2C] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#57503F]/30 hover:text-[#221E1A] transition-colors"
                   aria-label="Clear search"
                 >
                   <X size={14} strokeWidth={1.5} />
@@ -182,7 +182,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             <select
               value={sort}
               onChange={e => setSort(e.target.value as SortOption)}
-              className="px-3 py-2.5 border border-[#EDE8DC] bg-white/80 text-sm font-sans text-[#2C2C2C] focus:outline-none focus:border-[#B8A06C]/50 transition-colors cursor-pointer"
+              className="px-3 py-2.5 border border-[#DDCEB4] bg-white/80 text-sm font-sans text-[#221E1A] focus:outline-none focus:border-[#A07C34]/50 transition-colors cursor-pointer"
             >
               <option value="default">Featured</option>
               <option value="price-asc">Price: Low to High</option>
@@ -194,20 +194,20 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 border text-sm font-sans transition-colors ${showFilters ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]' : 'bg-white/80 text-[#2C2C2C] border-[#EDE8DC] hover:border-[#B8A06C]/50'}`}
+              className={`flex items-center gap-1.5 px-3 py-2.5 border text-sm font-sans transition-colors ${showFilters ? 'bg-[#221E1A] text-white border-[#221E1A]' : 'bg-white/80 text-[#221E1A] border-[#DDCEB4] hover:border-[#A07C34]/50'}`}
             >
               <SlidersHorizontal size={14} strokeWidth={1.5} />
               <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && (
-                <span className="w-1.5 h-1.5 bg-[#8B7D5C] rounded-full" />
+                <span className="w-1.5 h-1.5 bg-[#8A6A2E] rounded-full" />
               )}
             </button>
             {/* View toggle */}
-            <div className="flex items-center border border-[#EDE8DC] overflow-hidden">
+            <div className="flex items-center border border-[#DDCEB4] overflow-hidden">
               <button
                 type="button"
                 onClick={() => setView("grid")}
-                className={"p-2.5 transition-colors " + (view === "grid" ? "bg-[#2C2C2C] text-white" : "bg-white/80 text-[#6B6B6B]/50 hover:text-[#2C2C2C]")}
+                className={"p-2.5 transition-colors " + (view === "grid" ? "bg-[#221E1A] text-white" : "bg-white/80 text-[#57503F]/50 hover:text-[#221E1A]")}
                 aria-label="Grid view"
               >
                 <Grid3X3 size={14} strokeWidth={1.5} />
@@ -215,7 +215,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               <button
                 type="button"
                 onClick={() => setView("list")}
-                className={"p-2.5 transition-colors " + (view === "list" ? "bg-[#2C2C2C] text-white" : "bg-white/80 text-[#6B6B6B]/50 hover:text-[#2C2C2C]")}
+                className={"p-2.5 transition-colors " + (view === "list" ? "bg-[#221E1A] text-white" : "bg-white/80 text-[#57503F]/50 hover:text-[#221E1A]")}
                 aria-label="List view"
               >
                 <List size={14} strokeWidth={1.5} />
@@ -230,19 +230,19 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-white/60 border border-[#EDE8DC]/50 p-5 mb-6 overflow-hidden"
+            className="bg-white/60 border border-[#DDCEB4]/50 p-5 mb-6 overflow-hidden"
           >
             <div className="flex flex-wrap gap-6">
               {/* Category */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#6B6B6B]/60 tracking-[0.15em] uppercase font-medium mb-2">Category</h4>
+                <h4 className="font-sans text-[9px] text-[#57503F]/60 tracking-[0.15em] uppercase font-medium mb-2">Category</h4>
                 <div className="flex flex-wrap gap-2">
                   {[{ slug: '', label: 'All' }, ...categories.map(c => ({ slug: c.slug, label: c.nameEn || c.name }))].map(cat => (
                     <button
                       key={cat.slug || 'all'}
                       type="button"
                       onClick={() => setCategory(cat.slug)}
-                      className={`px-3 py-1.5 text-xs font-sans transition-colors ${category === cat.slug ? 'bg-[#2C2C2C] text-white' : 'bg-white/80 text-[#4A4D52] border border-[#EDE8DC] hover:border-[#B8A06C]/50'}`}
+                      className={`px-3 py-1.5 text-xs font-sans transition-colors ${category === cat.slug ? 'bg-[#221E1A] text-white' : 'bg-white/80 text-[#403A31] border border-[#DDCEB4] hover:border-[#A07C34]/50'}`}
                     >
                       {cat.label}
                     </button>
@@ -251,14 +251,14 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               </div>
               {/* Price */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#6B6B6B]/60 tracking-[0.15em] uppercase font-medium mb-2">Price Range</h4>
+                <h4 className="font-sans text-[9px] text-[#57503F]/60 tracking-[0.15em] uppercase font-medium mb-2">Price Range</h4>
                 <div className="flex flex-wrap gap-2">
                   {PRICE_RANGES.map((range, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setPriceRange(i)}
-                      className={`px-3 py-1.5 text-xs font-sans transition-colors ${priceRange === i ? 'bg-[#2C2C2C] text-white' : 'bg-white/80 text-[#4A4D52] border border-[#EDE8DC] hover:border-[#B8A06C]/50'}`}
+                      className={`px-3 py-1.5 text-xs font-sans transition-colors ${priceRange === i ? 'bg-[#221E1A] text-white' : 'bg-white/80 text-[#403A31] border border-[#DDCEB4] hover:border-[#A07C34]/50'}`}
                     >
                       {range.label}
                     </button>
@@ -267,22 +267,22 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               </div>
               {/* Featured */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#6B6B6B]/60 tracking-[0.15em] uppercase font-medium mb-2">Special</h4>
+                <h4 className="font-sans text-[9px] text-[#57503F]/60 tracking-[0.15em] uppercase font-medium mb-2">Special</h4>
                 <button
                   type="button"
                   onClick={() => setFeaturedOnly(!featuredOnly)}
-                  className={`px-3 py-1.5 text-xs font-sans transition-colors ${featuredOnly ? 'bg-[#2C2C2C] text-white' : 'bg-white/80 text-[#4A4D52] border border-[#EDE8DC] hover:border-[#B8A06C]/50'}`}
+                  className={`px-3 py-1.5 text-xs font-sans transition-colors ${featuredOnly ? 'bg-[#221E1A] text-white' : 'bg-white/80 text-[#403A31] border border-[#DDCEB4] hover:border-[#A07C34]/50'}`}
                 >
                   Featured Only
                 </button>
               </div>
             </div>
             {hasActiveFilters && (
-              <div className="mt-4 pt-4 border-t border-[#EDE8DC]/50">
+              <div className="mt-4 pt-4 border-t border-[#DDCEB4]/50">
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-[10px] text-[#8B7D5C] hover:underline font-sans tracking-wider uppercase"
+                  className="text-[10px] text-[#8A6A2E] hover:underline font-sans tracking-wider uppercase"
                 >
                   Clear All Filters
                 </button>
@@ -293,12 +293,12 @@ export default function AllProductsClient({ products: initialProducts }: { produ
 
         {products.length === 0 && !loading ? (
           <div className="text-center py-20">
-            <p className="font-sans text-[#6B6B6B]/50 text-base">No objects found</p>
+            <p className="font-sans text-[#57503F]/50 text-base">No objects found</p>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-xs text-[#8B7D5C] hover:underline mt-2 font-sans"
+                className="text-xs text-[#8A6A2E] hover:underline mt-2 font-sans"
               >
                 Clear filters
               </button>
@@ -321,9 +321,9 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.02, 0.4) }}
-                  className="bg-white/70 border border-[#EDE8DC]/50 p-4 flex items-center gap-4 hover:bg-white transition-colors"
+                  className="bg-white/70 border border-[#DDCEB4]/50 p-4 flex items-center gap-4 hover:bg-white transition-colors"
                 >
-                  <Link href={"/products/" + product.id} className="relative w-16 h-16 shrink-0 overflow-hidden bg-[#EDE8E0]">
+                  <Link href={"/products/" + product.id} className="relative w-16 h-16 shrink-0 overflow-hidden bg-[#E2D5C0]">
                     <Image
                       src={product.image}
                       alt={product.nameEn || product.name}
@@ -335,18 +335,18 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                     />
                   </Link>
                   <div className="flex-1 min-w-0">
-                    <Link href={"/products/" + product.id} className="font-en text-sm text-[#2C2C2C] hover:text-[#8B7D5C] transition-colors font-medium">
+                    <Link href={"/products/" + product.id} className="font-en text-sm text-[#221E1A] hover:text-[#8A6A2E] transition-colors font-medium">
                       {product.nameEn || product.name}
                     </Link>
-                    <p className="font-sans text-[11px] text-[#6B6B6B]/50 mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
+                    <p className="font-sans text-[11px] text-[#57503F]/50 mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`font-en text-base font-medium ${promoPriceClass(eff, 'text-[#2C2C2C]')}`}>
+                    <p className={`font-en text-base font-medium ${promoPriceClass(eff, 'text-[#221E1A]')}`}>
                       {formatPrice(convertPrice(eff.price, currency), currency)}
                       {eff.discount > 0 && <PromoSaleTag />}
                     </p>
                     {(eff.originalPrice || product.originalPrice) && (
-                      <p className="font-sans text-sm text-[#6B6B6B]/60 line-through">
+                      <p className="font-sans text-sm text-[#57503F]/60 line-through">
                         {formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}
                       </p>
                     )}
@@ -360,10 +360,10 @@ export default function AllProductsClient({ products: initialProducts }: { produ
         {/* Infinite scroll loader */}
         <div ref={loaderRef} className="mt-12 flex justify-center">
           {loading && (
-            <Loader2 size={24} className="text-[#8B7D5C] animate-spin" />
+            <Loader2 size={24} className="text-[#8A6A2E] animate-spin" />
           )}
           {!hasMore && products.length > 0 && !loading && (
-            <p className="font-sans text-[10px] text-[#6B6B6B]/40 tracking-wider uppercase">
+            <p className="font-sans text-[10px] text-[#57503F]/40 tracking-wider uppercase">
               You&apos;ve reached the end
             </p>
           )}
@@ -372,7 +372,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
         <div className="mt-16 text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#2C2C2C] transition-colors tracking-wider uppercase font-sans font-medium"
+            className="inline-flex items-center gap-1.5 text-xs text-[#57503F] hover:text-[#221E1A] transition-colors tracking-wider uppercase font-sans font-medium"
           >
             <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Home
           </Link>

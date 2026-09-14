@@ -224,7 +224,7 @@ export default function OrderDetailPage() {
                         {[1, 2, 3, 4, 5].map(n => (
                           <button key={n} type="button" onClick={() => setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, rating: n } }))}
                             aria-label={`${n} star${n > 1 ? "s" : ""}`} className="p-0.5">
-                            <Star size={16} className={n <= rv.rating ? "fill-[#B8A06C] text-[#B8A06C]" : "text-[#D8CFC0]"} />
+                            <Star size={16} className={n <= rv.rating ? "fill-[#A07C34] text-[#A07C34]" : "text-[#D8CFC0]"} />
                           </button>
                         ))}
                         <span className="font-sans text-[11px] text-otb-ink/50 ml-2">{rv.rating}/5</span>

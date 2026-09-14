@@ -61,7 +61,7 @@ export interface HeroContent {
   videoFit?: 'cover' | 'contain' // 视频填充模式, 默认 cover
 
   // === 新增: 背景颜色与对比度调节 ===
-  heroColorTint?: string        // 背景叠层颜色 (十六进制, 如 "#2D2F33")
+  heroColorTint?: string        // 背景叠层颜色 (十六进制, 如 "#221E1A")
   heroColorTintOpacity?: number // 颜色叠层不透明度, 0-100, 默认 40
   heroBrightness?: number       // 背景亮度, 20-200, 默认 100 (%)
   heroContrast?: number         // 背景对比度, 50-200, 默认 100 (%)
@@ -524,8 +524,8 @@ export const DEFAULTS: SiteSettings = {
   heroTitle: "Artisanal Treasures",
   heroSubtitle: "Hand-selected ceramics, silk, bamboo, and paper-cut art from master craftspeople across China.",
   heroBackgroundImage: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=1920&q=80",
-  primaryColor: "#2D2F33",
-  accentColor: "#8BA8A0",
+  primaryColor: "#221E1A",
+  accentColor: "#5F7D72",
   featuredProductIds: [],
   aboutText: "Low Flame — contemporary craftsmanship with quiet character.",
   footerEmail: "hello@lowflame.store",
@@ -567,7 +567,7 @@ export const DEFAULTS: SiteSettings = {
   customerTiers: [
     { id: "new", name: "New", minOrders: 0, maxOrders: 0, stars: 1, color: "#3b82f6", bgColor: "#dbeafe" },
     { id: "bronze", name: "Bronze", minOrders: 1, maxOrders: 2, stars: 2, color: "#b45309", bgColor: "#fef3c7" },
-    { id: "silver", name: "Silver", minOrders: 3, maxOrders: 5, stars: 3, color: "#6b7280", bgColor: "#f3f4f6" },
+    { id: "silver", name: "Silver", minOrders: 3, maxOrders: 5, stars: 3, color: "#6b7280", bgColor: "#F2EADF" },
     { id: "gold", name: "Gold", minOrders: 6, maxOrders: 10, stars: 4, color: "#f59e0b", bgColor: "#fefce8" },
     { id: "vip", name: "VIP", minOrders: 11, maxOrders: 9999, stars: 5, color: "#e11d48", bgColor: "#fef2f2" },
   ],

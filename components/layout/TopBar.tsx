@@ -13,10 +13,10 @@ export default function TopBar() {
   if (!visible) return null
 
   return (
-    <div className="relative z-40 bg-[#2D2F33]/80 backdrop-blur-md text-white/76 text-[11px] py-1.5 px-4 font-sans tracking-[0.12em] uppercase">
+    <div className="relative z-40 bg-[#221E1A]/80 backdrop-blur-md text-white/76 text-[11px] py-1.5 px-4 font-sans tracking-[0.12em] uppercase">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <p>
-          <span className="text-[#8BA8A0]">◈</span>
+          <span className="text-[#5F7D72]">◈</span>
           {' '}Handcrafted in small batches · Shipped worldwide
         </p>
         <button
