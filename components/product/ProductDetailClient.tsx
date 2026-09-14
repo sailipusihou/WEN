@@ -107,7 +107,7 @@ export default function ProductDetailClient({
   product: Product | null
   reviews: Review[]
 }) {
-  const { addItem } = useCart()
+  const { addItem, subtotal: cartSubtotal } = useCart()
   const { currency } = useCurrency()
   const { addToast } = useToast()
   const eff = useProductPrice(product)
@@ -550,6 +550,45 @@ export default function ProductDetailClient({
                 </span>
               )}
             </div>
+
+            {/* 免邮目标：在挑商品的阶段就把门槛立起来（购物车/结算页也有，这里更早）
+                门槛来自分区值（zone.freeThreshold），与真实免邮判定完全一致 */}
+            {(() => {
+              const th = shipping?.freeThreshold || 0
+              if (!th) return null
+              const sub = cartSubtotal || 0
+              const remain = Math.max(0, th - sub)
+              const pct = Math.min(100, Math.round((sub / th) * 100))
+              const unlocked = remain <= 0 && sub > 0
+              return (
+                <div className="mt-5">
+                  {unlocked ? (
+                    <p className="flex items-center gap-2 font-sans text-[13px] font-medium" style={{ color: '#2E7D5B' }}>
+                      <Check size={14} strokeWidth={2.2} /> You&apos;ve unlocked free shipping
+                    </p>
+                  ) : (
+                    <>
+                      <p className="flex items-center gap-2 font-sans text-[13px]" style={{ color: SOFT }}>
+                        <Truck size={14} strokeWidth={1.6} style={{ color: GOLD }} />
+                        {sub > 0 ? (
+                          <>Add <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(remain, currency), currency)}</strong> more for free shipping</>
+                        ) : (
+                          <>Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(th, currency), currency)}</strong></>
+                        )}
+                      </p>
+                      {sub > 0 && (
+                        <div className="h-1.5 rounded-full overflow-hidden mt-2.5" style={{ backgroundColor: 'rgba(35,31,28,0.08)' }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%`, backgroundColor: '#8BA8A0' }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* 库存 / 时效 */}
             <div className="mt-5 space-y-2.5">
