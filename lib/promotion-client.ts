@@ -53,3 +53,23 @@ export function useProductPrice(product: { id: string; category: string; price: 
   if (!product) return { price: 0, originalPrice: undefined, discount: 0, promoName: undefined }
   return computePromotionForProduct(product, promotions)
 }
+
+/**
+ * 购物车「促销后」小计。
+ *
+ * 购物车项存的是**基础价**（CartContext.addItem 传的是 product.price），
+ * 而购物车页/结算页/服务端下单都会再套一次促销价，
+ * 所以任何展示小计的地方都必须走这条路，否则会出现：
+ *   底部购物车条显示 $93.33，购物车页却显示 $74.66 —— 客户会认为算错了。
+ * 免邮进度也必须用促销后小计，因为服务端 calculateShipping 收到的就是这个值。
+ */
+export function useDiscountedCartSubtotal(items: { id: string; category?: string; price: number; quantity: number }[]): number {
+  const promotions = useActivePromotions()
+  return items.reduce((sum, it) => {
+    const eff = computePromotionForProduct(
+      { id: it.id, category: it.category || '', price: it.price },
+      promotions
+    )
+    return sum + eff.price * it.quantity
+  }, 0)
+}

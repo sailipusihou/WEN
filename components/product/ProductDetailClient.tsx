@@ -16,7 +16,7 @@ import type { Product, Review } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import ProductCard from '@/components/product/ProductCard'
 import StickyBuyBar from '@/components/product/StickyBuyBar'
-import { useProductPrice } from '@/lib/promotion-client'
+import { useProductPrice, useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
 import { trackReferralVisit } from '@/lib/referral-client'
@@ -107,7 +107,9 @@ export default function ProductDetailClient({
   product: Product | null
   reviews: Review[]
 }) {
-  const { addItem, subtotal: cartSubtotal } = useCart()
+  const { addItem, items: cartItems } = useCart()
+  // 免邮进度/小计一律用「促销后」金额，与购物车页、结算页、服务端 calculateShipping 口径一致
+  const cartSubtotal = useDiscountedCartSubtotal(cartItems)
   const { currency } = useCurrency()
   const { addToast } = useToast()
   const eff = useProductPrice(product)

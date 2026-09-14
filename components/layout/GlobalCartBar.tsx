@@ -19,11 +19,14 @@ import { ShoppingBag, X, ArrowRight } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
+import { useDiscountedCartSubtotal } from '@/lib/promotion-client'
 
 const INK = '#231F1C'
 
 export default function GlobalCartBar() {
-  const { items, totalItems, subtotal } = useCart()
+  const { items, totalItems } = useCart()
+  // 用促销后小计：与购物车页/结算页口径一致（购物车项存的是基础价）
+  const subtotal = useDiscountedCartSubtotal(items)
   const { currency } = useCurrency()
   const pathname = usePathname()
   const [closed, setClosed] = useState(false)

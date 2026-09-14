@@ -21,6 +21,7 @@ import { ShoppingBag, Minus, Plus, Zap } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
+import { useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import type { Product } from '@/lib/products'
 
 const INK = '#231F1C'
@@ -73,8 +74,8 @@ export default function StickyBuyBar({
     router.push('/checkout')
   }
 
-  // 免邮进度（购物车小计 → 门槛）
-  const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  // 免邮进度（购物车小计 → 门槛）—— 用促销后小计，与购物车页/结算页一致
+  const subtotalUsd = useDiscountedCartSubtotal(items)
   const remain = freeThreshold && freeThreshold > 0 ? Math.max(0, freeThreshold - subtotalUsd) : 0
   const showShip = !!freeThreshold && freeThreshold > 0 && subtotalUsd > 0 && remain > 0
 
