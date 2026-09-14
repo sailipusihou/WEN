@@ -30,11 +30,20 @@ export default function GlobalCartBar() {
   const { currency } = useCurrency()
   const pathname = usePathname()
   const [closed, setClosed] = useState(false)
+  // 延迟出现：点 PDP 的「立即购买」会先加购再 router.push('/checkout')，
+  // 加购瞬间购物车变非空，底部这条就会闪一下再因为跳转到 /checkout 而消失 —— 很难看。
+  // 等购物车稳定非空 700ms 再滑上来，快跳转就不会闪。
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (items.length === 0) { setSettled(false); return }
+    const t = setTimeout(() => setSettled(true), 700)
+    return () => clearTimeout(t)
+  }, [items.length])
 
   // 换页时把「已关闭」重置为「显示」以外的判断交给 closed 保留：
   // 用户主动关掉就尊重他的选择（同一次会话内不再弹），刷新后才回来。
   const onCartPage = pathname === '/cart' || pathname === '/checkout'
-  const visible = !closed && !onCartPage && items.length > 0
+  const visible = !closed && !onCartPage && items.length > 0 && settled
 
   // 给页面底部留出空间，避免遮住页脚最后一行
   useEffect(() => {

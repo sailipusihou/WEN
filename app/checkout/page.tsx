@@ -8,7 +8,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { getOrCreateVisitorId, getStoredReferralChannel, getStoredReferralCode } from '@/lib/referral-client'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
-import WalletButtons from '@/components/checkout/WalletButtons'
+import WalletButtons, { type WalletContact } from '@/components/checkout/WalletButtons'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
@@ -297,13 +297,26 @@ export default function CheckoutPage() {
   // 这样「找不到订单就拒绝 capture」，孤儿扣款在结构上不可能发生。
   const pendingOrderRef = useRef<string | null>(null)
 
-  const createPendingOrder = async (): Promise<string> => {
+  const createPendingOrder = async (contact?: WalletContact): Promise<string> => {
+    // Express Checkout：钱包回传的收货信息覆盖表单里空着的字段。
+    // 服务端按 shipping.country 重新核算运费与总价，所以国家名对得上就不会算错钱。
+    const merged: typeof shipping = { ...shipping }
+    if (contact) {
+      for (const [k, v] of Object.entries(contact)) {
+        const val = v == null ? '' : String(v).trim()
+        if (val) (merged as any)[k] = val
+      }
+      // 同步到表单，让右侧 Order Summary 与地址栏立刻反映钱包地址
+      setShipping(merged)
+      if (merged.email) setUserEmail(merged.email)
+    }
+
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: discountedItems,
-        shipping,
+        shipping: merged,
         subtotal: discountedSubtotal,
         shippingCost,
         discount: couponDiscount,
@@ -311,7 +324,7 @@ export default function CheckoutPage() {
         total: totalPrice,
         currency,
         notes: `Payment: PayPal`,
-        userEmail,
+        userEmail: merged.email || userEmail,
         paymentMethod: 'paypal',
         paypalTransaction: null,
         referralCode: referralCode || undefined,
@@ -328,9 +341,9 @@ export default function CheckoutPage() {
 
   // 把「建单 → 创建 PayPal 订单」抽出来共用：PayPal 按钮、Google Pay、Apple Pay
   // 三条入口最后都汇到这一个函数，保证金额口径与订单落库逻辑只有一份实现。
-  const createPayPalOrderId = async (): Promise<string> => {
+  const createPayPalOrderId = async (contact?: WalletContact): Promise<string> => {
     // 1) 先建站内订单（服务端核价、落库为 unpaid）
-    const orderId = await createPendingOrder()
+    const orderId = await createPendingOrder(contact)
     // 2) 再按服务端确认的订单总额创建 PayPal 订单（金额不接受客户端指定）
     const res = await fetch('/api/create-paypal-order', {
       method: 'POST',
@@ -645,6 +658,35 @@ export default function CheckoutPage() {
         </ol>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
+            {/* Express Checkout —— 放在最顶部，和参考站一致：
+                客户可以一个点击用钱包里的卡付掉，跳过下面整张表单。
+                组件自己判断有没有可用钱包；都不可用就整块不渲染。 */}
+            {paymentMethod === 'paypal' && (
+              paypalReady ? (
+                <WalletButtons
+                  paypal={paypalInstance}
+                  masterEnabled={wallets.enabled}
+                  allowApplePay={wallets.applePay !== false}
+                  allowGooglePay={wallets.googlePay !== false}
+                  amount={convertPrice(totalPrice, 'USD').toFixed(2)}
+                  currency="USD"
+                  layout="row"
+                  title="Express Checkout"
+                  subtitle="Skip the form — pay in one tap with a saved card."
+                  createOrderId={createPayPalOrderId}
+                  captureOrder={captureAndFinalize}
+                  onError={(m) => setPaypalError(m)}
+                  setProcessing={setProcessing}
+                />
+              ) : paypalLoading ? (
+                <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
+                  <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-4">Express Checkout</h2>
+                  <div className="flex items-center justify-center gap-2 py-3 font-sans text-xs tracking-[0.08em] uppercase text-[#5A4A36]/60">
+                    <Loader2 size={14} className="animate-spin" /> Loading payment options...
+                  </div>
+                </div>
+              ) : null
+            )}
             {referralInfo && (
               <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
                 <p className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-3">Attribution Active</p>
@@ -828,22 +870,9 @@ export default function CheckoutPage() {
                       </button>
                     )
                   ) : (
-                    <>
-                      <div id="paypal-button-container" className="mt-4"></div>
-                      {/* Apple Pay / Google Pay —— 只有账号真的开通且当前环境可用时才渲染 */}
-                      <WalletButtons
-                        paypal={paypalInstance}
-                        masterEnabled={wallets.enabled}
-                        allowApplePay={wallets.applePay !== false}
-                        allowGooglePay={wallets.googlePay !== false}
-                        amount={convertPrice(totalPrice, 'USD').toFixed(2)}
-                        currency="USD"
-                        createOrderId={createPayPalOrderId}
-                        captureOrder={captureAndFinalize}
-                        onError={(m) => setPaypalError(m)}
-                        setProcessing={setProcessing}
-                      />
-                    </>
+                    /* Apple Pay / Google Pay 已经提到页面顶部的 Express Checkout 区块，
+                       这里只放 PayPal / Pay Later / 借记卡信用卡，避免同一页出现两套钱包按钮 */
+                    <div id="paypal-button-container" className="mt-4"></div>
                   )}
                 </div>
               )}

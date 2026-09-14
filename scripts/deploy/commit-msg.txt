@@ -1,0 +1,12 @@
+fix(checkout): 支付按钮进页面就直接渲染，不再藏在「Continue with PayPal」后面
+
+客户在结算页看不到 Apple Pay / Google Pay，根因是界面设计：PayPal SDK 只在点了
+「Continue with PayPal」之后才加载，而那一行看起来像 PayPal 的一个付款选项、
+不像"加载按钮"，没人会去点。结果结算页只有一个选择器 + 一堆卡片图标 + 一个按钮，
+PayPal / Apple Pay / Google Pay 三个真按钮全被挡在后面。
+
+- PayPal SDK 改为进结算页即自动加载（和所有正常独立站一致）
+- 加载中显示 "Loading payment options..."，失败才回退到「Continue with PayPal」让客户重试
+- ensurePayPalSdk 用 ref 守卫，不会重复注入 script
+- WalletButtons 容器加 data-wallet 属性便于自动化验证
+- Google Pay 不可用时打 console.warn，便于排查「按钮没出来」

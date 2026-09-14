@@ -1936,3 +1936,27 @@ body {
 @supports (-webkit-appearance: -apple-pay-button) {
   .apple-pay-button { background-color: transparent; color: transparent; }
 }
+
+/* ---------------------------------------------------------------------------
+   Express Checkout 钱包按钮排版
+   row = 参考站那种「Google Pay / Apple Pay 并排两个大按钮」
+--------------------------------------------------------------------------- */
+.wallet-buttons { width: 100%; }
+.wallet-buttons-stack > * + * { margin-top: 8px; }
+.wallet-buttons-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.wallet-buttons-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Google 的按钮是它自己创建的，强制拉满容器宽度，避免并排时尺寸不齐 */
+.wallet-buttons [data-wallet="googlepay"] > button,
+.wallet-buttons [data-wallet="googlepay"] iframe {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+/* 只有一个钱包可用时，并排模式下也让它独占一行 */
+.wallet-buttons-row > *:only-child { flex: 1 1 100%; }
