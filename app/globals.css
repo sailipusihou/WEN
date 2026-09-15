@@ -2002,26 +2002,34 @@ apple-pay-button {
 
 /* ---------------------------------------------------------------------------
    Express Checkout 钱包按钮排版
-   row = 参考站那种「PayPal / Google Pay / Apple Pay 并排的大按钮」
-   按钮统一 48px 高、圆角 10px，和参考站的圆润观感一致。
+   参考站的布局是「两个按钮并排、每个约一半宽」，读起来完整清楚。
+   我们这里三个支付方式，改成两行网格：
+     第 1 行：PayPal 独占整行（它的按钮本身很宽，挤在半行里字会很小）
+     第 2 行：Apple Pay / Google Pay 并排各占一半
+   高度统一 54px —— 原来 48px 且三个挤一行，每个只有 200px 宽，字太小。
 --------------------------------------------------------------------------- */
 .wallet-buttons { width: 100%; }
 .wallet-buttons-stack > * + * { margin-top: 10px; }
 .wallet-buttons-row {
-  display: flex;
-  flex-wrap: wrap;          /* 窄屏自动换行，不会把三个按钮挤扁 */
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   align-items: stretch;
 }
 .wallet-buttons-row > * {
-  flex: 1 1 0;
-  min-width: 150px;
-  height: 48px;
+  height: 54px;
   border-radius: 10px;
   overflow: hidden;
+  min-width: 0;
 }
-/* 只有一个钱包可用时独占整行 */
-.wallet-buttons-row > *:only-child { flex: 1 1 100%; }
+/* PayPal 那行（由结算页传进来的 leading 节点）独占整行 */
+.wallet-buttons-row > .express-leading { grid-column: 1 / -1; }
+/* 只有一个钱包可用时也独占整行 */
+.wallet-buttons-row > *:only-child { grid-column: 1 / -1; }
+/* 手机上两列太窄，改成一条竖排 */
+@media (max-width: 640px) {
+  .wallet-buttons-row { grid-template-columns: 1fr; }
+}
 
 /* Google 的按钮由它自己创建，统一裁成同样的圆角与高度 */
 .wallet-buttons [data-wallet="googlepay"] {

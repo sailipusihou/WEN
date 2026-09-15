@@ -689,15 +689,14 @@ export default function CheckoutPage() {
   return (
     <div className="bg-[#FBFAF7] min-h-screen">
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
-        <Link href="/cart" className="inline-flex items-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors mb-8 tracking-[0.18em] uppercase">
-          <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to Cart
-        </Link>
+        {/* 结账页不放返回入口 —— 要退就用浏览器自带的返回按钮。
+            页面上再放一个 Back to Cart 等于多给一个弃单出口。 */}
         <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-5">Checkout</h1>
 
         {/* 预留倒计时（对齐参考站顶部那条紧迫感提示） */}
         <CheckoutUrgency />
 
-        {/* 参考站顶部没有步骤标签页，只有 Back to Cart 那种细面包屑 —— 这里也去掉编号步进条，
+        {/* 参考站顶部没有步骤标签页 —— 这里也去掉编号步进条，
             页面直接进入支付区，减少视觉噪音 */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 mt-2">
           <div className="lg:col-span-1 space-y-6 lg:pr-10 pb-10">
