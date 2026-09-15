@@ -154,6 +154,12 @@ export default function ProductDetailClient({
   // 默认全选；用 Set 记录被取消的，这样商品数据变化时不会把新搭配漏掉
   const [bundleOff, setBundleOff] = useState<Set<string>>(new Set())
   const bundleSelected = bundleList.filter((b: any) => !bundleOff.has(b.bundleProductId))
+  /**
+   * 搭配商品的详情预览：点击列表里任意一项，在下方展示该商品的
+   * 缩略图 + 名称 + 价格 + 说明，客户不用跳走就能看清要买的是什么。
+   * null = 没选中任何项（不显示预览）。
+   */
+  const [bundlePreview, setBundlePreview] = useState<string | null>(null)
 
   /**
    * 价格展示：有选中款式且该款式设了独立价格时，**用款式的价格参与促销计算**。
@@ -914,6 +920,22 @@ export default function ProductDetailClient({
               </button>
             </div>
 
+            {/*
+              单品「立即购买」—— 必须紧跟在加购按钮下面。
+              ⚠️ 之前这个按钮被放在"配套商品"区块**之后**，视觉上像是组合购买的按钮，
+                 用户直接反馈"单独商品的立即购买框还是没有"。参考站的顺序是
+                 Add to cart → Buy now →（然后是）Frequently bought together，这里对齐。
+            */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              data-buy-now="1"
+              className="pdp-btn pdp-btn-primary mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
+              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', border: '1px solid #4C5546', borderRadius: 4 }}
+            >
+              <Zap size={15} strokeWidth={2.2} /> Buy Now
+            </button>
+
             {/* ===== 配套商品 / 搭配购买（Frequently bought together） =====
                 参考站右栏就是这个区块：主商品 + 搭配商品，显示单品价 / 组合优惠 / 总价，
                 一键把多件一起加购。默认全选，客户可以取消某个。 */}
@@ -982,9 +1004,16 @@ export default function ProductDetailClient({
                           {on && <Check size={11} strokeWidth={3} color="#fff" />}
                         </button>
                         <div className="flex-1 min-w-0">
-                          <p className="font-sans text-[12px] truncate" style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}>
+                          {/* 点商品名 → 展开详情预览（缩略图 + 说明 + 价格） */}
+                          <button
+                            type="button"
+                            data-bundle-info={b.bundleProductId}
+                            onClick={() => setBundlePreview(prev => prev === b.bundleProductId ? null : b.bundleProductId)}
+                            className="text-left font-sans text-[12px] underline-offset-2 hover:underline"
+                            style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}
+                          >
                             {b.title || bp.nameEn || bp.name || b.bundleProductId}
-                          </p>
+                          </button>
                           {b.description && (
                             <p className="font-sans text-[10px] mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
                               {b.description}
@@ -1003,6 +1032,64 @@ export default function ProductDetailClient({
                     )
                   })}
                 </div>
+
+                {/* ===== 搭配商品详情预览 =====
+                    点搭配项的商品名展开：缩略图 + 名称 + 价格 + 说明 + 跳转链接。
+                    这样客户在勾选前就能确认要买的是什么，不用离开当前页。 */}
+                {bundlePreview && (() => {
+                  const b = bundleList.find((x: any) => x.bundleProductId === bundlePreview)
+                  if (!b) return null
+                  const bp = b.product || {}
+                  const unit = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
+                  const img = b.image || bp.image || ''
+                  return (
+                    <div className="mt-3 p-3 flex gap-3"
+                      data-bundle-preview={b.bundleProductId}
+                      style={{ backgroundColor: '#F8F2E2', border: `1px solid ${LINE}`, borderRadius: 3 }}>
+                      {img && (
+                        <div className="shrink-0 overflow-hidden" style={{ width: 64, height: 80, borderRadius: 3, backgroundColor: '#FFFFFF' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-sans text-[12px] font-medium" style={{ color: INK }}>
+                          {b.title ? `${b.title} — ` : ''}{bp.nameEn || bp.name || b.bundleProductId}
+                        </p>
+                        {(bp.subtitleEn || bp.subtitle) && (
+                          <p className="font-sans text-[10px] mt-0.5" style={{ color: 'rgba(74,58,36,0.6)' }}>
+                            {bp.subtitleEn || bp.subtitle}
+                          </p>
+                        )}
+                        {b.description && (
+                          <p className="font-sans text-[10px] mt-1 leading-relaxed" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                            {b.description}
+                          </p>
+                        )}
+                        <p className="font-sans text-[12px] mt-1.5" style={{ color: INK }}>
+                          {formatPrice(convertPrice(unit, currency), currency)}
+                          {Number(b.discount) > 0 && (
+                            <span className="ml-2" style={{ color: '#4A665D' }}>
+                              save {formatPrice(convertPrice(Number(b.discount), currency), currency)}
+                            </span>
+                          )}
+                        </p>
+                        {bp.id && (
+                          <Link href={`/products/${bp.id}`}
+                            className="font-sans text-[10px] mt-1 inline-block underline underline-offset-2"
+                            style={{ color: GOLD }}>
+                            View full details →
+                          </Link>
+                        )}
+                      </div>
+                      <button type="button" onClick={() => setBundlePreview(null)}
+                        className="shrink-0 self-start px-1.5 py-0.5 font-sans text-[10px]"
+                        style={{ color: 'rgba(74,58,36,0.5)' }} aria-label="Close preview">
+                        ✕
+                      </button>
+                    </div>
+                  )
+                })()}
 
                 {/* 金额明细：单品合计 / 优惠 / 总价 */}
                 <div className="mt-4 pt-3 space-y-1.5" style={{ borderTop: `1px solid ${LINE}` }}>
@@ -1113,18 +1200,6 @@ export default function ProductDetailClient({
                 </p>
               </div>
             )}
-
-            {/* 立即购买：直接进结算，跳过购物车这一步。
-                参考站的「Buy now」是**深墨绿实心**，和描边的 Add to cart 形成主次；
-                我们原来两个都是描边，客户看不出哪个是主推，这里改成实心。 */}
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              className="pdp-btn pdp-btn-primary mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
-              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', border: '1px solid #4C5546', borderRadius: 4 }}
-            >
-              <Zap size={15} strokeWidth={2.2} /> Buy Now
-            </button>
 
             {/* 咨询 */}
             <Link

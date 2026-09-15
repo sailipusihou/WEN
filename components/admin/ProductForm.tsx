@@ -1124,15 +1124,35 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
                   </div>
                   <div>
                     <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>图片 URL</label>
-                    <input type="text" value={v.image}
-                      onChange={e => {
-                        const next = [...form.variants]
-                        next[idx] = { ...next[idx], image: e.target.value }
-                        update("variants", next)
-                      }}
-                      placeholder="https://…"
-                      className="w-full px-3 py-2 rounded text-sm"
-                      style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                    <div className="flex items-center gap-2">
+                      <input type="text" value={v.image}
+                        onChange={e => {
+                          const next = [...form.variants]
+                          next[idx] = { ...next[idx], image: e.target.value }
+                          update("variants", next)
+                        }}
+                        placeholder="留空=用主图"
+                        className="flex-1 min-w-0 px-3 py-2 rounded text-sm"
+                        style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                      {/* 本地图片上传：款式有自己的 image 字段，上传后直接写入 */}
+                      <label className="shrink-0 cursor-pointer px-2 py-2 rounded text-xs"
+                        style={{ backgroundColor: "var(--adm-bg)", color: "var(--adm-text)", border: "1px solid var(--adm-input-border)" }}
+                        title="上传本地图片作为该款式的图片">
+                        <input type="file" accept="image/*" className="hidden"
+                          onChange={async e => {
+                            const f = e.target.files?.[0]
+                            if (!f) return
+                            const url = await uploadImage(f)
+                            if (url) {
+                              const next = [...form.variants]
+                              next[idx] = { ...next[idx], image: url }
+                              update("variants", next)
+                            }
+                            e.target.value = ''
+                          }} />
+                        上传
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
