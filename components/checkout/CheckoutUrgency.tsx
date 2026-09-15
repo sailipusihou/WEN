@@ -51,13 +51,13 @@ export default function CheckoutUrgency() {
 
   return (
     /**
-     * 参考站的那条紧迫提示是**贴左边的一小条**，不是整行铺满。
-     * 用 inline-flex + w-fit 让它按内容宽度收紧（原来 justify-center 会撑满整行，
-     * 在宽屏上显示成一条很长的横条，很突兀）。
+     * 参考站的那条紧迫提示：**铺满表单列的宽度**，但不横跨到右栏。
+     * 所以这里用 block 铺满左栏（它由结算页渲染在左栏内部），
+     * 不再 justify-center 撑满整页 —— 那是它之前显得"太长"的原因。
      */
     <div
       data-checkout-urgency="1"
-      className="mb-5 inline-flex w-fit max-w-full items-center gap-2.5 px-4 py-2.5"
+      className="flex items-center gap-2.5 px-4 py-3"
       style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', borderRadius: 3 }}
     >
       <Clock size={15} strokeWidth={2} className="shrink-0" style={{ color: '#8A6A2E' }} />

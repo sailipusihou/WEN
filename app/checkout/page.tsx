@@ -706,9 +706,6 @@ export default function CheckoutPage() {
           Low Flame™ Official Website
         </h1>
 
-        {/* 紧迫提示条（对齐参考站：紧凑的浅色条 + 时钟图标） */}
-        <CheckoutUrgency />
-
         {/* 支付报错提示 —— 必须放在页面顶部。
             钱包按钮（PayPal / Apple Pay / Google Pay）在 Express Checkout 里，
             而 Payment 卡片在很下面；原来报错只显示在 Payment 卡片里，
@@ -735,6 +732,10 @@ export default function CheckoutPage() {
             页面直接进入支付区，减少视觉噪音 */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 mt-2">
           <div className="lg:col-span-1 space-y-6 lg:pr-10 pb-10">
+            {/* 紧迫提示条：放进左栏并铺满左栏宽度。
+                参考站就是这样 —— 它占满表单列、但不会横跨到右栏去。
+                之前它渲染在 grid 外面，所以横跨整页，显得"太长"。 */}
+            <CheckoutUrgency />
             {/* Express Checkout —— 放在最顶部，和参考站一致：
                 客户可以一个点击用钱包里的卡付掉，跳过下面整张表单。
                 组件自己判断有没有可用钱包；都不可用就整块不渲染。 */}
@@ -1088,19 +1089,13 @@ export default function CheckoutPage() {
           >
             {/* sticky 与「最大高度 + 内部滚动」都放在这一层：
                 若把 maxHeight 放在里面的卡片上，外层 sticky 容器会跟内容一样高，
-                超过一屏时底部就被顶出视口、够不到。 */}
+                超过一屏时底部就被顶出视口、够不到。
+                参考站右栏**没有白色卡片边框** —— 内容直接铺在背景上，所以这里也不套卡片。 */}
             <div
               className="lg:sticky lg:top-0 px-6 sm:px-8 lg:px-8 py-6"
               style={{ maxHeight: '100vh', overflowY: 'auto' }}
             >
-              <div
-                className="p-6 md:p-7"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(74,102,93,0.18)',
-                  borderRadius: 10,
-                }}
-              >
+              <div>
                 <h2 className="section-heading mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度）。
@@ -1209,6 +1204,55 @@ export default function CheckoutPage() {
 
                 {/* 信任区：跨境客户在最后一步最需要确定性（真实要素，非媒体背书） */}
                 <ShopWithConfidence reviewCount={reviewStats.count} rating={reviewStats.rating} />
+
+                {/* *Note 信息块（对齐参考站右栏底部那一大段说明）。
+                    ⚠️ 只写我们**真实执行**的政策，不抄参考站的营销话术：
+                       · 处理时效与分区运费来自 lib/settings.ts 的实际配置
+                       · 退货政策对应 /refund-policy 页面
+                       · 关税说明与 /shipping-policy 一致 */}
+                <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }}>
+                  <p className="font-sans text-[13px] font-semibold mb-2" style={{ color: '#2A2118' }}>
+                    *Note:
+                  </p>
+                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.75)' }}>
+                    Please review the following so your order goes smoothly:
+                  </p>
+
+                  <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
+                    Processing time
+                  </p>
+                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    Orders are prepared within 1–2 business days. During sale periods this can extend to 4 business
+                    days — we email you if your order is affected.
+                  </p>
+
+                  <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
+                    Shipping
+                  </p>
+                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    Tracked delivery in 7–14 business days after dispatch. Rates are calculated from your address
+                    above. Free over $199 (US &amp; Canada), $249 (Europe), $229 (Asia Pacific), $279 (rest of world).
+                  </p>
+
+                  <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
+                    Customs &amp; duties
+                  </p>
+                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    Import duties or taxes charged by your country are the recipient&apos;s responsibility and are not
+                    included in the price paid here.
+                  </p>
+
+                  <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
+                    Returns
+                  </p>
+                  <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    30 days to return, refunds within 5 business days of us receiving the item. Full details in our{' '}
+                    <a href="/refund-policy" className="underline underline-offset-2" style={{ color: '#8A6A2E' }}>
+                      Returns &amp; Refunds
+                    </a>{' '}
+                    policy.
+                  </p>
+                </div>
               </div>
               </div>
             </div>
