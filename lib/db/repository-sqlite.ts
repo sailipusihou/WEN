@@ -1,5 +1,5 @@
-// SQLite Repository 实现
-// 返回的数据结构与现有的 JSON 模块完全兼容, 可以无缝切换
+// SQLite Repository 瀹炵幇
+// 杩斿洖鐨勬暟鎹粨鏋勪笌鐜版湁鐨?JSON 妯″潡瀹屽叏鍏煎, 鍙互鏃犵紳鍒囨崲
 
 import { getDb, initDatabase } from './sqlite'
 import type { Product, Review, Supplier } from '@/lib/db'
@@ -11,7 +11,7 @@ import { DEFAULTS, getSettings, normalizeSavedSettings } from '@/lib/settings'
 import type { WorkLogEntry } from '@/lib/work-log'
 import type { Message, NewsletterSubscriber } from '@/lib/repository'
 
-// ========== 工具函数 ==========
+// ========== 宸ュ叿鍑芥暟 ==========
 
 function rowToProduct(row: any): Product {
   return {
@@ -51,11 +51,11 @@ function rowToProduct(row: any): Product {
 }
 
 /**
- * 把 product_gifts 表里的赠品绑定聚合到商品上。
+ * 鎶?product_gifts 琛ㄩ噷鐨勮禒鍝佺粦瀹氳仛鍚堝埌鍟嗗搧涓娿€?
  *
- * 设计说明：赠品关系存在独立的 product_gifts 表（一行一个可赠商品），
- * 列表接口一次性把全部绑定读出来再分发（避免 N+1 查询）。
- * 前台只需读 product.giftProductIds 就能决定要不要渲染赠品区。
+ * 璁捐璇存槑锛氳禒鍝佸叧绯诲瓨鍦ㄧ嫭绔嬬殑 product_gifts 琛紙涓€琛屼竴涓彲璧犲晢鍝侊級锛?
+ * 鍒楄〃鎺ュ彛涓€娆℃€ф妸鍏ㄩ儴缁戝畾璇诲嚭鏉ュ啀鍒嗗彂锛堥伩鍏?N+1 鏌ヨ锛夈€?
+ * 鍓嶅彴鍙渶璇?product.giftProductIds 灏辫兘鍐冲畾瑕佷笉瑕佹覆鏌撹禒鍝佸尯銆?
  */
 export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
   if (!products.length) return products
@@ -79,7 +79,53 @@ export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
       }
     }
   } catch {
-    // 表还没建（旧库首次启动）—— 静默跳过，不影响商品读取
+    // 琛ㄨ繕娌″缓锛堟棫搴撻娆″惎鍔級鈥斺€?闈欓粯璺宠繃锛屼笉褰卞搷鍟嗗搧璇诲彇
+  }
+  return products
+}
+
+function rowToVariant(row: any): any {
+  return {
+    id: row.id,
+    productId: row.productId,
+    optionName: row.optionName || '',
+    label: row.label,
+    valueCode: row.valueCode || '',
+    price: row.price === null || row.price === undefined ? undefined : Number(row.price),
+    image: row.image || undefined,
+    stock: row.stock === null || row.stock === undefined ? undefined : Number(row.stock),
+    sortOrder: Number(row.sortOrder) || 0,
+    active: row.active !== 0,
+  }
+}
+
+/**
+ * 鎶?product_variants 琛ㄩ噷鐨勮鏍艰仛鍚堟垚 product.variants銆?
+ * 鍚屾牱涓€娆℃煡瀹屽叏閮ㄥ垎鍙戯紝閬垮厤 N+1銆?
+ * 鍙甫涓?active 鐨勮鏍硷紱optionName 鍙栫涓€涓鏍肩殑缁村害鍚嶆斁鍒?product 涓婏紝
+ * 鏂逛究鍓嶅彴鐩存帴鏄剧ず閫夋嫨鍣ㄦ爣棰樸€?
+ */
+export function attachVariantsToProducts(db: any, products: Product[]): Product[] {
+  if (!products.length) return products
+  try {
+    const rows = db.prepare(
+      'SELECT * FROM product_variants WHERE active = 1 ORDER BY productId, sortOrder'
+    ).all() as any[]
+    if (!rows.length) return products
+    const map = new Map<string, any[]>()
+    for (const r of rows) {
+      if (!map.has(r.productId)) map.set(r.productId, [])
+      map.get(r.productId)!.push(rowToVariant(r))
+    }
+    for (const p of products) {
+      const v = map.get(p.id)
+      if (v && v.length) {
+        ;(p as any).variants = v
+        ;(p as any).optionName = v[0].optionName || 'Style'
+      }
+    }
+  } catch {
+    // 琛ㄨ繕娌″缓灏辫烦杩?
   }
   return products
 }
@@ -125,7 +171,7 @@ function rowToCategory(row: any, productCount = 0): Category {
     nameEn: row.nameEn || '',
     description: row.description || '',
     descriptionEn: row.descriptionEn || '',
-    icon: row.icon || '📦',
+    icon: row.icon || '馃摝',
     productCount,
     image: row.image || '',
   }
@@ -192,7 +238,7 @@ function rowToOrder(row: any, items: OrderItem[]): Order {
       url: row.trackingUrl || '',
     } as TrackingInfo : undefined,
     statusHistory: statusHistory.length > 0 ? statusHistory : undefined,
-    // 修复 C3: 读回支付交易/退换货/支付状态 (原先 SQLite 后端静默丢失)
+    // 淇 C3: 璇诲洖鏀粯浜ゆ槗/閫€鎹㈣揣/鏀粯鐘舵€?(鍘熷厛 SQLite 鍚庣闈欓粯涓㈠け)
     paymentStatus: row.paymentStatus || undefined,
     paypalTransaction: row.paypalTransaction ? safeJsonParse(row.paypalTransaction) : undefined,
     payoneerTransaction: row.payoneerTransaction ? safeJsonParse(row.payoneerTransaction) : undefined,
@@ -263,7 +309,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachGiftsToProducts(db, products)
+    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
   },
 
   listActive(): Product[] {
@@ -271,7 +317,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachGiftsToProducts(db, products)
+    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
   },
 
   getById(id: string): Product | undefined {
@@ -280,7 +326,7 @@ export const productRepo = {
     if (!row) return undefined
     const product = rowToProduct(row)
     loadProductRelations(product)
-    attachGiftsToProducts(db, [product])
+    attachVariantsToProducts(db, attachGiftsToProducts(db, [product]))
     return product
   },
 
@@ -289,10 +335,10 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE category = ? AND active = 1 ORDER BY sortOrder DESC, createdAt DESC').all(slug) as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachGiftsToProducts(db, products)
+    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
   },
 
-  /** 读取某商品绑定的赠品（完整商品对象，供前台渲染赠品区） */
+  /** 璇诲彇鏌愬晢鍝佺粦瀹氱殑璧犲搧锛堝畬鏁村晢鍝佸璞★紝渚涘墠鍙版覆鏌撹禒鍝佸尯锛?*/
   listGifts(productId: string): Product[] {
     const db = getDb()
     try {
@@ -308,8 +354,8 @@ export const productRepo = {
   },
 
   /**
-   * 覆盖式设置赠品绑定。
-   * giftQuantity 存在每一行上（一份主商品送几件），取第一个主商品的设置写入全部行。
+   * 瑕嗙洊寮忚缃禒鍝佺粦瀹氥€?
+   * giftQuantity 瀛樺湪姣忎竴琛屼笂锛堜竴浠戒富鍟嗗搧閫佸嚑浠讹級锛屽彇绗竴涓富鍟嗗搧鐨勮缃啓鍏ュ叏閮ㄨ銆?
    */
   setGifts(productId: string, giftProductIds: string[], giftQuantity = 1): void {
     const db = getDb()
@@ -322,7 +368,7 @@ export const productRepo = {
       const seen = new Set<string>()
       let i = 0
       for (const gid of giftProductIds) {
-        // 不给自己送自己，也不重复绑定
+        // 涓嶇粰鑷繁閫佽嚜宸憋紝涔熶笉閲嶅缁戝畾
         if (!gid || gid === productId || seen.has(gid)) continue
         seen.add(gid)
         ins.run(productId, gid, qty, i++)
@@ -331,7 +377,7 @@ export const productRepo = {
     tx()
   },
 
-  /** 所有商品的赠品绑定（后台列表用，一次查完避免 N+1） */
+  /** 鎵€鏈夊晢鍝佺殑璧犲搧缁戝畾锛堝悗鍙板垪琛ㄧ敤锛屼竴娆℃煡瀹岄伩鍏?N+1锛?*/
   allGiftBindings(): Record<string, string[]> {
     const db = getDb()
     try {
@@ -340,6 +386,80 @@ export const productRepo = {
       for (const r of rows) {
         if (!out[r.productId]) out[r.productId] = []
         out[r.productId].push(r.giftProductId)
+      }
+      return out
+    } catch {
+      return {}
+    }
+  },
+
+  // ===== 商品规格 / 款式（product_variants） =====
+
+  /** 读取某商品的全部规格（含未启用的，后台编辑用） */
+  listVariants(productId: string): any[] {
+    const db = getDb()
+    try {
+      const rows = db.prepare(
+        'SELECT * FROM product_variants WHERE productId = ? ORDER BY sortOrder, rowid'
+      ).all(productId) as any[]
+      return rows.map(rowToVariant)
+    } catch {
+      return []
+    }
+  },
+
+  /**
+   * 覆盖式保存某商品的规格列表。
+   *
+   * 为什么用「先删后插」而不是逐条 diff：
+   *   规格是整体配置（顺序、增减都在一起改），diff 逻辑复杂且容易残留脏数据；
+   *   规格条数很少（通常 < 20），整表重写的代价可以忽略。
+   * 顺带做基本清洗：去掉空 label、去掉重复 label、按传入顺序写 sortOrder。
+   */
+  setVariants(productId: string, variants: any[]): void {
+    const db = getDb()
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM product_variants WHERE productId = ?').run(productId)
+      const ins = db.prepare(`
+        INSERT INTO product_variants
+          (id, productId, optionName, label, valueCode, price, image, stock, sortOrder, active)
+        VALUES (@id, @productId, @optionName, @label, @valueCode, @price, @image, @stock, @sortOrder, @active)
+      `)
+      const seen = new Set<string>()
+      let i = 0
+      for (const v of variants || []) {
+        const label = String(v?.label || '').trim()
+        if (!label || seen.has(label)) continue
+        seen.add(label)
+        const numOrNull = (x: any) =>
+          x === '' || x === null || x === undefined || Number.isNaN(Number(x)) ? null : Number(x)
+        ins.run({
+          id: String(v?.id || `${productId}-var-${Date.now().toString(36)}-${i}`),
+          productId,
+          optionName: String(v?.optionName || '').trim(),
+          label,
+          valueCode: String(v?.valueCode || '').trim(),
+          price: numOrNull(v?.price),
+          image: v?.image ? String(v.image) : null,
+          stock: numOrNull(v?.stock),
+          sortOrder: i,
+          active: v?.active === false ? 0 : 1,
+        })
+        i++
+      }
+    })
+    tx()
+  },
+
+  /** 所有商品的规格（后台列表用，一次查完避免 N+1） */
+  allVariants(): Record<string, any[]> {
+    const db = getDb()
+    try {
+      const rows = db.prepare('SELECT * FROM product_variants ORDER BY productId, sortOrder').all() as any[]
+      const out: Record<string, any[]> = {}
+      for (const r of rows) {
+        if (!out[r.productId]) out[r.productId] = []
+        out[r.productId].push(rowToVariant(r))
       }
       return out
     } catch {
@@ -447,7 +567,7 @@ export const productRepo = {
       featured: merged.featured ? 1 : 0,
       active: merged.active !== false ? 1 : 0,
     })
-    // 更新 tags 和 detailImages
+    // 鏇存柊 tags 鍜?detailImages
     if (updates.tags) {
       db.prepare('DELETE FROM product_tags WHERE productId = ? AND lang = \'zh\'').run(id)
       const tagStmt = db.prepare('INSERT INTO product_tags (productId, tag, lang, sortOrder) VALUES (?, ?, \'zh\', ?)')
@@ -575,7 +695,7 @@ export const categoryRepo = {
     db.prepare(`
       INSERT INTO categories (id, name, nameEn, slug, description, descriptionEn, image, icon, sortOrder, active)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
-    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '📦')
+    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '馃摝')
     return category
   },
 
@@ -587,7 +707,7 @@ export const categoryRepo = {
     db.prepare(`
       UPDATE categories SET name = ?, nameEn = ?, description = ?, descriptionEn = ?, image = ?, icon = ?, updatedAt = datetime('now')
       WHERE slug = ?
-    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '📦', slug)
+    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '馃摝', slug)
     return categoryRepo.getBySlug(slug) || null
   },
 
@@ -608,8 +728,8 @@ export const orderRepo = {
       const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(row.id) as any[]
       const items: OrderItem[] = itemRows.map(r => ({
         id: r.id,
-        // 必须回填 productId：deductStockForOrder 依赖它扣库存，
-        // 缺了它 item.id（订单项 ID）会被当成商品 ID，查不到商品而静默跳过扣减。
+        // 蹇呴』鍥炲～ productId锛歞eductStockForOrder 渚濊禆瀹冩墸搴撳瓨锛?
+        // 缂轰簡瀹?item.id锛堣鍗曢」 ID锛変細琚綋鎴愬晢鍝?ID锛屾煡涓嶅埌鍟嗗搧鑰岄潤榛樿烦杩囨墸鍑忋€?
         productId: r.productId || undefined,
         name: r.name,
         nameEn: r.nameEn || '',
@@ -628,7 +748,7 @@ export const orderRepo = {
     const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(id) as any[]
     const items: OrderItem[] = itemRows.map(r => ({
       id: r.id,
-      // 同 list()：回填 productId，否则按订单取回的订单扣不了库存
+      // 鍚?list()锛氬洖濉?productId锛屽惁鍒欐寜璁㈠崟鍙栧洖鐨勮鍗曟墸涓嶄簡搴撳瓨
       productId: r.productId || undefined,
       name: r.name,
       nameEn: r.nameEn || '',
@@ -773,7 +893,7 @@ export const orderRepo = {
       if (updates.attributionMatchedBy !== undefined) { fields.push('attributionMatchedBy = ?'); values.push(updates.attributionMatchedBy || null) }
       if (updates.attributionFallbackUsed !== undefined) { fields.push('attributionFallbackUsed = ?'); values.push(updates.attributionFallbackUsed ? 1 : 0) }
       if ((updates as any).paymentStatus !== undefined) { fields.push('paymentStatus = ?'); values.push((updates as any).paymentStatus || 'unpaid') }
-      // 修复 C3: 支付交易/退换货数据可更新 (JSON 列)
+      // 淇 C3: 鏀粯浜ゆ槗/閫€鎹㈣揣鏁版嵁鍙洿鏂?(JSON 鍒?
       if ((updates as any).paypalTransaction !== undefined) { fields.push('paypalTransaction = ?'); values.push((updates as any).paypalTransaction ? JSON.stringify((updates as any).paypalTransaction) : null) }
       if ((updates as any).payoneerTransaction !== undefined) { fields.push('payoneerTransaction = ?'); values.push((updates as any).payoneerTransaction ? JSON.stringify((updates as any).payoneerTransaction) : null) }
       if ((updates as any).returnInfo !== undefined) { fields.push('returnInfo = ?'); values.push((updates as any).returnInfo ? JSON.stringify((updates as any).returnInfo) : null) }
@@ -881,16 +1001,16 @@ export const userRepo = {
     const db = getDb()
     const row = db.prepare('SELECT * FROM users WHERE token = ?').get(token) as any
     if (!row) return undefined
-    // 修复 H20: token 过期校验 (无过期时间的历史用户视为有效, 兼容旧会话)
+    // 淇 H20: token 杩囨湡鏍￠獙 (鏃犺繃鏈熸椂闂寸殑鍘嗗彶鐢ㄦ埛瑙嗕负鏈夋晥, 鍏煎鏃т細璇?
     if (row.tokenExpiresAt && new Date(row.tokenExpiresAt).getTime() < Date.now()) return undefined
     return userRepo.getById(row.id)
   },
 
   add(user: User): User {
     const db = getDb()
-    // 修复: 原 INSERT 漏掉了 token / tokenExpiresAt —— 注册接口是「先写库再发 cookie」,
-    // 于是新注册用户浏览器里虽然拿到了 cookie, 但库里 token 为 NULL,
-    // /api/auth/user 查不到人 → 直接被踢回登录页 (注册即掉线)。
+    // 淇: 鍘?INSERT 婕忔帀浜?token / tokenExpiresAt 鈥斺€?娉ㄥ唽鎺ュ彛鏄€屽厛鍐欏簱鍐嶅彂 cookie銆?
+    // 浜庢槸鏂版敞鍐岀敤鎴锋祻瑙堝櫒閲岃櫧鐒舵嬁鍒颁簡 cookie, 浣嗗簱閲?token 涓?NULL,
+    // /api/auth/user 鏌ヤ笉鍒颁汉 鈫?鐩存帴琚涪鍥炵櫥褰曢〉 (娉ㄥ唽鍗虫帀绾?銆?
     db.prepare(`
       INSERT INTO users (id, email, passwordHash, salt, firstName, lastName, phone, avatar, dob, gender, bio, preferredCurrency, coupons, role, token, tokenExpiresAt, createdAt, updatedAt)
       VALUES (@id, @email, @passwordHash, @salt, @firstName, @lastName, @phone, @avatar, @dob, @gender, @bio, @preferredCurrency, @coupons, @role, @token, @tokenExpiresAt, @createdAt, @updatedAt)
@@ -904,7 +1024,7 @@ export const userRepo = {
       token: user.token || null, tokenExpiresAt: user.tokenExpiresAt || null,
       createdAt: user.createdAt, updatedAt: user.updatedAt || user.createdAt,
     })
-    // 保存 addresses
+    // 淇濆瓨 addresses
     if (user.addresses?.length) {
       const addrStmt = db.prepare(`
         INSERT INTO user_addresses (id, userId, label, firstName, lastName, phone, address, city, state, zip, country, isDefault)
@@ -915,7 +1035,7 @@ export const userRepo = {
         addr.address, addr.city, addr.state, addr.zip, addr.country, addr.isDefault ? 1 : 0
       ))
     }
-    // 保存 wishlist
+    // 淇濆瓨 wishlist
     if (user.wishlist?.length) {
       const wishStmt = db.prepare('INSERT OR IGNORE INTO wishlist (userId, productId) VALUES (?, ?)')
       user.wishlist.forEach(pid => wishStmt.run(user.id, pid))
@@ -941,7 +1061,7 @@ export const userRepo = {
       (updates as any).tokenExpiresAt !== undefined ? (updates as any).tokenExpiresAt : merged.tokenExpiresAt || null,
       id
     )
-    // 更新 addresses
+    // 鏇存柊 addresses
     if (updates.addresses) {
       db.prepare('DELETE FROM user_addresses WHERE userId = ?').run(id)
       const addrStmt = db.prepare(`
@@ -953,7 +1073,7 @@ export const userRepo = {
         addr.address, addr.city, addr.state, addr.zip, addr.country, addr.isDefault ? 1 : 0
       ))
     }
-    // 更新 wishlist
+    // 鏇存柊 wishlist
     if (updates.wishlist) {
       db.prepare('DELETE FROM wishlist WHERE userId = ?').run(id)
       const wishStmt = db.prepare('INSERT INTO wishlist (userId, productId) VALUES (?, ?)')
@@ -987,7 +1107,7 @@ export const reviewRepo = {
       INSERT INTO reviews (id, productId, author, avatar, rating, date, content, location, approved, orderId, customerEmail, source)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, data.productId, data.author || 'Anonymous', avatar, data.rating, date, data.content || '', data.location || 'Verified Buyer', data.approved ? 1 : 0, data.orderId || null, data.customerEmail || null, data.source || 'customer')
-    // 更新商品评论计数
+    // 鏇存柊鍟嗗搧璇勮璁℃暟
     db.prepare('UPDATE products SET reviewCount = (SELECT COUNT(*) FROM reviews WHERE productId = products.id) WHERE id = ?').run(data.productId)
     return { ...data, id, date, avatar, approved: !!data.approved, hidden: false, deleted: false, createdAt: new Date().toISOString() } as Review
   },
@@ -1185,15 +1305,15 @@ export const settingsRepo = {
       VALUES (?, ?, datetime('now'))
     `).run(DEFAULT_SETTINGS_KEY, JSON.stringify(merged))
 
-    // 关键：清掉 getSettings() 的进程内缓存。
-    // getSettings() 用 lib/cache 缓存 settings（TTL 60 秒，且只在 JSON 写入路径
-    // saveSettings() 里才失效）。后台保存设置走的是这里，不失效的话
-    // 后台改了配置最长 60 秒才生效，表现为「明明改了却没反应」。
+    // 鍏抽敭锛氭竻鎺?getSettings() 鐨勮繘绋嬪唴缂撳瓨銆?
+    // getSettings() 鐢?lib/cache 缂撳瓨 settings锛圱TL 60 绉掞紝涓斿彧鍦?JSON 鍐欏叆璺緞
+    // saveSettings() 閲屾墠澶辨晥锛夈€傚悗鍙颁繚瀛樿缃蛋鐨勬槸杩欓噷锛屼笉澶辨晥鐨勮瘽
+    // 鍚庡彴鏀逛簡閰嶇疆鏈€闀?60 绉掓墠鐢熸晥锛岃〃鐜颁负銆屾槑鏄庢敼浜嗗嵈娌″弽搴斻€嶃€?
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       require('@/lib/cache').invalidateCache('settings')
     } catch {
-      // 缓存模块不可用不应影响设置保存本身
+      // 缂撳瓨妯″潡涓嶅彲鐢ㄤ笉搴斿奖鍝嶈缃繚瀛樻湰韬?
     }
 
     return merged
@@ -1445,7 +1565,7 @@ export const browsingHistoryRepo = {
     ip?: string
   }): any {
     const db = getDb()
-    // 去重: 同一 visitorId + productId 在 30 秒内不重复插入 (防止 React StrictMode 双调用)
+    // 鍘婚噸: 鍚屼竴 visitorId + productId 鍦?30 绉掑唴涓嶉噸澶嶆彃鍏?(闃叉 React StrictMode 鍙岃皟鐢?
     const existing = db.prepare(`
       SELECT * FROM browsing_history
       WHERE visitorId = ? AND productId = ?
@@ -1453,7 +1573,7 @@ export const browsingHistoryRepo = {
       ORDER BY timestamp DESC LIMIT 1
     `).get(data.visitorId, data.productId) as any
     if (existing) {
-      // 如果新请求带有用户信息而旧记录没有, 更新旧记录
+      // 濡傛灉鏂拌姹傚甫鏈夌敤鎴蜂俊鎭€屾棫璁板綍娌℃湁, 鏇存柊鏃ц褰?
       if ((data.userId || data.email) && (!existing.userId || !existing.email)) {
         const fields: string[] = []
         const values: any[] = []
@@ -1704,7 +1824,7 @@ export const customerRepo = {
   },
 }
 
-// ========== Shipments Repository (物流发货记录) ==========
+// ========== Shipments Repository (鐗╂祦鍙戣揣璁板綍) ==========
 
 function rowToShipment(row: any): any {
   return {
@@ -1724,7 +1844,7 @@ function rowToShipment(row: any): any {
     events: row.events ? JSON.parse(row.events) : [],
     notes: row.notes || '',
     createdBy: row.createdBy || '',
-    // 发货通知记录 (后台 "通知客户" 用): 渠道 email | message, 发送时间与目标
+    // 鍙戣揣閫氱煡璁板綍 (鍚庡彴 "閫氱煡瀹㈡埛" 鐢?: 娓犻亾 email | message, 鍙戦€佹椂闂翠笌鐩爣
     notifiedAt: row.notifiedAt || '',
     notifiedChannel: row.notifiedChannel || '',
     notifiedTo: row.notifiedTo || '',
@@ -1817,7 +1937,7 @@ export const shipmentRepo = {
       fields.push('events = ?')
       values.push(JSON.stringify(updates.events))
     }
-    // 自动设置 deliveredAt (当状态变为 delivered 且未手动设置时)
+    // 鑷姩璁剧疆 deliveredAt (褰撶姸鎬佸彉涓?delivered 涓旀湭鎵嬪姩璁剧疆鏃?
     if (updates.status === 'delivered' && !updates.deliveredAt && !existing.deliveredAt) {
       fields.push('deliveredAt = ?')
       values.push(new Date().toISOString())
@@ -1830,7 +1950,7 @@ export const shipmentRepo = {
     return shipmentRepo.getById(id)
   },
 
-  // 添加轨迹节点
+  // 娣诲姞杞ㄨ抗鑺傜偣
   addTrackEvent(shipmentId: string, event: { timestamp: string; location: string; description: string; status: string; carrier?: string }): any | null {
     const shipment = shipmentRepo.getById(shipmentId)
     if (!shipment) return null
@@ -1839,7 +1959,7 @@ export const shipmentRepo = {
       ...event,
     }
     const events = [...(shipment.events || []), newEvent]
-    // 按 timestamp 排序
+    // 鎸?timestamp 鎺掑簭
     events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     return shipmentRepo.update(shipmentId, { events, status: event.status })
   },
@@ -1850,16 +1970,16 @@ export const shipmentRepo = {
     return result.changes > 0
   },
 
-  // 取消发货
-  // 将物流单标记为 cancelled
-  // 如果该订单没有其他活跃物流单，则将订单回退到 processing 状态并清除 tracking 信息
-  // 只有非 delivered/returned/cancelled 状态的发货单才能取消
+  // 鍙栨秷鍙戣揣
+  // 灏嗙墿娴佸崟鏍囪涓?cancelled
+  // 濡傛灉璇ヨ鍗曟病鏈夊叾浠栨椿璺冪墿娴佸崟锛屽垯灏嗚鍗曞洖閫€鍒?processing 鐘舵€佸苟娓呴櫎 tracking 淇℃伅
+  // 鍙湁闈?delivered/returned/cancelled 鐘舵€佺殑鍙戣揣鍗曟墠鑳藉彇娑?
   cancel(id: string, reason?: string, operator?: string): { shipment: any; order: any; orderReverted: boolean } | null {
     const db = getDb()
     const shipment = shipmentRepo.getById(id)
     if (!shipment) return null
 
-    // 检查是否可以取消
+    // 妫€鏌ユ槸鍚﹀彲浠ュ彇娑?
     if (['delivered', 'returned', 'cancelled'].includes(shipment.status)) {
       throw new Error(`Cannot cancel shipment with status: ${shipment.status}`)
     }
@@ -1870,13 +1990,13 @@ export const shipmentRepo = {
     const now = new Date().toISOString()
     const cancelNote = reason || 'Shipment cancelled'
 
-    // 检查该订单是否有其他活跃物流单
+    // 妫€鏌ヨ璁㈠崟鏄惁鏈夊叾浠栨椿璺冪墿娴佸崟
     const allShipments = shipmentRepo.getByOrderId(shipment.orderId)
     const otherActiveShipments = allShipments.filter(s => s.id !== id && !['cancelled', 'delivered', 'returned'].includes(s.status))
     const hasOtherActiveShipment = otherActiveShipments.length > 0
 
     const tx = db.transaction(() => {
-      // 1. 添加取消事件到轨迹
+      // 1. 娣诲姞鍙栨秷浜嬩欢鍒拌建杩?
       const cancelEvent = {
         id: 'EVT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
         timestamp: now,
@@ -1888,7 +2008,7 @@ export const shipmentRepo = {
       }
       const events = [...(shipment.events || []), cancelEvent]
 
-      // 2. 更新发货单状态为 cancelled
+      // 2. 鏇存柊鍙戣揣鍗曠姸鎬佷负 cancelled
       const fields: string[] = ['status = ?', 'events = ?', 'updatedAt = datetime(\'now\')']
       const values: any[] = ['cancelled', JSON.stringify(events)]
       if (shipment.notes) {
@@ -1901,7 +2021,7 @@ export const shipmentRepo = {
       values.push(id)
       db.prepare(`UPDATE shipments SET ${fields.join(', ')} WHERE id = ?`).run(...values)
 
-      // 3. 只有当没有其他活跃物流单时，才回退订单状态并清除 tracking 信息
+      // 3. 鍙湁褰撴病鏈夊叾浠栨椿璺冪墿娴佸崟鏃讹紝鎵嶅洖閫€璁㈠崟鐘舵€佸苟娓呴櫎 tracking 淇℃伅
       if (!hasOtherActiveShipment) {
         const orderFields: string[] = ['status = ?']
         const orderValues: any[] = ['processing']
@@ -1911,7 +2031,7 @@ export const shipmentRepo = {
           VALUES (?, ?, ?, ?, ?)
         `).run(histId, shipment.orderId, 'processing', `Shipment ${shipment.shipmentNo || shipment.id.slice(0,12)} cancelled: ${cancelNote}`, now)
 
-        // 清除tracking信息
+        // 娓呴櫎tracking淇℃伅
         orderFields.push('trackingNumber = ?')
         orderValues.push(null)
         orderFields.push('carrier = ?')
@@ -1933,13 +2053,13 @@ export const shipmentRepo = {
     return tx()
   },
 
-  // 检查订单是否有活跃的发货单 (非 cancelled/delivered/returned)
+  // 妫€鏌ヨ鍗曟槸鍚︽湁娲昏穬鐨勫彂璐у崟 (闈?cancelled/delivered/returned)
   hasActiveShipment(orderId: string): boolean {
     const shipments = shipmentRepo.getByOrderId(orderId)
     return shipments.some(s => !['cancelled', 'delivered', 'returned'].includes(s.status))
   },
 
-  // 统计
+  // 缁熻
   getStats(): { total: number; inTransit: number; delivered: number; pending: number; cancelled: number } {
     const db = getDb()
     const total = (db.prepare('SELECT COUNT(*) as c FROM shipments').get() as any).c
@@ -1951,5 +2071,5 @@ export const shipmentRepo = {
   },
 }
 
-// 初始化数据库
+// 鍒濆鍖栨暟鎹簱
 initDatabase()

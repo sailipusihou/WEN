@@ -66,6 +66,34 @@ export interface Product {
   giftProductIds?: string[]
   /** 一份主商品送几件赠品，默认 1 */
   giftQuantity?: number
+  /**
+   * 商品规格 / 款式。一个商品可以有多个款式，每个款式有自己的图片和价格。
+   * 前台选不同款式时图片与价格联动切换；后台在商品编辑页维护。
+   * 存储：product_variants 表，由仓库层聚合到这里。
+   */
+  variants?: ProductVariant[]
+  /** 规格维度的名字，如 "Style" / "Color"（前台选择器上显示） */
+  optionName?: string
+}
+
+/** 单个商品款式（对应 product_variants 表一行） */
+export interface ProductVariant {
+  id: string
+  productId: string
+  /** 规格维度名，如 Style / Color */
+  optionName?: string
+  /** 款式名，如 "Zen Black" */
+  label: string
+  /** 供应商货号 / SKU（可选，对账用） */
+  valueCode?: string
+  /** 该款式价格；undefined = 沿用主商品价格 */
+  price?: number
+  /** 该款式主图；undefined = 沿用主商品图 */
+  image?: string
+  /** 该款式库存；undefined = 沿用主商品库存 */
+  stock?: number
+  sortOrder?: number
+  active?: boolean
 }
 
 // 商品编码分类前缀映射 — 规律性: {前缀}-{4位序号}, 如 CG-0001

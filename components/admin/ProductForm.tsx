@@ -215,6 +215,18 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     // 赠品绑定：存 product_gifts 表，这里只放在表单状态里，保存时单独提交
     giftProductIds: initial?.giftProductIds || [] as string[],
     giftQuantity: initial?.giftQuantity?.toString() || "1",
+    // 规格款式：存 product_variants 表，同样单独提交。
+    // 每个款式可有自己的价格 / 图片 / 库存；留空表示沿用主商品的值。
+    optionName: (initial as any)?.optionName || "Style",
+    variants: ((initial as any)?.variants || []).map((v: any) => ({
+      id: v.id,
+      label: v.label || "",
+      valueCode: v.valueCode || "",
+      price: v.price === undefined || v.price === null ? "" : String(v.price),
+      image: v.image || "",
+      stock: v.stock === undefined || v.stock === null ? "" : String(v.stock),
+      active: v.active !== false,
+    })) as any[],
   })
 
   function update(field: string, value: any) { setForm(prev => ({ ...prev, [field]: value })) }
@@ -361,6 +373,40 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
         // 赠品绑定单独提交（存 product_gifts 表，不走商品主表的更新接口）
         const targetId = isEdit ? initial!.id : data?.id
         if (targetId) {
+          // 规格款式：先提交（失败不阻断商品本身已保存的事实，只提示）
+          const cleanVariants = (form.variants || [])
+            .filter((v: any) => String(v.label || '').trim())
+            .map((v: any) => ({
+              id: v.id,
+              label: String(v.label).trim(),
+              valueCode: v.valueCode || '',
+              price: v.price === '' ? undefined : Number(v.price),
+              image: v.image || undefined,
+              stock: v.stock === '' ? undefined : Number(v.stock),
+              active: v.active !== false,
+            }))
+          try {
+            const vres = await fetch("/api/products/variants", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: targetId,
+                optionName: form.optionName || 'Style',
+                variants: cleanVariants,
+              }),
+            })
+            if (!vres.ok) {
+              const verr = await vres.json().catch(() => ({}))
+              setError(`Product saved, but variants failed: ${verr.error || vres.status}`)
+              setSaving(false)
+              return
+            }
+          } catch {
+            setError("Product saved, but variants could not be reached.")
+            setSaving(false)
+            return
+          }
+
           try {
             const gres = await fetch("/api/products/gifts", {
               method: "POST",
@@ -700,6 +746,142 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
               </p>
             )}
           </div>
+        </Section>
+
+        {/* ===== 规格款式（variants）=====
+            一个商品可以有多个款式，每个款式有自己的图片和价格，
+            前台选不同款式时图片与价格联动切换。 */}
+        <Section title="规格款式（Variants）">
+          <p className="text-xs mb-3" style={{ color: "var(--adm-text-secondary, rgba(255,255,255,0.6))" }}>
+            给同一件商品设置多个款式 / 型号（如颜色、尺寸、版本）。客户在前台切换款式时，
+            下方填的图片和价格会跟着变。价格留空 = 用主商品价格；图片留空 = 用主商品主图。
+          </p>
+
+          {/* 规格维度名 */}
+          <div className="mb-4">
+            <label className="block text-xs mb-1.5" style={{ color: "var(--adm-text)" }}>
+              规格名称（前台选择器上显示，如 Style / Color / Size）
+            </label>
+            <input
+              type="text"
+              value={form.optionName}
+              onChange={e => update("optionName", e.target.value)}
+              placeholder="Style"
+              className="w-full sm:w-64 px-4 py-2.5 rounded-lg text-sm"
+              style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+            />
+          </div>
+
+          {/* 款式列表 */}
+          <div className="space-y-3">
+            {form.variants.map((v: any, idx: number) => (
+              <div key={idx} className="rounded-lg p-3"
+                style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)" }}>
+                <div className="flex items-center gap-3 mb-2.5">
+                  {/* 缩略图预览 */}
+                  <div className="shrink-0 rounded overflow-hidden flex items-center justify-center"
+                    style={{ width: 44, height: 52, backgroundColor: "var(--adm-bg)" }}>
+                    {v.image
+                      ? <img src={v.image} alt="" className="w-full h-full object-cover" />
+                      : <span className="text-[9px] opacity-40" style={{ color: "var(--adm-text)" }}>用主图</span>}
+                  </div>
+                  <input
+                    type="text"
+                    value={v.label}
+                    onChange={e => {
+                      const next = [...form.variants]
+                      next[idx] = { ...next[idx], label: e.target.value }
+                      update("variants", next)
+                    }}
+                    placeholder="款式名，如 Zen Black"
+                    className="flex-1 px-3 py-2 rounded text-sm"
+                    style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                  />
+                  <label className="flex items-center gap-1.5 shrink-0 cursor-pointer">
+                    <input type="checkbox" checked={v.active !== false}
+                      onChange={e => {
+                        const next = [...form.variants]
+                        next[idx] = { ...next[idx], active: e.target.checked }
+                        update("variants", next)
+                      }}
+                      className="w-4 h-4" />
+                    <span className="text-xs" style={{ color: "var(--adm-text)" }}>启用</span>
+                  </label>
+                  <button type="button"
+                    onClick={() => update("variants", form.variants.filter((_: any, i: number) => i !== idx))}
+                    className="px-2 py-1 rounded text-xs shrink-0"
+                    style={{ backgroundColor: "rgba(220,38,38,0.15)", color: "#f87171" }}>
+                    删除
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>价格（留空=主价）</label>
+                    <input type="number" step="0.01" value={v.price}
+                      onChange={e => {
+                        const next = [...form.variants]
+                        next[idx] = { ...next[idx], price: e.target.value }
+                        update("variants", next)
+                      }}
+                      placeholder="USD"
+                      className="w-full px-3 py-2 rounded text-sm"
+                      style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>库存（留空=主库存）</label>
+                    <input type="number" value={v.stock}
+                      onChange={e => {
+                        const next = [...form.variants]
+                        next[idx] = { ...next[idx], stock: e.target.value }
+                        update("variants", next)
+                      }}
+                      className="w-full px-3 py-2 rounded text-sm"
+                      style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>货号 / SKU</label>
+                    <input type="text" value={v.valueCode}
+                      onChange={e => {
+                        const next = [...form.variants]
+                        next[idx] = { ...next[idx], valueCode: e.target.value }
+                        update("variants", next)
+                      }}
+                      className="w-full px-3 py-2 rounded text-sm"
+                      style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>图片 URL</label>
+                    <input type="text" value={v.image}
+                      onChange={e => {
+                        const next = [...form.variants]
+                        next[idx] = { ...next[idx], image: e.target.value }
+                        update("variants", next)
+                      }}
+                      placeholder="https://…"
+                      className="w-full px-3 py-2 rounded text-sm"
+                      style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {form.variants.length === 0 && (
+              <p className="text-xs opacity-50 px-1" style={{ color: "var(--adm-text)" }}>
+                还没有款式。没有款式时前台按普通商品展示，不显示规格选择器。
+              </p>
+            )}
+          </div>
+
+          <button type="button"
+            onClick={() => update("variants", [
+              ...form.variants,
+              { label: "", valueCode: "", price: "", image: "", stock: "", active: true },
+            ])}
+            className="mt-3 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
+            + 添加款式
+          </button>
         </Section>
 
         {/* Status */}

@@ -136,6 +136,31 @@ export function initDatabase() {
       FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
     );
 
+    -- 商品规格 / 款式表（variants）
+    -- 语义：一个商品可以有多个款式/型号，每个款式对应自己的图片和价格。
+    --   optionName  规格维度名，如 "Style" / "Color"（空则前台不显示标签）
+    --   label       该规格的值，如 "Zen Black" / "Soft Ivory White"
+    --   price       该款式价格（NULL = 用主商品价格）
+    --   image       该款式主图（NULL = 用主商品图）
+    --   stock       该款式库存（NULL = 用主商品库存）
+    --   valueCode   可选的外部编码（对应供应商货号 / SKU），便于对账
+    -- 前台：选不同款式 → 图片与价格联动切换
+    CREATE TABLE IF NOT EXISTS product_variants (
+      id TEXT PRIMARY KEY,
+      productId TEXT NOT NULL,
+      optionName TEXT DEFAULT '',
+      label TEXT NOT NULL,
+      valueCode TEXT DEFAULT '',
+      price REAL,
+      image TEXT,
+      stock INTEGER,
+      sortOrder INTEGER DEFAULT 0,
+      active INTEGER NOT NULL DEFAULT 1,
+      FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(productId, sortOrder);
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
