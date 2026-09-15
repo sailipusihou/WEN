@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ArrowRight, Check, Gift } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -113,23 +113,38 @@ export default function CartPage() {
                       <Link href={`/products/${item.id}`} className="font-en text-sm md:text-base text-[#2A2118] hover:text-[#8A6A2E] transition-colors font-medium">
                         {item.nameEn || item.name}
                       </Link>
+                      {/* 赠品行：明确标出来，避免客户以为被多收了钱 */}
+                      {item.isGift && (
+                        <span
+                          className="inline-flex items-center gap-1 ml-2 align-middle px-2 py-0.5 font-sans text-[9px] font-bold tracking-[0.16em] uppercase"
+                          style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', color: '#8A6A2E', borderRadius: 2 }}
+                        >
+                          <Gift size={9} strokeWidth={2.2} /> Free gift
+                        </span>
+                      )}
                     </div>
                     <button onClick={() => removeItem(item.id)} className="p-1 text-[#5A4A36]/30 hover:text-red-400 transition-colors shrink-0">
                       <Trash2 size={14} strokeWidth={1.5} />
                     </button>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center border border-[#EFE7D4]">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
-                        <Minus size={12} strokeWidth={1.5} />
-                      </button>
-                      <span className="w-8 text-center font-sans text-sm text-[#2A2118]">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
-                        <Plus size={12} strokeWidth={1.5} />
-                      </button>
-                    </div>
-                    <span className="font-en text-base font-medium text-[#2A2118]">
-                      {formatPrice(convertPrice(item.price * item.quantity, currency), currency)}
+                    {item.isGift ? (
+                      <span className="font-sans text-[11px] tracking-[0.14em] uppercase" style={{ color: '#4A665D' }}>
+                        Included with your order
+                      </span>
+                    ) : (
+                      <div className="flex items-center border border-[#EFE7D4]">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
+                          <Minus size={12} strokeWidth={1.5} />
+                        </button>
+                        <span className="w-8 text-center font-sans text-sm text-[#2A2118]">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
+                          <Plus size={12} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    )}
+                    <span className="font-en text-base font-medium" style={{ color: item.isGift ? '#4A665D' : '#2A2118' }}>
+                      {item.isGift ? 'FREE' : formatPrice(convertPrice(item.price * item.quantity, currency), currency)}
                     </span>
                   </div>
                 </div>

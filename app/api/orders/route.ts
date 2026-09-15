@@ -405,6 +405,37 @@ export async function POST(req: NextRequest) {
     const validatedItems = []
     const activePromotions = getActivePromotions()
 
+    /**
+     * 赠品免费额度计算（安全关键）。
+     *
+     * 前端会把赠品行标成 isGift=true，但**绝不能只信这个标记** —— 否则谁都能把
+     * 整辆购物车标成赠品白拿。这里由服务端按 product_gifts 表独立裁决：
+     *   1. 先统计购物车里「真正付钱的商品」及数量
+     *   2. 依据每个付费商品绑定的赠品，算出每个赠品商品最多能免几件
+     *      （额度 = 付费数量 × 该商品的 giftQuantity）
+     *   3. 再从额度里扣：有额度 → 价格 0；没额度 → 按普通商品计价（不报错，避免误伤）
+     */
+    const paidQty = new Map<string, number>()
+    for (const item of rawItems) {
+      if (item?.isGift) continue
+      const pid = item?.productId || item?.id
+      if (!pid) continue
+      const q = Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1))
+      paidQty.set(String(pid), (paidQty.get(String(pid)) || 0) + q)
+    }
+
+    const giftAllowance = new Map<string, number>()
+    for (const [pid, q] of paidQty.entries()) {
+      try {
+        const owner: any = repo.products.getById(pid)
+        const giftIds: string[] = owner?.giftProductIds || []
+        const perUnit = Math.max(1, Number(owner?.giftQuantity) || 1)
+        for (const gid of giftIds) {
+          giftAllowance.set(gid, (giftAllowance.get(gid) || 0) + q * perUnit)
+        }
+      } catch { /* 读不到商品就跳过，后续按普通商品计价 */ }
+    }
+
     for (const item of rawItems) {
       // 前端购物车项（lib/cart-types.ts CartItem）只有 id、没有 productId，
       // 下一行用 `item.productId || item.id` 兜底，因此两者有其一即可。
@@ -412,7 +443,7 @@ export async function POST(req: NextRequest) {
       if (!item.id && !item.productId) {
         return NextResponse.json({ error: 'Invalid item: missing product ID' }, { status: 400 })
       }
-      const productId = item.productId || item.id
+      const productId = String(item.productId || item.id)
       const product = repo.products.getById(productId)
       if (!product) {
         return NextResponse.json({ error: `Product not found: ${productId}` }, { status: 400 })
@@ -421,8 +452,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Product is unavailable: ${productId}` }, { status: 400 })
       }
       const qty = Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1))
-      const unitPrice = computePromotionForProduct(product, activePromotions).price
-      const itemSubtotal = unitPrice * qty
+
+      let unitPrice = computePromotionForProduct(product, activePromotions).price
+      let isGift = false
+      if (item.isGift) {
+        const allowance = giftAllowance.get(productId) || 0
+        if (allowance >= qty) {
+          // 有额度：这件赠品免费，并从额度里扣掉
+          giftAllowance.set(productId, allowance - qty)
+          unitPrice = 0
+          isGift = true
+        }
+        // 额度不够时保持原价计费 —— 宁可让客户多付，也不能让人白拿
+      }
+
+      const itemSubtotal = Math.round(unitPrice * qty * 100) / 100
       calculatedSubtotal += itemSubtotal
 
       validatedItems.push({
@@ -436,6 +480,7 @@ export async function POST(req: NextRequest) {
         quantity: qty,
         subtotal: itemSubtotal,
         category: product.category || '',
+        isGift,
       })
     }
 

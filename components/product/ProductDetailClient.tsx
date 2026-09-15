@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
   ArrowUpLeft, Star, ShoppingBag, Plus, Minus, Check, ShieldCheck, Truck, RotateCcw,
-  MessageCircle, Heart, X, ChevronDown, Package, Clock, ChevronRight, ZoomIn, Zap,
+  MessageCircle, Heart, X, ChevronDown, Package, Clock, ChevronRight, ZoomIn, Zap, Gift,
 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 import { useCart } from '@/context/CartContext'
@@ -103,11 +103,14 @@ function Accordion({
 export default function ProductDetailClient({
   product,
   reviews: reviewsProp,
+  giftProducts = [],
 }: {
   product: Product | null
   reviews: Review[]
+  /** 服务端取好的赠品商品（来自 product.giftProductIds） */
+  giftProducts?: any[]
 }) {
-  const { addItem, items: cartItems } = useCart()
+  const { addItem, addGiftItem, items: cartItems } = useCart()
   // 免邮进度/小计一律用「促销后」金额，与购物车页、结算页、服务端 calculateShipping 口径一致
   const cartSubtotal = useDiscountedCartSubtotal(cartItems)
   const { currency } = useCurrency()
@@ -118,6 +121,8 @@ export default function ProductDetailClient({
   const router = useRouter()
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  /** 绑了多个赠品时，客户选中的那个 */
+  const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistLoading, setWishlistLoading] = useState(false)
@@ -345,6 +350,43 @@ export default function ProductDetailClient({
     deliveryText = `${fmt(from)} – ${fmt(to)}`
   }
 
+  /**
+   * 赠品相关。
+   *
+   * 一个商品绑了赠品时（product.giftProductIds），加购/立即购买要把它一起带进购物车：
+   *   - 只绑 1 个 → 自动带上，不用客户操作
+   *   - 绑多个    → 客户在下方「Choose your free gift」里挑一个
+   *
+   * ⚠️ 购物车里赠品行的价格写 0 只是显示；真正的免费由服务端按 product_gifts
+   * 表核销额度（app/api/orders/route.ts），前端改价格没有意义。
+   */
+  const giftList = useMemo(
+    () => (Array.isArray(giftProducts) ? giftProducts : []),
+    [giftProducts]
+  )
+
+  /** 当前选中的赠品 id；只有一个赠品时直接就是它 */
+  const effectiveGiftId = giftList.length === 0
+    ? null
+    : giftList.length === 1
+      ? giftList[0].id
+      : selectedGiftId || giftList[0].id
+
+  /** 把赠品加进购物车（幂等，已在车里就不重复加） */
+  const attachGift = () => {
+    if (!effectiveGiftId) return
+    const gp = giftList.find(g => g.id === effectiveGiftId)
+    if (!gp) return
+    addGiftItem({
+      id: gp.id,
+      name: gp.name,
+      nameEn: gp.nameEn || gp.name,
+      image: gp.image,
+      price: 0,
+      category: gp.category,
+    }, product.id)
+  }
+
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
       addItem({
@@ -354,6 +396,7 @@ export default function ProductDetailClient({
         category: product.category,
       })
     }
+    attachGift()
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -368,6 +411,7 @@ export default function ProductDetailClient({
         category: product.category,
       })
     }
+    attachGift()
     router.push('/checkout')
   }
 
@@ -661,6 +705,84 @@ export default function ProductDetailClient({
                 <Heart size={17} strokeWidth={1.6} fill={isWishlisted ? 'currentColor' : 'none'} />
               </button>
             </div>
+
+            {/* ===== 赠品区（买一送一 / 免费搭配） =====
+                绑 1 个 → 直接展示"随货赠送"，不用客户操作
+                绑多个 → 客户自己挑一个，选中项实时高亮 */}
+            {giftList.length > 0 && (
+              <div
+                data-gift-section="1"
+                className="mt-5 p-4"
+                style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', borderRadius: 3 }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Gift size={14} strokeWidth={2} style={{ color: '#8A6A2E' }} />
+                  <span className="font-sans text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: '#6B5220' }}>
+                    {giftList.length > 1 ? 'Choose your free gift' : 'Free gift with this piece'}
+                  </span>
+                </div>
+
+                {giftList.length === 1 ? (
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={giftList[0].image} alt="" className="w-12 h-12 object-cover shrink-0"
+                      style={{ borderRadius: 2, backgroundColor: '#F8F2E2' }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
+                        {giftList[0].nameEn || giftList[0].name}
+                      </p>
+                      <p className="font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                        <span className="line-through opacity-50 mr-1.5">{formatPrice(convertPrice(giftList[0].price, currency), currency)}</span>
+                        FREE
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {giftList.map((g: any) => {
+                      const active = g.id === effectiveGiftId
+                      return (
+                        <button
+                          key={g.id}
+                          type="button"
+                          data-gift-option={g.id}
+                          onClick={() => setSelectedGiftId(g.id)}
+                          className="w-full flex items-center gap-3 p-2 text-left transition-all duration-200"
+                          style={{
+                            backgroundColor: active ? '#FFFFFF' : 'transparent',
+                            border: `1px solid ${active ? '#8A6A2E' : 'transparent'}`,
+                            borderRadius: 3,
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={g.image} alt="" className="w-11 h-11 object-cover shrink-0"
+                            style={{ borderRadius: 2, backgroundColor: '#F8F2E2' }} />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
+                              {g.nameEn || g.name}
+                            </p>
+                            <p className="font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                              <span className="line-through opacity-50 mr-1.5">{formatPrice(convertPrice(g.price, currency), currency)}</span>
+                              FREE
+                            </p>
+                          </div>
+                          <span
+                            className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
+                            style={{ border: `1.5px solid ${active ? '#8A6A2E' : 'rgba(74,58,36,0.3)'}` }}
+                          >
+                            {active && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8A6A2E' }} />}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <p className="mt-3 font-sans text-[10px] leading-relaxed" style={{ color: 'rgba(107,82,32,0.75)' }}>
+                  Added automatically at checkout — you pay nothing for it.
+                </p>
+              </div>
+            )}
 
             {/* 立即购买：直接进结算，跳过购物车这一步 */}
             <button

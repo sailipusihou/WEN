@@ -11,6 +11,10 @@ import { useCurrency } from '@/context/CurrencyContext'
 interface CartContextType {
   items: CartItem[]
   addItem: (item: Omit<CartItem, 'quantity'>) => void
+  /** 加入赠品（价格 0；真正免费与否由服务端核销） */
+  addGiftItem: (item: Omit<CartItem, 'quantity'>, forProductId: string) => void
+  /** 移除某个主商品带进来的赠品 */
+  removeGiftFor: (forProductId: string) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, qty: number) => void
   clearCart: () => void
@@ -63,10 +67,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
     fetchIsLoggedIn().then(setIsLoggedIn)
     setItems(prev => {
-      const existing = prev.find(i => i.id === item.id)
+      // 只在「同为付费行」或「同为赠品行」之间合并数量。
+      // 否则同一个商品的付费行和赠品行会被并成一行，价格算错。
+      const existing = prev.find(i => i.id === item.id && !!i.isGift === !!item.isGift)
       let updated: CartItem[]
       if (existing) {
-        updated = prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
+        updated = prev.map(i =>
+          (i.id === item.id && !!i.isGift === !!item.isGift) ? { ...i, quantity: i.quantity + 1 } : i
+        )
       } else {
         updated = [...prev, { ...item, quantity: 1 }]
       }
@@ -76,9 +84,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setJustAdded({ ...item, quantity: 1 })
   }, [])
 
+  /**
+   * 把赠品加入购物车（价格固定 0）。
+   *
+   * ⚠️ 价格在这里写 0 只是「显示用」；真正的免费与否由服务端按 product_gifts
+   * 表独立核算（app/api/orders/route.ts），所以前端改这个数字没有意义。
+   *
+   * 幂等：同一商品已在购物车（无论付费行还是赠品行）就不再重复加赠品行，
+   * 避免出现两行同 id 导致移除操作互相影响。
+   */
+  const addGiftItem = useCallback((item: Omit<CartItem, 'quantity'>, forProductId: string) => {
+    setItems(prev => {
+      if (prev.some(i => i.id === item.id)) return prev
+      const updated = [...prev, { ...item, price: 0, quantity: 1, isGift: true, giftFor: forProductId }]
+      localStorage.setItem('otm_cart', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  /** 移除某个主商品带进来的赠品（换赠品时用） */
+  const removeGiftFor = useCallback((forProductId: string) => {
+    setItems(prev => {
+      const updated = prev.filter(i => !(i.isGift && i.giftFor === forProductId))
+      localStorage.setItem('otm_cart', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
   const removeItem = useCallback((id: string) => {
     setItems(prev => {
-      const updated = prev.filter(i => i.id !== id)
+      // 连同「属于该主商品的赠品」一起移除，避免赠品孤零零留在购物车里
+      const updated = prev.filter(i => i.id !== id && i.giftFor !== id)
       localStorage.setItem('otm_cart', JSON.stringify(updated))
       return updated
     })
@@ -102,8 +138,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items])
 
   const value = useMemo(() => ({
-    items, addItem, removeItem, updateQuantity, clearCart, totalItems, subtotal, isLoggedIn
-  }), [items, addItem, removeItem, updateQuantity, clearCart, totalItems, subtotal, isLoggedIn])
+    items, addItem, addGiftItem, removeGiftFor, removeItem, updateQuantity, clearCart, totalItems, subtotal, isLoggedIn
+  }), [items, addItem, addGiftItem, removeGiftFor, removeItem, updateQuantity, clearCart, totalItems, subtotal, isLoggedIn])
 
   return (
     <CartContext.Provider value={value}>

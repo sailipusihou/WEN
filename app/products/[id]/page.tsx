@@ -88,5 +88,11 @@ export default async function ProductPage({
 
   const reviews = repo.reviews.getByProduct(id).filter(r => r.approved && !r.hidden && !r.deleted)
 
-  return <ProductDetailClient product={product} reviews={reviews} />
+  // 赠品绑定：直接在这里把赠品商品取好传给客户端组件，
+  // 避免前台为了渲染赠品区再打一次 /api/products。
+  const giftProducts = (product.giftProductIds || [])
+    .map((gid: string) => repo.products.getById(gid))
+    .filter((p: any) => p && p.active)
+
+  return <ProductDetailClient product={product} reviews={reviews} giftProducts={giftProducts} />
 }
