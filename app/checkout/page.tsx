@@ -1100,14 +1100,15 @@ export default function CheckoutPage() {
             背景色从页面顶端一直铺到底端，和左半在正中形成分界线。 */}
         <div style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)' }}>
           <div className="px-6 sm:px-8 py-8 md:py-10 pb-28 lg:max-w-[576px] lg:mr-auto lg:pl-10">
-            {/* sticky 与「最大高度 + 内部滚动」放在这一层：
-                若把 maxHeight 放在里面的内容上，外层 sticky 容器会跟内容一样高，
-                超过一屏时底部就被顶出视口、够不到。
-                参考站右栏**没有白色卡片边框** —— 内容直接铺在背景上。 */}
-            <div
-              className="lg:sticky lg:top-0"
-              style={{ maxHeight: '100vh', overflowY: 'auto' }}
-            >
+            {/* 右栏跟随整页一起滚动，**不再单独 sticky、也不设内部滚动条**。
+                原因：
+                  1) 内部滚动条（maxHeight + overflowY）会在页面里多出一条下拉栏，
+                     和站点右侧那个可拖动的滚动条重复，视觉上很乱；
+                  2) 参考站的右栏本来就不固定 —— 它内容很长
+                     （商品行 + Shop with Confidence + *Note），跟着页面一起滚；
+                  3) 右栏内容常常超过一屏，硬做 sticky 会把底部顶出视口、够不到。
+                整页的滚动统一交给 DraggableScrollbar。 */}
+            <div>
               <div>
                 <h2 className="section-heading mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">

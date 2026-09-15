@@ -167,12 +167,14 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* 右栏：与结算页保持一致 —— 淡绿分区 + 固定不动 + 大号标题。
-              sticky 失效的常见原因是 grid 子项默认 stretch 拉满行高，
-              所以必须加 lg:self-start。 */}
+          {/* 右栏：与结算页保持一致 —— 淡绿分区铺满整列、跟随整页滚动。
+              不加 sticky、也不设内部滚动条：
+              页面里多一条下拉栏会和站点右侧的可拖动滚动条重复，
+              而且右栏内容常超过一屏，硬做 sticky 底部会够不到。
+              整页滚动统一交给 DraggableScrollbar。 */}
           <div
-            className="lg:col-span-1 lg:self-start lg:sticky lg:top-6 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
-            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)', borderRadius: 8 }}
+            className="lg:col-span-1 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
+            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)' }}
           >
             <div className="px-6 sm:px-8 lg:px-7 py-6">
               <h2 className="section-heading mb-4">Order Summary</h2>
