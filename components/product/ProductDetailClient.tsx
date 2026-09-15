@@ -121,6 +121,13 @@ export default function ProductDetailClient({
   const router = useRouter()
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  /**
+   * 「Add to cart」按钮的左右抖动。
+   * 参考站点加购时按钮会抖一下做反馈（抓不到它的 keyframes，应该是 JS 驱动的），
+   * 这里用同名动画还原：点一下 → 抖 0.45 秒 → 自动复位。
+   * 用 state 而不是直接改 DOM，避免和 React 的重新渲染打架。
+   */
+  const [shake, setShake] = useState(false)
   /** 绑了多个赠品时，客户选中的那个 */
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -329,7 +336,37 @@ export default function ProductDetailClient({
     )
   }
 
-  const images = [product.image, ...(product.detailImages || [])].filter(Boolean)
+  /**
+   * 商品规格 / 款式（variants）。
+   *
+   * 一件商品可以有多个款式，每个款式有自己的图片和价格。
+   * 客户选不同款式时：
+   *   · 主图切换到该款式的图片
+   *   · 价格切换成该款式的价格
+   *   · 加购 / 立即购买带上款式信息（购物车与订单里能看出买的是哪个款式）
+   *
+   * 款式的价格/图片留空时沿用主商品的值，所以下面到处都要做 `?? 主商品` 兜底。
+   *
+   * ⚠️ 这段必须放在 `const images` 之前 —— images 要用 activeVariant 决定首图。
+   */
+  const variants = useMemo(() => {
+    const v = (product as any)?.variants
+    return Array.isArray(v) ? v.filter((x: any) => x && x.active !== false && x.label) : []
+  }, [product])
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  // 默认选第一个款式（有款式时）
+  const activeVariant = useMemo(() => {
+    if (!variants.length) return null
+    return variants.find((v: any) => v.id === selectedVariantId) || variants[0]
+  }, [variants, selectedVariantId])
+
+  // 图片列表：选中的款式图优先，其余仍用主图 + 详情图。
+  // 这样切款式时大图/缩略图会一起换，客户能直观看到款式差异。
+  const images = [
+    activeVariant?.image || product.image,
+    ...(product.detailImages || []),
+  ].filter((x, i, arr) => x && arr.indexOf(x) === i)
   // 库存说明：这个站的 stock 字段目前从未维护（全部为 0），所以
   // **不能**把 0 当成「售罄」去拦截加购，否则整店无法下单。
   // 只在后台明确填了正数（1–10）时才提示库存紧张。
@@ -387,17 +424,30 @@ export default function ProductDetailClient({
     }, product.id)
   }
 
+  /** 当前生效的价格：款式价优先，留空则用主商品价 */
+  const effectivePrice = activeVariant && activeVariant.price !== undefined && activeVariant.price !== null
+    ? Number(activeVariant.price)
+    : product.price
+  /** 当前生效的主图：款式图优先 */
+  const effectiveImage = activeVariant?.image || product.image
+  /** 加进购物车用的显示名：带上款式，方便客户在购物车里区分 */
+  const cartName = activeVariant ? `${product.nameEn || product.name} · ${activeVariant.label}` : (product.nameEn || product.name)
+
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
       addItem({
         id: product.id, name: product.name,
-        nameEn: product.nameEn || product.name,
-        image: product.image, price: product.price,
+        nameEn: cartName,
+        image: effectiveImage, price: effectivePrice,
         category: product.category,
       })
     }
     attachGift()
     setAdded(true)
+    // 抖动反馈：先复位再触发，保证连点也能重新播一次动画
+    setShake(false)
+    requestAnimationFrame(() => setShake(true))
+    setTimeout(() => setShake(false), 500)
     setTimeout(() => setAdded(false), 2000)
   }
 
@@ -406,8 +456,8 @@ export default function ProductDetailClient({
     for (let i = 0; i < qty; i++) {
       addItem({
         id: product.id, name: product.name,
-        nameEn: product.nameEn || product.name,
-        image: product.image, price: product.price,
+        nameEn: cartName,
+        image: effectiveImage, price: effectivePrice,
         category: product.category,
       })
     }
@@ -640,6 +690,53 @@ export default function ProductDetailClient({
               )
             })()}
 
+            {/* ===== 规格 / 款式选择器 =====
+                有款式时显示。选中不同款式 → 图片与价格联动切换。
+                款式的价格/图片留空则沿用主商品的值（所以这里要显示"实际生效"的价格）。 */}
+            {variants.length > 0 && (
+              <div className="mt-6" data-variant-picker="1">
+                <div className="flex items-baseline gap-3 mb-2.5">
+                  <span className="font-sans text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: SOFT }}>
+                    {(product as any).optionName || 'Style'}
+                  </span>
+                  <span className="font-sans text-[12px]" style={{ color: INK }}>
+                    {activeVariant?.label}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((v: any) => {
+                    const on = activeVariant && v.id === activeVariant.id
+                    const vPrice = v.price !== undefined && v.price !== null ? Number(v.price) : product.price
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        data-variant-option={v.id}
+                        onClick={() => setSelectedVariantId(v.id)}
+                        className="relative px-4 py-2.5 font-sans text-[12px] transition-all duration-200"
+                        style={{
+                          border: `1px solid ${on ? INK : 'rgba(74,58,36,0.28)'}`,
+                          backgroundColor: on ? INK : 'transparent',
+                          color: on ? '#FFFFFF' : SOFT,
+                          borderRadius: 3,
+                        }}
+                        title={`${v.label} — ${formatPrice(convertPrice(vPrice, currency), currency)}`}
+                      >
+                        {v.label}
+                        {/* 有独立价格的款式在按钮上标出来，客户一眼看到差价 */}
+                        {v.price !== undefined && v.price !== null && Number(v.price) !== product.price && (
+                          <span className="ml-2 opacity-70">
+                            {formatPrice(convertPrice(vPrice, currency), currency)}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 库存 / 时效 */}
             <div className="mt-5 space-y-2.5">
               {lowStock ? (
@@ -684,8 +781,18 @@ export default function ProductDetailClient({
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="pdp-btn flex-1 flex items-center justify-center gap-2.5 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase text-white transition-all duration-300"
-                style={{ backgroundColor: added ? GOLD : INK, borderRadius: 2 }}
+                data-add-to-cart="1"
+                className="pdp-btn flex-1 flex items-center justify-center gap-2.5 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300"
+                style={{
+                  // 参考站的「Add to cart」是**白底描边**按钮（透明底 + 墨绿描边），
+                  // 「Buy now」才是实心。两者形成主次，客户一眼知道主推哪个。
+                  // 加购成功后变成金色实心，作为即时反馈。
+                  backgroundColor: added ? GOLD : 'transparent',
+                  color: added ? '#FFFFFF' : INK,
+                  border: `1px solid ${added ? GOLD : INK}`,
+                  borderRadius: 4,
+                  animation: shake ? 'otm-shake 0.45s cubic-bezier(.36,.07,.19,.97) both' : undefined,
+                }}
               >
                 {added ? <><Check size={15} strokeWidth={2} /> Added to Cart</> : <><ShoppingBag size={15} strokeWidth={2} /> Add to Cart</>}
               </button>
@@ -784,12 +891,14 @@ export default function ProductDetailClient({
               </div>
             )}
 
-            {/* 立即购买：直接进结算，跳过购物车这一步 */}
+            {/* 立即购买：直接进结算，跳过购物车这一步。
+                参考站的「Buy now」是**深墨绿实心**，和描边的 Add to cart 形成主次；
+                我们原来两个都是描边，客户看不出哪个是主推，这里改成实心。 */}
             <button
               type="button"
               onClick={handleBuyNow}
-              className="pdp-btn mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
-              style={{ backgroundColor: '#fff', color: INK, border: `1px solid ${INK}`, borderRadius: 2 }}
+              className="pdp-btn pdp-btn-primary mt-3 w-full flex items-center justify-center gap-2 px-8 py-3.5 font-sans text-[12px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
+              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', border: '1px solid #4C5546', borderRadius: 4 }}
             >
               <Zap size={15} strokeWidth={2.2} /> Buy Now
             </button>

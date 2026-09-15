@@ -2047,7 +2047,31 @@ apple-pay-button {
 }
 
 /* ---------------------------------------------------------------------------
-   结算页视觉分区
+   「Add to cart」按钮的左右抖动反馈（对齐参考站）
+   参考站点加购时按钮会左右抖一下；它的动画是 JS 驱动的、抓不到 keyframes，
+   这里按视觉效果还原：小幅快速左右位移 + 轻微旋转，0.45 秒结束。
+   尊重 prefers-reduced-motion：关了动画的用户不做抖动。
+--------------------------------------------------------------------------- */
+@keyframes otm-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  12%      { transform: translateX(-5px) rotate(-0.6deg); }
+  28%      { transform: translateX(5px) rotate(0.6deg); }
+  44%      { transform: translateX(-4px) rotate(-0.4deg); }
+  60%      { transform: translateX(3px) rotate(0.4deg); }
+  76%      { transform: translateX(-2px) rotate(-0.2deg); }
+  90%      { transform: translateX(1px) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-add-to-cart="1"] { animation: none !important; }
+}
+
+/* 「Buy now」按钮：参考站是深墨绿实心，和描边的 Add to cart 形成主次 */
+.pdp-btn-primary {
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   支付界面：结算页顶部结构与信任区 + 结算页视觉分区
 
    参考站把「表单区」和「订单摘要区」用背景色 + 竖线分开，形成明确的两个区域。
    这里照做：
