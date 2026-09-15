@@ -12,10 +12,23 @@ import ProductCard from '@/components/product/ProductCard'
 import type { Product } from '@/lib/products'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
+import OrderSummaryLines from '@/components/cart/OrderSummaryLines'
+import ShopWithConfidence from '@/components/cart/ShopWithConfidence'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart } = useCart()
   const { currency } = useCurrency()
+  // 信任区用的真实评价数据（服务端聚合，不编造）
+  const [reviewStats, setReviewStats] = useState<{ count: number; rating: number }>({ count: 0, rating: 0 })
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/products/review-stats')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled && d) setReviewStats({ count: d.count || 0, rating: d.rating || 0 }) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   // 修复 C5: 购物车存基础价, 此处按当前促销统一计算一次 (与结算页/服务端一致, 避免双重折扣)
   const promotions = useActivePromotions()
@@ -153,9 +166,13 @@ export default function CartPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 sticky top-24">
-              <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-6">Order Summary</h2>
-              <div className="space-y-3 font-sans text-sm">
+            <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 sticky top-24">
+              <h2 className="checkout-section-title mb-4">Order Summary</h2>
+
+              {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度） */}
+              <OrderSummaryLines items={items} currency={currency} compact />
+
+              <div className="space-y-3 font-sans text-sm mt-4 pt-4" style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }}>
                 <div className="flex justify-between text-[#5A4A36]/70">
                   <span>Subtotal</span>
                   <span className="text-[#2A2118]">{formatPrice(subtotalConverted, currency)}</span>
@@ -196,6 +213,9 @@ export default function CartPage() {
               <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
                 <ArrowLeft size={12} strokeWidth={1.5} /> Continue Shopping
               </Link>
+
+              {/* 信任区：全部为真实可核验的要素（付款渠道/物流/退货/站内真实评价） */}
+              <ShopWithConfidence reviewCount={reviewStats.count} rating={reviewStats.rating} />
             </div>
           </div>
         </div>

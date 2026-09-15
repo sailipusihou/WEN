@@ -10,6 +10,8 @@ import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 import WalletButtons, { type WalletContact } from '@/components/checkout/WalletButtons'
 import CheckoutUrgency from '@/components/checkout/CheckoutUrgency'
+import OrderSummaryLines from '@/components/cart/OrderSummaryLines'
+import ShopWithConfidence from '@/components/cart/ShopWithConfidence'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
@@ -1013,12 +1015,12 @@ export default function CheckoutPage() {
             <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 md:p-8 lg:sticky lg:top-24">
               <h2 className="checkout-section-title mb-5">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
-                {discountedItems.map((item: any) => (
-                  <div key={item.id} className="flex justify-between text-[#5A4A36]/70">
-                    <span className="truncate max-w-[180px]">{item.nameEn || item.name} x{item.quantity}</span>
-                    <span>{formatPrice(convertPrice((item.price || 0) * item.quantity, currency), currency)}</span>
-                  </div>
-                ))}
+                {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度）。
+                    原来这里只有「名字 x 数量 …… 金额」一行文字，现在换成带图的明细。
+                    金额口径不变：仍由本页的 discountedItems 计算，OrderSummaryLines
+                    用的是同一个纯函数 computePromotionForProduct。 */}
+                <OrderSummaryLines items={items} currency={currency} compact />
+                <div style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }} className="pt-1" />
                 <div className="border-t border-[#EFE7D4]/30 pt-3 flex justify-between text-[#5A4A36]/60">
                   <span>Subtotal</span>
                   <span className="text-[#2A2118]">
