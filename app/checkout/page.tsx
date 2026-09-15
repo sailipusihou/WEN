@@ -1075,27 +1075,30 @@ export default function CheckoutPage() {
               )}
             </div>
           </div>
-          {/* Order Summary —— 右栏固定不动（下滑时留在视口里），左栏表单可滚。
-              sticky 失效的常见原因是 grid 子项默认 stretch 拉满行高，
-              粘性元素就没有可移动空间 —— 所以必须加 lg:self-start。
-              配色：左栏纯白，右栏淡绿，用颜色把两个区域分开。 */}
+          {/* Order Summary —— 右半部分整体变色（从顶到底铺满），内容 sticky 固定。
+              结构要点：
+                · 外层列 **不加** self-start → grid 默认 stretch 会把它拉满整行高度，
+                  这样淡绿色才能真正铺满右半部分（之前加 self-start 只包住内容，
+                  颜色只到卡片底部就断了）
+                · sticky 挂在内层 → 父级（这一列）很高，粘性元素才有可移动空间
+                · 列自带左侧框线，形成"整个右半部分换色 + 一条分界线"的效果 */}
           <div
-            className="lg:col-span-1 lg:self-start lg:sticky lg:top-0 pt-8 lg:py-6 lg:mt-0 -mx-6 sm:-mx-8 lg:mx-0"
-            style={{
-              backgroundColor: '#EFF5F0',
-              borderLeft: '1px solid rgba(74,102,93,0.16)',
-            }}
+            className="lg:col-span-1 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
+            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.18)' }}
           >
-            <div className="px-6 sm:px-8 lg:px-8">
+            {/* sticky 与「最大高度 + 内部滚动」都放在这一层：
+                若把 maxHeight 放在里面的卡片上，外层 sticky 容器会跟内容一样高，
+                超过一屏时底部就被顶出视口、够不到。 */}
+            <div
+              className="lg:sticky lg:top-0 px-6 sm:px-8 lg:px-8 py-6"
+              style={{ maxHeight: '100vh', overflowY: 'auto' }}
+            >
               <div
                 className="p-6 md:p-7"
                 style={{
                   backgroundColor: '#FFFFFF',
                   border: '1px solid rgba(74,102,93,0.18)',
                   borderRadius: 10,
-                  // 内容比视口高时，右栏自己可滚，不会被裁掉（长订单 + 信任区很容易超高）
-                  maxHeight: 'calc(100vh - 3rem)',
-                  overflowY: 'auto',
                 }}
               >
                 <h2 className="section-heading mb-4">Order Summary</h2>

@@ -50,12 +50,17 @@ export default function CheckoutUrgency() {
   if (left <= 0) return null
 
   return (
+    /**
+     * 参考站的那条紧迫提示是**贴左边的一小条**，不是整行铺满。
+     * 用 inline-flex + w-fit 让它按内容宽度收紧（原来 justify-center 会撑满整行，
+     * 在宽屏上显示成一条很长的横条，很突兀）。
+     */
     <div
       data-checkout-urgency="1"
-      className="mb-5 flex items-center justify-center gap-2.5 px-4 py-3"
+      className="mb-5 inline-flex w-fit max-w-full items-center gap-2.5 px-4 py-2.5"
       style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', borderRadius: 3 }}
     >
-      <Clock size={15} strokeWidth={2} style={{ color: '#8A6A2E' }} />
+      <Clock size={15} strokeWidth={2} className="shrink-0" style={{ color: '#8A6A2E' }} />
       <p className="font-sans text-[13px] leading-none" style={{ color: '#6B5220' }}>
         Your order is reserved for the next{' '}
         <span className="font-semibold tabular-nums tracking-[0.04em]">{mm}:{ss}</span>
