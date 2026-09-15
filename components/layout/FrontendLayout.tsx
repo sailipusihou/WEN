@@ -6,7 +6,7 @@ import Footer from "@/components/layout/Footer"
 import ChatWidget from "@/components/chat/ChatWidget"
 import GlobalCartBar from "@/components/layout/GlobalCartBar"
 import CheckoutTopBar from "@/components/layout/CheckoutTopBar"
-import ScrollProgressRail from "@/components/layout/ScrollProgressRail"
+import DraggableScrollbar from "@/components/layout/DraggableScrollbar"
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -41,8 +41,8 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
       {/* 全站底部购物车条：购物车非空时在所有前台页面常驻（可手动关闭） */}
       <GlobalCartBar />
       <ChatWidget />
-      {/* 右侧滑动进度栏：所有前台页面都有 */}
-      <ScrollProgressRail />
+      {/* 右侧可拖拽滚动条：所有前台页面都有（能拖，不只是进度指示） */}
+      <DraggableScrollbar />
     </div>
   )
 }
