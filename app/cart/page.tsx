@@ -100,7 +100,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-[#FBFAF7] min-h-screen">
+    <div className="bg-[#FFFFFF] min-h-screen">
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -116,7 +116,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-3">
             {discountedItems.map((item, i) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-4 md:p-6 flex gap-4 md:gap-6">
+                className="checkout-card p-4 md:p-6 flex gap-4 md:gap-6">
                 <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#EFE7D4]/30 overflow-hidden relative">
                   <OptimizedImage src={item.image} alt={item.nameEn || item.name} fill sizes="(max-width: 768px) 80px, 96px" objectFit="cover" placeholder="blur" />
                 </Link>
@@ -165,9 +165,15 @@ export default function CartPage() {
             ))}
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 sticky top-24">
-              <h2 className="checkout-section-title mb-4">Order Summary</h2>
+          {/* 右栏：与结算页保持一致 —— 淡绿分区 + 固定不动 + 大号标题。
+              sticky 失效的常见原因是 grid 子项默认 stretch 拉满行高，
+              所以必须加 lg:self-start。 */}
+          <div
+            className="lg:col-span-1 lg:self-start lg:sticky lg:top-6 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
+            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)', borderRadius: 8 }}
+          >
+            <div className="px-6 sm:px-8 lg:px-7 py-6">
+              <h2 className="section-heading mb-4">Order Summary</h2>
 
               {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度） */}
               <OrderSummaryLines items={items} currency={currency} compact />
