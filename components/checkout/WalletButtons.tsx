@@ -253,48 +253,82 @@ export default function WalletButtons({
             },
           }
 
+          /**
+           * Google Pay 的点击处理。
+           *
+           * ⚠️ 为什么不能只靠 createButton 的 onClick（实测踩过的坑）：
+           *   线上实测——真实鼠标点击确实落在了 Google 生成的
+           *   <button id="gpay-button-online-api-id"> 上（isTrusted=true），
+           *   但我们的 onClick 完全没被执行：loadPaymentData 没被调用、
+           *   没有报错、processing 也没有被置起。表现就是「点了没反应」。
+           *   而隔离实验证明 createButton({onClick}) 本身是好使的。
+           *   → 所以除了把处理函数交给 createButton，还要在**按钮元素自身**上
+           *     再绑一个原生 click 监听器兜底（和 Apple Pay 那次的修法一致）。
+           *   两边可能都触发，用 inflight 标志防止重复发起支付。
+           */
+          let googlePayInflight = false
+          const handleGooglePay = async () => {
+            if (googlePayInflight) return
+            googlePayInflight = true
+            try {
+              setProcessing(true)
+              // ⚠️ loadPaymentData 必须是点击后的第一个动作，否则手势上下文过期被 Chrome 拒绝
+              const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
+
+              const sa = paymentData.shippingAddress || {}
+              const nm = splitName(sa.name)
+              const contact: WalletContact = {
+                firstName: nm.firstName,
+                lastName: nm.lastName,
+                email: paymentData.email || undefined,
+                phone: sa.phoneNumber || undefined,
+                address: sa.address1 || undefined,
+                city: sa.locality || undefined,
+                state: sa.administrativeArea || undefined,
+                zipCode: sa.postalCode || undefined,
+                country: sa.countryCode ? countryNameFromCode(sa.countryCode) : undefined,
+              }
+
+              const paypalOrderId = await createOrderId(contact)
+              const { orderId } = await paypal.Googlepay().confirmOrder({
+                orderId: paypalOrderId,
+                paymentSource: paymentData.paymentMethodData,
+              })
+              await captureOrder(orderId || paypalOrderId)
+            } catch (e: any) {
+              const msg = String(e?.message || e)
+              // 用户主动关掉支付面板不算错误
+              if (!/cancel/i.test(msg)) onError(msg || 'Google Pay failed. Please try another method.')
+            } finally {
+              setProcessing(false)
+              googlePayInflight = false
+            }
+          }
+
           const button = paymentsClient.createButton({
             buttonType: 'buy',
             buttonColor: 'black',
             buttonLocale: 'en',
             buttonSizeMode: 'fill',
-            onClick: async () => {
-              try {
-                setProcessing(true)
-                // ⚠️ loadPaymentData 必须是点击后的第一个动作，否则手势上下文过期被 Chrome 拒绝
-                const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
-
-                const sa = paymentData.shippingAddress || {}
-                const nm = splitName(sa.name)
-                const contact: WalletContact = {
-                  firstName: nm.firstName,
-                  lastName: nm.lastName,
-                  email: paymentData.email || undefined,
-                  phone: sa.phoneNumber || undefined,
-                  address: sa.address1 || undefined,
-                  city: sa.locality || undefined,
-                  state: sa.administrativeArea || undefined,
-                  zipCode: sa.postalCode || undefined,
-                  country: sa.countryCode ? countryNameFromCode(sa.countryCode) : undefined,
-                }
-
-                const paypalOrderId = await createOrderId(contact)
-                const { orderId } = await paypal.Googlepay().confirmOrder({
-                  orderId: paypalOrderId,
-                  paymentSource: paymentData.paymentMethodData,
-                })
-                await captureOrder(orderId || paypalOrderId)
-              } catch (e: any) {
-                const msg = String(e?.message || e)
-                // 用户主动关掉支付面板不算错误
-                if (!/cancel/i.test(msg)) onError(msg || 'Google Pay failed. Please try another method.')
-              } finally {
-                setProcessing(false)
-              }
-            },
+            onClick: handleGooglePay,
           })
+
           host.innerHTML = ''
           host.appendChild(button)
+
+          // 兜底：直接绑在 Google 生成的 <button> 上（合成 onClick 实测不触发）
+          const innerBtn = (button.querySelector && button.querySelector('button')) || button
+          if (innerBtn && innerBtn !== button) {
+            innerBtn.addEventListener('click', (ev: Event) => {
+              ev.preventDefault()
+              handleGooglePay()
+            })
+          } else if (button && button.tagName === 'BUTTON') {
+            button.addEventListener('click', (ev: Event) => {
+              ev.preventDefault()
+              handleGooglePay()
+            })
+          }
         } catch (e: any) {
           console.warn('[wallet] Google Pay unavailable:', e?.message || e)
           if (!cancelled) setShowGooglePay(false)
