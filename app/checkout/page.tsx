@@ -688,9 +688,25 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-[#FFFFFF] min-h-screen">
-      {/* pb-28：给底部常驻购物车条留出空间，避免盖住右栏底部的信任区 */}
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-10 pb-28">
+    /**
+     * 左右对半布局（对齐参考站）。
+     *
+     * 关键区别：**颜色的分界线在视口正中**，从页面顶端到底端一刀切，
+     * 而不是只在居中的内容容器里变色。
+     * 所以这里不能再用「max-w-6xl mx-auto + 两栏 grid」——
+     * 那样两侧留白会是同一个颜色，看着就不是对半。
+     *
+     * 做法：
+     *   · 外层是**满宽**的两列 grid（lg:grid-cols-2），左右各占视口一半
+     *   · 左列白底、右列淡绿底，各自撑满整列高度 → 分界线自然贯穿整页
+     *   · 每列内部再限制内容宽度并靠向中线，让正文和原来一样居中
+     *     （左列 ml-auto / 右列 mr-auto，各 max-w-[576px] = 1152/2）
+     */
+    <div className="min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="lg:grid lg:grid-cols-2">
+        {/* ===================== 左半：表单区（白） ===================== */}
+        <div style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="px-6 sm:px-8 py-8 md:py-10 pb-28 lg:max-w-[576px] lg:ml-auto lg:pr-10">
         {/* 站名：参考站把店名当纯文字 logo 放在表单列顶部，不另开一条导航栏 */}
 
         {/* 面包屑：Information > Shipping > Payment（参考站顶部那一行细灰字） */}
@@ -730,8 +746,8 @@ export default function CheckoutPage() {
 
         {/* 参考站顶部没有步骤标签页 —— 这里也去掉编号步进条，
             页面直接进入支付区，减少视觉噪音 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 mt-2">
-          <div className="lg:col-span-1 space-y-6 lg:pr-10 pb-10">
+        <div className="space-y-6">
+          <div className="space-y-6">
             {/* 紧迫提示条：放进左栏并铺满左栏宽度。
                 参考站就是这样 —— 它占满表单列、但不会横跨到右栏去。
                 之前它渲染在 grid 外面，所以横跨整页，显得"太长"。 */}
@@ -1076,23 +1092,20 @@ export default function CheckoutPage() {
               )}
             </div>
           </div>
-          {/* Order Summary —— 右半部分整体变色（从顶到底铺满），内容 sticky 固定。
-              结构要点：
-                · 外层列 **不加** self-start → grid 默认 stretch 会把它拉满整行高度，
-                  这样淡绿色才能真正铺满右半部分（之前加 self-start 只包住内容，
-                  颜色只到卡片底部就断了）
-                · sticky 挂在内层 → 父级（这一列）很高，粘性元素才有可移动空间
-                · 列自带左侧框线，形成"整个右半部分换色 + 一条分界线"的效果 */}
-          <div
-            className="lg:col-span-1 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
-            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.18)' }}
-          >
-            {/* sticky 与「最大高度 + 内部滚动」都放在这一层：
-                若把 maxHeight 放在里面的卡片上，外层 sticky 容器会跟内容一样高，
+        </div>
+          </div>
+        </div>
+        {/* ===================== 右半：订单摘要（淡绿） =====================
+            这是满宽 grid 的第二列 → 天然的视口右半部分，
+            背景色从页面顶端一直铺到底端，和左半在正中形成分界线。 */}
+        <div style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)' }}>
+          <div className="px-6 sm:px-8 py-8 md:py-10 pb-28 lg:max-w-[576px] lg:mr-auto lg:pl-10">
+            {/* sticky 与「最大高度 + 内部滚动」放在这一层：
+                若把 maxHeight 放在里面的内容上，外层 sticky 容器会跟内容一样高，
                 超过一屏时底部就被顶出视口、够不到。
-                参考站右栏**没有白色卡片边框** —— 内容直接铺在背景上，所以这里也不套卡片。 */}
+                参考站右栏**没有白色卡片边框** —— 内容直接铺在背景上。 */}
             <div
-              className="lg:sticky lg:top-0 px-6 sm:px-8 lg:px-8 py-6"
+              className="lg:sticky lg:top-0"
               style={{ maxHeight: '100vh', overflowY: 'auto' }}
             >
               <div>
@@ -1254,10 +1267,10 @@ export default function CheckoutPage() {
                   </p>
                 </div>
               </div>
-              </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
