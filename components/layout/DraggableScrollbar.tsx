@@ -56,10 +56,36 @@ export default function DraggableScrollbar() {
     measure()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
+
+    /**
+     * ⚠️ 只监听 scroll/resize 不够。
+     * 组件挂载时页面内容往往还没加载完（图片、支付按钮、优惠码区都是异步出来的），
+     * 这时 scrollHeight ≈ 视口高 → 判定"不足一屏" → 不渲染；
+     * 之后内容变长并不会触发 scroll 或 resize，滚动条就永远不出现。
+     * 实测：结算页就是这个情况（商品列表页内容多所以正常）。
+     * 用 ResizeObserver 盯住 body 高度，内容一变就重新测量。
+     */
+    let ro: ResizeObserver | null = null
+    try {
+      ro = new ResizeObserver(() => measure())
+      ro.observe(document.body)
+      if (document.documentElement) ro.observe(document.documentElement)
+    } catch { /* 老浏览器没有 ResizeObserver 就退化成下面的定时补测 */ }
+
+    // 兜底：前 6 秒内每秒补测一次，覆盖异步内容渲染
+    let ticks = 0
+    const timer = setInterval(() => {
+      ticks++
+      measure()
+      if (ticks >= 6) clearInterval(timer)
+    }, 1000)
+
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
       if (raf) cancelAnimationFrame(raf)
+      clearInterval(timer)
+      try { ro?.disconnect() } catch { /* ignore */ }
     }
   }, [measure])
 
