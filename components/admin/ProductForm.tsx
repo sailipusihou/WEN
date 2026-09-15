@@ -245,7 +245,171 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     })) as any[],
   })
 
+  /**
+   * 通用图片上传：上传本地文件，返回可访问的 URL。
+   * 赠品商品、搭配商品、搭配展示图都走这一个，避免三处各写一遍。
+   * 失败返回 null，并把错误写到表单顶部的错误区。
+   */
+  const uploadImage = async (file: File): Promise<string | null> => {
+    if (file.size > 5 * 1024 * 1024) { setError("File too large (max 5MB)"); return null }
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("type", "product")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setError(d.error || "Upload failed")
+        return null
+      }
+      const d = await res.json()
+      return d.url || null
+    } catch {
+      setError("Upload failed")
+      return null
+    }
+  }
+
+  /**
+   * 页内「快速新建赠品/搭配商品」的小表单状态。
+   *
+   * 为什么不用 window.prompt：
+   *   prompt 会在浏览器顶部弹一个系统框，无法上传图片、无法校验、体验割裂。
+   *   改成表单内嵌在当前编辑页里，可以带名称/价格/本地图片一起建。
+   */
+  const [quickForm, setQuickForm] = useState<null | {
+    kind: 'gift' | 'bundle'
+    name: string
+    price: string
+    image: string
+  }>(null)
+  const [quickBusy, setQuickBusy] = useState(false)
+
+  /**
+   * 页内「快速新建赠品/搭配商品」表单。
+   * 两个区块共用同一个组件函数，只是 kind 不同。
+   */
+  const renderQuickCreateForm = (kind: 'gift' | 'bundle') => {
+    if (!quickForm || quickForm.kind !== kind) return null
+    const label = kind === 'gift' ? '赠品' : '搭配商品'
+    return (
+      <div className="mt-3 rounded-lg p-4"
+        style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-accent)" }}>
+        <p className="text-sm font-medium mb-3" style={{ color: "var(--adm-text)" }}>
+          新建{label}商品
+        </p>
+
+        <div className="flex items-start gap-4">
+          {/* 本地图片上传 */}
+          <label className="shrink-0 cursor-pointer">
+            <input type="file" accept="image/*" className="hidden"
+              onChange={async e => {
+                const f = e.target.files?.[0]
+                if (!f) return
+                const url = await uploadImage(f)
+                if (url) setQuickForm(prev => prev ? { ...prev, image: url } : prev)
+                e.target.value = ''
+              }} />
+            <div className="flex flex-col items-center justify-center rounded overflow-hidden"
+              style={{ width: 84, height: 100, backgroundColor: "var(--adm-bg)", border: "1px dashed var(--adm-input-border)" }}>
+              {quickForm.image
+                ? <img src={quickForm.image} alt="" className="w-full h-full object-cover" />
+                : <>
+                    <Upload size={16} style={{ color: "var(--adm-text)" }} />
+                    <span className="text-[10px] mt-1 opacity-60" style={{ color: "var(--adm-text)" }}>上传图片</span>
+                  </>}
+            </div>
+          </label>
+
+          <div className="flex-1 min-w-0 space-y-2">
+            <div>
+              <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>名称 *</label>
+              <input type="text" autoFocus value={quickForm.name}
+                onChange={e => setQuickForm(prev => prev ? { ...prev, name: e.target.value } : prev)}
+                placeholder={`${label}名称`}
+                className="w-full px-3 py-2 rounded text-sm"
+                style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+            </div>
+            <div>
+              <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>价格 USD</label>
+              <input type="number" step="0.01" value={quickForm.price}
+                onChange={e => setQuickForm(prev => prev ? { ...prev, price: e.target.value } : prev)}
+                className="w-40 px-3 py-2 rounded text-sm"
+                style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <button type="button" disabled={quickBusy} onClick={submitQuickCreate}
+                className="px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
+                {quickBusy ? "创建中…" : "创建并绑定"}
+              </button>
+              <button type="button" onClick={() => setQuickForm(null)}
+                className="px-4 py-2 rounded text-sm"
+                style={{ color: "var(--adm-text-secondary, rgba(255,255,255,0.6))" }}>
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[10px] opacity-50 mt-3" style={{ color: "var(--adm-text)" }}>
+          建好后这个商品<strong>不会出现在商店列表</strong>，但仍可售、库存与价格照常计算，
+          也能被任意多个主商品复用为{label}。以后想上架，去商品管理打开「列表展示」即可。
+        </p>
+      </div>
+    )
+  }
+
   function update(field: string, value: any) { setForm(prev => ({ ...prev, [field]: value })) }
+
+  /**
+   * 提交「快速新建」：建一个隐藏商品（listingVisible=false）并直接绑定。
+   *
+   * 为什么建成独立商品而不是附属品副本：
+   *   赠品/搭配是真实商品，价格、图片、库存应有唯一来源。复制一份会导致
+   *   库存分裂（超卖）和同一件东西两份数据打架。
+   *   建出来的商品 active=true（可售、可参与计算），listingVisible=false（不进商店），
+   *   因此可以被任意多个主商品复用为赠品/搭配，改一次价格处处同步。
+   */
+  const submitQuickCreate = async () => {
+    if (!quickForm) return
+    const name = quickForm.name.trim()
+    if (!name) { setError('请填写名称'); return }
+    setQuickBusy(true)
+    setError("")
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          nameEn: name,
+          subtitle: '', description: '', story: '',
+          price: Number(quickForm.price) || 0,
+          category: form.category || 'cultural-gifts',
+          image: quickForm.image || '',
+          craft: '', material: '', origin: '',
+          rating: 0, reviewCount: 0,
+          featured: false,
+          active: true,           // 可售：库存/价格照常参与计算
+          listingVisible: false,  // 不进商店列表
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.id) { setError(data.error || '新建失败'); return }
+      setAllProducts(prev => [...prev, data])
+      if (quickForm.kind === 'gift') {
+        update('giftProductIds', [...form.giftProductIds, data.id])
+      } else {
+        update('bundles', [...form.bundles, {
+          bundleProductId: data.id, title: '', description: '', image: '', price: '', discount: '',
+        }])
+      }
+      setQuickForm(null)
+    } finally {
+      setQuickBusy(false)
+    }
+  }
 
   /**
    * 快速新建一个「隐藏商品」并直接绑定为赠品/搭配。
@@ -257,50 +421,10 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
    *   建出来的商品 listingVisible = false（不出现在商店），但 active = true，
    *   所以库存/价格照常参与计算，也能被多个主商品复用。
    */
-  const createHiddenProduct = async (kind: 'gift' | 'bundle') => {
-    const label = kind === 'gift' ? '赠品' : '搭配商品'
-    const name = window.prompt(`新建${label}的名称（建好后不会出现在商店列表，只作${label}用，可随时改）：`)
-    if (!name || !name.trim()) return
-    const priceStr = window.prompt(`「${name.trim()}」的价格（USD，可留空=0）：`, '0')
-    if (priceStr === null) return
-    setQuickCreating(true)
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          nameEn: name.trim(),
-          subtitle: '',
-          description: '',
-          story: '',
-          price: Number(priceStr) || 0,
-          category: form.category || 'cultural-gifts',
-          image: '',
-          craft: '', material: '', origin: '',
-          rating: 0, reviewCount: 0,
-          featured: false,
-          active: true,          // 可售：能参与库存/价格计算
-          listingVisible: false, // 关键：不出现在商店列表
-        }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data?.id) {
-        setError(data.error || `新建${label}失败`)
-        return
-      }
-      // 刷新候选列表，并直接绑定
-      setAllProducts(prev => [...prev, data])
-      if (kind === 'gift') {
-        update('giftProductIds', [...form.giftProductIds, data.id])
-      } else {
-        update('bundles', [...form.bundles, {
-          bundleProductId: data.id, title: '', description: '', image: '', price: '', discount: '',
-        }])
-      }
-    } finally {
-      setQuickCreating(false)
-    }
+  const createHiddenProduct = (kind: 'gift' | 'bundle') => {
+    // 改为打开页内表单（原来是 window.prompt，在浏览器顶部弹系统框，
+    // 没法传图、没法校验、体验割裂）
+    setQuickForm({ kind, name: '', price: '0', image: '' })
   }
 
   // 调用后端生成下一个规律性编码 (基于当前分类)
@@ -786,6 +910,30 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
                         {gp ? `$${gp.price}` : "商品不存在（保存时会自动剔除）"}
                       </p>
                     </div>
+                    {/* 换图：上传本地图片 → 更新该赠品商品的主图。
+                        赠品没有独立图片字段（它的图就是商品自己的主图），
+                        所以这里改的是商品本身的 image；改一次，所有引用它的地方同步。 */}
+                    <label className="shrink-0 cursor-pointer px-2 py-1 rounded text-xs"
+                      style={{ backgroundColor: "var(--adm-bg)", color: "var(--adm-text)", border: "1px solid var(--adm-input-border)" }}
+                      title="上传本地图片替换该赠品商品的主图">
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={async e => {
+                          const f = e.target.files?.[0]
+                          if (!f) return
+                          const url = await uploadImage(f)
+                          if (url) {
+                            const r = await fetch('/api/products/' + gid, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ image: url }),
+                            })
+                            if (!r.ok) { setError('改图失败'); e.target.value = ''; return }
+                            setAllProducts(prev => prev.map(x => x.id === gid ? { ...x, image: url } : x))
+                          }
+                          e.target.value = ''
+                        }} />
+                      换图
+                    </label>
                     <button type="button"
                       onClick={() => update("giftProductIds", form.giftProductIds.filter(x => x !== gid))}
                       className="px-2 py-1 rounded text-xs shrink-0"
@@ -800,11 +948,11 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
 
           <button type="button"
             onClick={() => createHiddenProduct('gift')}
-            disabled={quickCreating}
-            className="mt-3 mr-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="mt-3 mr-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
-            {quickCreating ? "创建中…" : "＋ 新建赠品商品"}
+            ＋ 新建赠品商品
           </button>
+          {renderQuickCreateForm('gift')}
 
           <p className="text-[11px] opacity-50 mt-2" style={{ color: "var(--adm-text)" }}>
             新建的赠品商品会自动设为「不在商店列表展示」，但仍可售、库存与价格照常参与计算，
@@ -1108,16 +1256,38 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
                             style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
                         </div>
                         <div>
-                          <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>图片 URL</label>
-                          <input type="text" value={b.image}
-                            onChange={e => {
-                              const next = [...form.bundles]
-                              next[idx] = { ...next[idx], image: e.target.value }
-                              update("bundles", next)
-                            }}
-                            placeholder="用对方主图"
-                            className="w-full px-3 py-2 rounded text-sm"
-                            style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                          <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>
+                            搭配展示图
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input type="text" value={b.image}
+                              onChange={e => {
+                                const next = [...form.bundles]
+                                next[idx] = { ...next[idx], image: e.target.value }
+                                update("bundles", next)
+                              }}
+                              placeholder="留空=用对方主图"
+                              className="flex-1 min-w-0 px-3 py-2 rounded text-sm"
+                              style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                            {/* 本地图片上传：搭配有自己的图片字段，直接存 URL 即可 */}
+                            <label className="shrink-0 cursor-pointer px-2 py-2 rounded text-xs"
+                              style={{ backgroundColor: "var(--adm-bg)", color: "var(--adm-text)", border: "1px solid var(--adm-input-border)" }}
+                              title="上传本地图片作为搭配展示图">
+                              <input type="file" accept="image/*" className="hidden"
+                                onChange={async e => {
+                                  const f = e.target.files?.[0]
+                                  if (!f) return
+                                  const url = await uploadImage(f)
+                                  if (url) {
+                                    const next = [...form.bundles]
+                                    next[idx] = { ...next[idx], image: url }
+                                    update("bundles", next)
+                                  }
+                                  e.target.value = ''
+                                }} />
+                              上传
+                            </label>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1143,11 +1313,11 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
           {/* 添加搭配商品：搜索后从候选里点选 */}
           <button type="button"
             onClick={() => createHiddenProduct('bundle')}
-            disabled={quickCreating}
-            className="mt-3 mb-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="mt-3 mb-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
-            {quickCreating ? "创建中…" : "＋ 新建搭配商品"}
+            ＋ 新建搭配商品
           </button>
+          {renderQuickCreateForm('bundle')}
 
           <div className="flex flex-col sm:flex-row gap-2">
             <input
