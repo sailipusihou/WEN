@@ -101,7 +101,9 @@ export default function CartPage() {
 
   return (
     <div className="bg-[#FFFFFF] min-h-screen">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
+      {/* pb-28：给底部常驻购物车条（GlobalCartBar，fixed bottom，约 70px 高）留出空间，
+          否则它会盖住右栏底部的支付方式图标和版权信息 */}
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12 pb-28">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em]">Cart</h1>

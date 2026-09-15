@@ -689,7 +689,8 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-[#FFFFFF] min-h-screen">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-10">
+      {/* pb-28：给底部常驻购物车条留出空间，避免盖住右栏底部的信任区 */}
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-10 pb-28">
         {/* 站名：参考站把店名当纯文字 logo 放在表单列顶部，不另开一条导航栏 */}
 
         {/* 面包屑：Information > Shipping > Payment（参考站顶部那一行细灰字） */}
