@@ -49,9 +49,18 @@ export async function GET(req: NextRequest) {
     filtered = filtered.filter(p => p.featured)
   }
 
-  // 仅显示上架商品（默认）
+  /**
+   * 仅显示「商店可见」的商品（默认）。
+   *
+   * 两个条件都要：
+   *   active !== false          → 可售
+   *   listingVisible !== false  → 在列表里露出
+   * 只在主商品编辑页里当赠品/搭配用的商品会设 listingVisible=false，
+   * 所以不会出现在商店、搜索、分类页；但它仍然可售。
+   * 后台管理界面走 ?activeOnly=false，不受这两个条件限制。
+   */
   if (activeOnly) {
-    filtered = filtered.filter(p => p.active !== false)
+    filtered = filtered.filter(p => p.active !== false && (p as any).listingVisible !== false)
   }
 
   // 搜索 — 支持编码、名称、副标题、描述、工艺、材质、标签
