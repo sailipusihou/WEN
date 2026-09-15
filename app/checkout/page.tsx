@@ -688,7 +688,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-[#FBFAF7] min-h-screen">
+    <div className="bg-[#FFFFFF] min-h-screen">
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-10">
         {/* 站名：参考站把店名当纯文字 logo 放在表单列顶部，不另开一条导航栏 */}
 
@@ -1076,22 +1076,28 @@ export default function CheckoutPage() {
           </div>
           {/* Order Summary —— 右栏固定不动（下滑时留在视口里），左栏表单可滚。
               sticky 失效的常见原因是 grid 子项默认 stretch 拉满行高，
-              粘性元素就没有可移动空间 —— 所以必须加 lg:self-start。 */}
+              粘性元素就没有可移动空间 —— 所以必须加 lg:self-start。
+              配色：左栏纯白，右栏淡绿，用颜色把两个区域分开。 */}
           <div
-            className="lg:col-span-1 lg:pl-10 lg:self-start lg:sticky lg:top-6 pt-8 lg:pt-0 pb-10 -mx-6 sm:-mx-8 lg:mx-0 px-6 sm:px-8 lg:px-0"
+            className="lg:col-span-1 lg:self-start lg:sticky lg:top-0 pt-8 lg:py-6 lg:mt-0 -mx-6 sm:-mx-8 lg:mx-0"
+            style={{
+              backgroundColor: '#EFF5F0',
+              borderLeft: '1px solid rgba(74,102,93,0.16)',
+            }}
           >
-            <div
-              className="p-6 md:p-7"
-              style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid rgba(74,58,36,0.10)',
-                borderRadius: 10,
-                // 内容比视口高时，右栏自己可滚，不会被裁掉（长订单 + 信任区很容易超高）
-                maxHeight: 'calc(100vh - 3rem)',
-                overflowY: 'auto',
-              }}
-            >
-              <h2 className="section-heading mb-4">Order Summary</h2>
+            <div className="px-6 sm:px-8 lg:px-8">
+              <div
+                className="p-6 md:p-7"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid rgba(74,102,93,0.18)',
+                  borderRadius: 10,
+                  // 内容比视口高时，右栏自己可滚，不会被裁掉（长订单 + 信任区很容易超高）
+                  maxHeight: 'calc(100vh - 3rem)',
+                  overflowY: 'auto',
+                }}
+              >
+                <h2 className="section-heading mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度）。
                     原来这里只有「名字 x 数量 …… 金额」一行文字，现在换成带图的明细。
@@ -1199,6 +1205,7 @@ export default function CheckoutPage() {
 
                 {/* 信任区：跨境客户在最后一步最需要确定性（真实要素，非媒体背书） */}
                 <ShopWithConfidence reviewCount={reviewStats.count} rating={reviewStats.rating} />
+              </div>
               </div>
             </div>
           </div>
