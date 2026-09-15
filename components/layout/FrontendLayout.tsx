@@ -21,6 +21,7 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
    * 同时保留「返回购物车」这类页内返回，避免客户被困住。
    */
   const isCheckoutFlow = pathname === "/checkout" || pathname === "/cart"
+  const isCartPage = pathname === "/cart"
   if (isAdmin) return <>{children}</>
   return (
     <div className="flex min-h-screen flex-col bg-paper-light text-ink antialiased">
@@ -32,10 +33,14 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
       </a>
       {!isHome && !isCheckoutFlow && <TopBar />}
       {!isCheckoutFlow && <Header />}
-      {isCheckoutFlow && (
-        // 结算流程专用的极简顶栏：只有站名 + 返回购物车/安全标识，不放任何导航
-        <CheckoutTopBar isCart={pathname === "/cart"} />
-      )}
+      {/*
+        结算页不再渲染顶栏：
+        结算页是「左右对半两种颜色」的满宽布局，顶部再压一条白色横栏会破坏
+        「从页面顶端就对半」的效果；而且左栏里已经有 "Low Flame™ Official Website"，
+        再放一个 "Low Flame" 是重复的（参考站顶部也确实没有任何横栏）。
+        购物车页保留：那一页还没有站名，需要一个返回入口。
+      */}
+      {isCartPage && <CheckoutTopBar isCart />}
       <main id="main-content" className="flex-1">{children}</main>
       {!isCheckoutFlow && <Footer />}
       {/* 全站底部购物车条：购物车非空时在所有前台页面常驻（可手动关闭） */}
