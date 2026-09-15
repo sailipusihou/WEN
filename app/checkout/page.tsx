@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown, Lock, Truck, RotateCcw } from 'lucide-react'
+import { ArrowUpLeft, ShoppingBag, CheckCircle, Loader2, ChevronDown, Lock, Truck, RotateCcw, AlertCircle } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -707,6 +707,28 @@ export default function CheckoutPage() {
 
         {/* 紧迫提示条（对齐参考站：紧凑的浅色条 + 时钟图标） */}
         <CheckoutUrgency />
+
+        {/* 支付报错提示 —— 必须放在页面顶部。
+            钱包按钮（PayPal / Apple Pay / Google Pay）在 Express Checkout 里，
+            而 Payment 卡片在很下面；原来报错只显示在 Payment 卡片里，
+            客户点了顶部的按钮、报错却出现在下面看不见的地方，
+            体感就是「点了没反应」。这里在顶部再显示一份。 */}
+        {(paypalError || payoneerError) && (
+          <div
+            role="alert"
+            data-checkout-error="1"
+            className="mb-4 flex items-start gap-2.5 px-4 py-3 font-sans text-[13px] leading-snug"
+            style={{
+              backgroundColor: '#FDF2F2',
+              border: '1px solid rgba(190,60,60,0.35)',
+              borderRadius: 6,
+              color: '#9B2C2C',
+            }}
+          >
+            <AlertCircle size={15} strokeWidth={2} className="mt-0.5 shrink-0" />
+            <span className="min-w-0 break-words">{paypalError || payoneerError}</span>
+          </div>
+        )}
 
         {/* 参考站顶部没有步骤标签页 —— 这里也去掉编号步进条，
             页面直接进入支付区，减少视觉噪音 */}

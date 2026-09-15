@@ -273,7 +273,18 @@ export default function WalletButtons({
             try {
               setProcessing(true)
               // ⚠️ loadPaymentData 必须是点击后的第一个动作，否则手势上下文过期被 Chrome 拒绝
-              const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest)
+              //
+              // 加超时兜底：实测在某些浏览器/账号状态下 Google 会让这个 Promise 一直挂着
+              // （面板既不开也不报错），页面就永远停在「Processing payment...」。
+              // 90 秒还没结果就给出明确提示，而不是让客户干等。
+              const paymentData = await Promise.race([
+                paymentsClient.loadPaymentData(paymentDataRequest),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error(
+                    'Google Pay did not open. Your browser or Google account may not support it — please use PayPal or Apple Pay.'
+                  )), 90000)
+                ),
+              ]) as any
 
               const sa = paymentData.shippingAddress || {}
               const nm = splitName(sa.name)
@@ -296,9 +307,24 @@ export default function WalletButtons({
               })
               await captureOrder(orderId || paypalOrderId)
             } catch (e: any) {
-              const msg = String(e?.message || e)
+              /**
+               * 把 Google 的原始报错完整暴露出来。
+               *
+               * 为什么要连 statusCode / statusMessage 一起打：
+               * Google Pay 的面板在自动化浏览器里弹不出来，我们没法复现，
+               * 只能靠客户在自己浏览器里点一次，把真实错误回传。
+               * 只写一句 "Google Pay failed" 等于把唯一的线索丢掉。
+               */
+              const detail = [
+                e?.statusCode ? `[${e.statusCode}]` : '',
+                e?.statusMessage || '',
+                e?.message || String(e),
+              ].filter(Boolean).join(' ').trim()
               // 用户主动关掉支付面板不算错误
-              if (!/cancel/i.test(msg)) onError(msg || 'Google Pay failed. Please try another method.')
+              if (!/cancel/i.test(detail)) {
+                onError(detail || 'Google Pay failed. Please try another method.')
+                try { console.error('[wallet] Google Pay error:', detail, e) } catch { /* ignore */ }
+              }
             } finally {
               setProcessing(false)
               googlePayInflight = false
