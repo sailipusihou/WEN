@@ -596,6 +596,21 @@ export function initDatabase() {
   addProductCol('code', 'TEXT')
   addProductCol('video', 'TEXT')
   addProductCol('videoEnabled', 'INTEGER DEFAULT 0')
+  /**
+   * listingVisible —— 是否在商品列表（商店 / 搜索 / 分类页）中展示。
+   *
+   * 为什么需要它，和 active 有什么区别：
+   *   active          = 是否可售（能下单、能当赠品/搭配）
+   *   listingVisible  = 是否在列表里露出
+   *
+   * 场景：只在主商品编辑页里当赠品/搭配用的商品，不该出现在商店里，
+   * 但它仍然是"可售"的（库存、价格都要正常参与计算）。
+   * 如果复用 active=false 来隐藏，赠品功能会失效 ——
+   * app/products/[id]/page.tsx 里曾用 .filter(p => p.active) 过滤赠品，
+   * 下架的商品会被直接过滤掉，赠品就不显示了。
+   * 默认 1（展示），旧数据不受影响。
+   */
+  addProductCol('listingVisible', 'INTEGER DEFAULT 1')
 
   // 迁移: 给 users 表添加优惠券字段
   const userColumns = db.prepare("PRAGMA table_info(users)").all() as any[]

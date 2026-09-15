@@ -75,6 +75,8 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
   const [giftSearch, setGiftSearch] = useState("")
   // 配套商品搜索词
   const [bundleSearch, setBundleSearch] = useState("")
+  // 快速新建赠品/搭配商品时的 loading
+  const [quickCreating, setQuickCreating] = useState(false)
   const [seedForm, setSeedForm] = useState({
     author: "",
     avatar: "",
@@ -214,6 +216,8 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     reviewCount: initial?.reviewCount?.toString() || "0",
     featured: initial?.featured || false,
     active: initial?.active !== false,
+    // 是否在商店列表展示。关掉后不出现在商店/搜索/分类页，但仍可售、仍能当赠品。
+    listingVisible: (initial as any)?.listingVisible !== false,
     // 赠品绑定：存 product_gifts 表，这里只放在表单状态里，保存时单独提交
     giftProductIds: initial?.giftProductIds || [] as string[],
     giftQuantity: initial?.giftQuantity?.toString() || "1",
@@ -242,6 +246,62 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
   })
 
   function update(field: string, value: any) { setForm(prev => ({ ...prev, [field]: value })) }
+
+  /**
+   * 快速新建一个「隐藏商品」并直接绑定为赠品/搭配。
+   *
+   * 为什么这样做（而不是把赠品存成附属品副本）：
+   *   赠品/搭配是真实商品，价格、图片、库存应该有唯一来源。复制一份会导致
+   *   库存分裂（超卖）和同一个东西两份数据打架。
+   *   但"先去商品管理建好再回来绑定"确实来回跑，所以这里给一键新建：
+   *   建出来的商品 listingVisible = false（不出现在商店），但 active = true，
+   *   所以库存/价格照常参与计算，也能被多个主商品复用。
+   */
+  const createHiddenProduct = async (kind: 'gift' | 'bundle') => {
+    const label = kind === 'gift' ? '赠品' : '搭配商品'
+    const name = window.prompt(`新建${label}的名称（建好后不会出现在商店列表，只作${label}用，可随时改）：`)
+    if (!name || !name.trim()) return
+    const priceStr = window.prompt(`「${name.trim()}」的价格（USD，可留空=0）：`, '0')
+    if (priceStr === null) return
+    setQuickCreating(true)
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          nameEn: name.trim(),
+          subtitle: '',
+          description: '',
+          story: '',
+          price: Number(priceStr) || 0,
+          category: form.category || 'cultural-gifts',
+          image: '',
+          craft: '', material: '', origin: '',
+          rating: 0, reviewCount: 0,
+          featured: false,
+          active: true,          // 可售：能参与库存/价格计算
+          listingVisible: false, // 关键：不出现在商店列表
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.id) {
+        setError(data.error || `新建${label}失败`)
+        return
+      }
+      // 刷新候选列表，并直接绑定
+      setAllProducts(prev => [...prev, data])
+      if (kind === 'gift') {
+        update('giftProductIds', [...form.giftProductIds, data.id])
+      } else {
+        update('bundles', [...form.bundles, {
+          bundleProductId: data.id, title: '', description: '', image: '', price: '', discount: '',
+        }])
+      }
+    } finally {
+      setQuickCreating(false)
+    }
+  }
 
   // 调用后端生成下一个规律性编码 (基于当前分类)
   const handleGenerateCode = async () => {
@@ -738,8 +798,21 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
             </div>
           )}
 
+          <button type="button"
+            onClick={() => createHiddenProduct('gift')}
+            disabled={quickCreating}
+            className="mt-3 mr-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
+            {quickCreating ? "创建中…" : "＋ 新建赠品商品"}
+          </button>
+
+          <p className="text-[11px] opacity-50 mt-2" style={{ color: "var(--adm-text)" }}>
+            新建的赠品商品会自动设为「不在商店列表展示」，但仍可售、库存与价格照常参与计算，
+            也能被多个主商品共用为赠品。想让它同时在商店上架，去商品管理打开「列表展示」即可。
+          </p>
+
           {/* 添加赠品：按名字/编码搜，避免商品多时找不到 */}
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
             <input
               type="text"
               value={giftSearch}
@@ -780,6 +853,12 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
                   {p.image && <img src={p.image} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                   <span className="flex-1 min-w-0 text-sm truncate" style={{ color: "var(--adm-text)" }}>
                     {p.nameEn || p.name}
+                    {(p as any).listingVisible === false && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] align-middle"
+                        style={{ backgroundColor: "rgba(138,106,46,0.2)", color: "#C4A059" }}>
+                        隐藏
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs opacity-50 shrink-0" style={{ color: "var(--adm-text)" }}>${p.price}</span>
                   <Plus size={14} className="shrink-0 opacity-60" style={{ color: "var(--adm-text)" }} />
@@ -1062,6 +1141,14 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
           )}
 
           {/* 添加搭配商品：搜索后从候选里点选 */}
+          <button type="button"
+            onClick={() => createHiddenProduct('bundle')}
+            disabled={quickCreating}
+            className="mt-3 mb-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
+            {quickCreating ? "创建中…" : "＋ 新建搭配商品"}
+          </button>
+
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
@@ -1094,6 +1181,13 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
                   {p.image && <img src={p.image} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                   <span className="flex-1 min-w-0 text-sm truncate" style={{ color: "var(--adm-text)" }}>
                     {p.nameEn || p.name}
+                    {/* 标出不在商店列表展示的商品，避免误选 */}
+                    {(p as any).listingVisible === false && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] align-middle"
+                        style={{ backgroundColor: "rgba(138,106,46,0.2)", color: "#C4A059" }}>
+                        隐藏
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs opacity-50 shrink-0" style={{ color: "var(--adm-text)" }}>${p.price}</span>
                   <Plus size={14} className="shrink-0 opacity-60" style={{ color: "var(--adm-text)" }} />
@@ -1109,16 +1203,25 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
 
         {/* Status */}
         <Section title="Status">
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.active} onChange={e => update("active", e.target.checked)} className="w-4 h-4" />
-              <span className="text-sm" style={{ color: "var(--adm-text)" }}>Active (Listed)</span>
+              <span className="text-sm" style={{ color: "var(--adm-text)" }}>Active (可售)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer" title="关闭后不出现在商店列表、搜索与分类页，但仍可售、仍能作为赠品/搭配使用">
+              <input type="checkbox" checked={form.listingVisible} onChange={e => update("listingVisible", e.target.checked)} className="w-4 h-4" />
+              <span className="text-sm" style={{ color: "var(--adm-text)" }}>Show in shop listing (列表展示)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.featured} onChange={e => update("featured", e.target.checked)} className="w-4 h-4" />
               <span className="text-sm" style={{ color: "var(--adm-text)" }}>Featured on Homepage</span>
             </label>
           </div>
+          <p className="text-[11px] opacity-50 mt-3" style={{ color: "var(--adm-text)" }}>
+            这两个开关的区别：<strong>可售</strong>决定能不能下单（也决定能不能当赠品/搭配）；
+            <strong>列表展示</strong>只决定会不会出现在商店里。
+            只作为赠品或配套商品用的商品，把「列表展示」关掉即可 —— 它不会出现在商店，但功能一切正常。
+          </p>
         </Section>
 
         {/* Base Reviews */}

@@ -80,6 +80,19 @@ export interface Product {
    * 勾选后实时算 单品价 / 组合优惠 / 总价，并可一键把多件一起加购。
    */
   bundles?: ProductBundle[]
+  /**
+   * 是否在商品列表（商店 / 搜索 / 分类页）中展示。默认 true。
+   *
+   * 与 active 的区别：
+   *   active          = 是否可售（能下单、能当赠品/搭配）
+   *   listingVisible  = 是否在列表里露出
+   *
+   * 用途：只在主商品编辑页里当赠品或搭配用的商品，设为 false 就不会出现在商店里，
+   * 但它仍然可售、库存和价格照常参与计算。
+   * ⚠️ 不能用 active=false 来做"隐藏" —— 那样会被赠品过滤逻辑排除掉
+   *    （app/products/[id]/page.tsx 只收 active !== false 的赠品）。
+   */
+  listingVisible?: boolean
 }
 
 /** 一条搭配关系（对应 product_bundles 表一行） */

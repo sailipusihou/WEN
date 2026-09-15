@@ -88,11 +88,19 @@ export default async function ProductPage({
 
   const reviews = repo.reviews.getByProduct(id).filter(r => r.approved && !r.hidden && !r.deleted)
 
-  // 赠品绑定：直接在这里把赠品商品取好传给客户端组件，
-  // 避免前台为了渲染赠品区再打一次 /api/products。
+  /**
+   * 赠品绑定：直接在这里把赠品商品取好传给客户端组件，
+   * 避免前台为了渲染赠品区再打一次 /api/products。
+   *
+   * ⚠️ 只按 active 过滤，**不看 listingVisible**。
+   *    赠品商品常常是"只在主商品编辑页里存在、不在商店列表露出"的，
+   *    如果这里也要求 listingVisible，那些隐藏赠品就会被过滤掉、前台不显示。
+   *    历史上这里写的是 .filter(p => p.active)，用的是 active 判断；
+   *    active 依然是唯一门槛（下架商品不能当赠品），listingVisible 与赠品无关。
+   */
   const giftProducts = (product.giftProductIds || [])
     .map((gid: string) => repo.products.getById(gid))
-    .filter((p: any) => p && p.active)
+    .filter((p: any) => p && p.active !== false)
 
   return <ProductDetailClient product={product} reviews={reviews} giftProducts={giftProducts} />
 }

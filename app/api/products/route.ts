@@ -194,6 +194,9 @@ export async function POST(req: NextRequest) {
       reviewCount: Math.max(0, Number(body.reviewCount) || 0),
       featured: Boolean(body.featured),
       active: body.active !== undefined ? Boolean(body.active) : true,
+      // 是否在商店列表露出。默认 true；设为 false 的商品只在主商品编辑页里
+      // 当赠品/搭配用，不出现在商店、搜索、分类页，但依然可售。
+      listingVisible: body.listingVisible !== undefined ? Boolean(body.listingVisible) : true,
     }
 
     const created = repo.products.add(product)

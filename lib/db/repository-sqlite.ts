@@ -42,6 +42,10 @@ function rowToProduct(row: any): Product {
     reviewCount: row.reviewCount || 0,
     featured: !!row.featured,
     active: row.active !== 0,
+    // 旧数据没有这一列时 row.listingVisible 为 undefined → 视为展示（true）
+    listingVisible: row.listingVisible === undefined || row.listingVisible === null
+      ? true
+      : row.listingVisible !== 0,
     tags: [],
     tagsEn: [],
     detailImages: [],
@@ -378,9 +382,20 @@ export const productRepo = {
     return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
   },
 
+  /**
+   * 商店列表用的查询。
+   *
+   * 两个条件都必需：
+   *   active = 1          → 可售
+   *   listingVisible != 0 → 在列表里露出
+   * 只在主商品编辑页里当赠品/搭配用的商品会设 listingVisible = 0，
+   * 所以不会出现在商店里，但依然可售、能参与赠品与搭配。
+   */
   listActive(): Product[] {
     const db = getDb()
-    const rows = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
+    const rows = db.prepare(
+      "SELECT * FROM products WHERE active = 1 AND (listingVisible IS NULL OR listingVisible != 0) ORDER BY sortOrder DESC, createdAt DESC"
+    ).all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
     return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
@@ -398,7 +413,7 @@ export const productRepo = {
 
   getByCategory(slug: string): Product[] {
     const db = getDb()
-    const rows = db.prepare('SELECT * FROM products WHERE category = ? AND active = 1 ORDER BY sortOrder DESC, createdAt DESC').all(slug) as any[]
+    const rows = db.prepare("SELECT * FROM products WHERE category = ? AND active = 1 AND (listingVisible IS NULL OR listingVisible != 0) ORDER BY sortOrder DESC, createdAt DESC").all(slug) as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
     return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
@@ -625,9 +640,9 @@ export const productRepo = {
     const db = getDb()
     const stmt = db.prepare(`
       INSERT INTO products (id, code, name, nameEn, subtitle, subtitleEn, description, descriptionEn, story, storyEn,
-        price, originalPrice, costPrice, stock, supplierId, category, image, video, videoEnabled, craft, craftEn, material, origin, rating, reviewCount, featured, active, sortOrder)
+        price, originalPrice, costPrice, stock, supplierId, category, image, video, videoEnabled, craft, craftEn, material, origin, rating, reviewCount, featured, active, listingVisible, sortOrder)
       VALUES (@id, @code, @name, @nameEn, @subtitle, @subtitleEn, @description, @descriptionEn, @story, @storyEn,
-        @price, @originalPrice, @costPrice, @stock, @supplierId, @category, @image, @video, @videoEnabled, @craft, @craftEn, @material, @origin, @rating, @reviewCount, @featured, @active, @sortOrder)
+        @price, @originalPrice, @costPrice, @stock, @supplierId, @category, @image, @video, @videoEnabled, @craft, @craftEn, @material, @origin, @rating, @reviewCount, @featured, @active, @listingVisible, @sortOrder)
     `)
     stmt.run({
       id: product.id,
@@ -657,6 +672,7 @@ export const productRepo = {
       reviewCount: product.reviewCount || 0,
       featured: product.featured ? 1 : 0,
       active: product.active !== false ? 1 : 0,
+      listingVisible: (product as any).listingVisible === false ? 0 : 1,
       sortOrder: 0,
     })
     if (product.tags?.length) {
@@ -689,6 +705,7 @@ export const productRepo = {
         video = @video, videoEnabled = @videoEnabled,
         craft = @craft, craftEn = @craftEn, material = @material, origin = @origin,
         rating = @rating, reviewCount = @reviewCount, featured = @featured, active = @active,
+        listingVisible = @listingVisible,
         updatedAt = datetime('now')
       WHERE id = @id
     `)
@@ -720,6 +737,7 @@ export const productRepo = {
       reviewCount: merged.reviewCount || 0,
       featured: merged.featured ? 1 : 0,
       active: merged.active !== false ? 1 : 0,
+      listingVisible: (merged as any).listingVisible === false ? 0 : 1,
     })
     // 閺囧瓨鏌?tags 閸?detailImages
     if (updates.tags) {
