@@ -476,8 +476,11 @@ const DEFAULT_FRONTEND: FrontendContent = {
       { label: "About", href: "/#philosophy" },
       { label: "Journal", href: "/#journal" },
       { label: "Contact", href: "/contact" },
-      { label: "Shipping", href: "/contact" },
-      { label: "Returns", href: "/contact" },
+      // 指向真实的政策页，不再都指向 /contact。
+      // Google 审核网站（Google Pay 生产权限）会检查退货/配送政策是否可查，
+      // 一个叫「Returns」却跳到联系表单的链接是会被挑的。
+      { label: "Shipping", href: "/shipping-policy" },
+      { label: "Returns", href: "/refund-policy" },
     ],
     contacts: [
       { label: "Email", value: "hello@lowflame.store" },
@@ -548,8 +551,8 @@ export const DEFAULTS: SiteSettings = {
   footerHours: "Mon-Sat 9:00-18:00 (CST)",
   footerAddress: "",
   footerCopyright: "All rights reserved.",
-  footerPrivacyLink: "/contact",
-  footerTermsLink: "/contact",
+  footerPrivacyLink: "/privacy",
+  footerTermsLink: "/terms",
   defaultShippingDays: 14,
   shippingZones: DEFAULT_ZONES,
   defaultCarrier: "DHL",
