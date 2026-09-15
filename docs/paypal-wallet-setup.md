@@ -74,6 +74,78 @@ https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilitie
 
 ---
 
+## 关键线索汇总（2026-09 排查记录 —— 改这块之前务必先读）
+
+### 现象
+Google Pay 面板**能打开**（`pay.google.com`），但选中卡片后报：
+```
+此商家目前无法接受您的付款。请尝试使用其他付款方式。[OR_BIBED_06]
+```
+
+### 已逐项排除的可能
+
+| 检查项 | 结论 |
+|---|---|
+| 请求字段（apiVersion / allowedPaymentMethods / tokenizationSpecification / merchantId / authJwt / merchantOrigin） | ✅ 逐项对过 Google 规范，零缺失 |
+| `PaymentRequest.show()` 是否被调用 | ✅ 钩住确认调用了（代码走到了这一步） |
+| `isReadyToPay()` | ✅ `{"result": true}` |
+| `countryCode` 用商户国 CN 是否有问题 | ❌ 改成买家国 / US 后**无变化**，排除 |
+| Google Pay 按钮点击有没有响应 | ✅ 已修（见下方「三个同类 bug」） |
+| 网站缺政策页影响审核 | ✅ 已补齐（/refund-policy、/shipping-policy） |
+
+### 官方文档给出的方向
+
+**Google 侧**（<https://developers.google.com/pay/api/web/support/troubleshooting>）：
+> "This merchant is **not enabled for Google Pay**... A Google merchantId is associated with
+> one or more fully qualified domains through the Google Pay & Wallet Console"
+>
+> "This merchant has **not completed registration**... **Request production access** to register
+> using the Google Pay & Wallet Console and request a review of your website's use of the Google Pay API"
+
+**PayPal 侧**（[platforms/checkout/apm/google-pay](https://developer.paypal.com/platforms/checkout/apm/google-pay/)）：
+> "**Note: Before going live, complete production onboarding to process Google Pay payments
+> with your live PayPal account.**"
+
+文档给出的生产 onboarding 入口：
+- Google Pay：`https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY`
+- Apple Pay 对照版：`...&capabilities=APPLE_PAY`（这个已走完，Apple Pay 实测可用）
+- ⚠️ 但 `bizsignup` 链接**按地区跳转**：跨境/中国区账户打开会落到**中国贝宝**，走不通
+- 备选路径：**PayPal Developer Dashboard → 选 Live 应用 → Features / Mobile and digital payments → 勾选启用 Google Pay**
+
+**⚠️ 商户不需要自己去 Google Pay & Wallet Console 建商户档案**：
+用 PayPal 网关集成时，`merchantId` + `authJwt` 都由 PayPal 下发，
+Google 侧那套 Business Profile 是**另一套体系**（用户实测在中国区被要求填，但填了也不解决这里的问题）。
+
+### 同类已知问题（说明中国商户本该可用）
+
+[woocommerce-paypal-payments #4138](https://github.com/woocommerce/woocommerce-paypal-payments/issues/4138)：
+> "WooCommerce PayPal Payments receives the PayPal onboarding `merchant_country` value **C2 for China**.
+> However, inside the plugin the Google Pay / Apple Pay supported-country whitelist only contains **CN**
+> and does not include **C2**. Because of this mismatch, Google Pay / Apple Pay are treated as **ineligible**"
+>
+> "PayPal docs confirm China's REST country code is **C2**:
+> <https://developer.paypal.com/api/rest/reference/country-codes/> (row: CHINA | C2)"
+
+**推论：中国商户本来应该能用**（否则插件作者不会建议把 C2 加进白名单）。
+所以这不是"中国不能用"，而是这条链路上有具体的配置/适配问题要解决。
+
+⚠️ 我们代码里的 `pickCountry()` 已做防护：PayPal 给的 `countryCode` 若不在
+Google Pay 支持列表里，会退回买家所在国、再退回 US，因此不会因 C2/CN 这类代码差异被拒。
+
+---
+
+## 三个同类 bug（改支付组件前必读）
+
+| # | 组件 | 症状 | 根因 | 修法 |
+|---|---|---|---|---|
+| 1 | Apple Pay | 点了没反应 | Apple 的 `<apple-pay-button>` **吞掉 click，不冒泡** | 在元素自身绑**原生** `addEventListener` |
+| 2 | PayPal 弹窗 | 点了不弹窗 | 地址断言被放进 `createPendingOrder` 公共路径；Express Checkout 在页顶、表单为空 → 断言抛错 | 断言只在钱包确实回传联系方式时执行 |
+| 3 | Google Pay | 点了没反应 | Google 生成的按钮**不把点击交给 `createButton` 的 `onClick`** | 在 Google 返回的 `<button>` 上再绑原生监听器 |
+
+**共同规律：第三方支付组件的点击，不能只依赖它自己的回调 —— 要在元素上绑原生监听器兜底。**
+
+---
+
 ## 排查 OR_BIBED_06（Google Pay 报"此商家无法接受付款"）
 
 **⚠️ 先确认报错是在哪台站上截的。** 2026-09 的经过：用户给的报错截图其实是在**对比网站**
