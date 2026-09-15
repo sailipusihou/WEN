@@ -479,7 +479,8 @@ export default function CheckoutPage() {
       try {
         pp.Buttons({
           fundingSource: pp.FUNDING?.PAYPAL,
-          style: { layout: 'horizontal', shape: 'rect', height: 48, tagline: false, label: 'pay' },
+          // 高度必须与 .wallet-buttons-row 里的 54px 一致，否则按钮比容器矮一截、看起来没对齐
+          style: { layout: 'horizontal', shape: 'rect', height: 54, tagline: false, label: 'pay' },
           createOrder: () => createPayPalOrderId(),
           onApprove: handleApprove,
           onError: () => setPaypalError('A PayPal error occurred. Please try again.'),
@@ -715,7 +716,7 @@ export default function CheckoutPage() {
                   layout="row"
                   title="Express Checkout"
                   subtitle="Skip the form — pay in one tap with a saved card or wallet."
-                  leading={<div id="paypal-express-container" style={{ width: '100%', height: 48 }} />}
+                  leading={<div id="paypal-express-container" style={{ width: '100%', height: 54 }} />}
                   createOrderId={createPayPalOrderId}
                   captureOrder={captureAndFinalize}
                   onError={(m) => setPaypalError(m)}
