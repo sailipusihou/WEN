@@ -2078,24 +2078,109 @@ apple-pay-button {
   box-shadow: 0 1px 2px rgba(74, 58, 36, 0.03);
 }
 
-/* 区块标题：加一条短金线，做出层级感 */
-.checkout-section-title {
-  display: inline-flex;
+/* ---------------------------------------------------------------------------
+   浮动标签输入框（对齐参考站）
+   参考站的输入框是「标签在框内上方、值在下方」的浮动标签样式：
+     ┌──────────────────────────┐
+     │ Country/region           │  ← 小字灰标签
+     │ United States         ▾  │  ← 正文值
+     └──────────────────────────┘
+   比我们把标签放在框外左侧更紧凑、也更好扫读。
+--------------------------------------------------------------------------- */
+.field-float {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+.field-float > input,
+.field-float > select,
+.field-float > textarea {
+  width: 100%;
+  height: 58px;
+  padding: 22px 14px 8px;
+  font-size: 15px;
+  line-height: 1.2;
+  color: #2A2118;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(74, 58, 36, 0.28);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.field-float > textarea { height: auto; min-height: 96px; padding-top: 26px; }
+.field-float > input:hover,
+.field-float > select:hover,
+.field-float > textarea:hover { border-color: rgba(74, 58, 36, 0.45); }
+.field-float > input:focus,
+.field-float > select:focus,
+.field-float > textarea:focus {
+  border-color: #8A6A2E;
+  box-shadow: 0 0 0 3px rgba(138, 106, 46, 0.14);
+}
+.field-float > select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A4A36' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+}
+
+/* 标签：默认落在框内上方；输入框为空且未聚焦时沉到中间冒充占位符 */
+.field-float > label {
+  position: absolute;
+  left: 15px;
+  top: 9px;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(74, 58, 36, 0.6);
+  pointer-events: none;
+  transition: all 0.15s ease;
+}
+.field-float > input:placeholder-shown:not(:focus) + label,
+.field-float > textarea:placeholder-shown:not(:focus) + label {
+  top: 20px;
+  font-size: 14px;
+  color: rgba(74, 58, 36, 0.5);
+}
+/* select 永远有值（默认选中第一项），标签固定在上方 */
+.field-float > select + label { top: 9px; font-size: 11px; }
+
+/* ---------------------------------------------------------------------------
+   区块标题（对齐参考站：大号、深色、粗体，不是小号大写细体）
+   参考站的 "Contact" / "Shipping address" 是 20px 左右的中粗体深色，
+   比我们原来那种 10px 大写字距的标签显眼得多，扫读更快。
+--------------------------------------------------------------------------- */
+.section-heading {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #2A2118;
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------------------------
+   参考站的细面包屑：Information > Shipping > Payment
+--------------------------------------------------------------------------- */
+.checkout-crumbs {
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-family: var(--font-inter), system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  color: #8A6A2E;
+  font-size: 12px;
+  color: rgba(74, 58, 36, 0.55);
 }
-.checkout-section-title::after {
-  content: '';
-  width: 22px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(138, 106, 46, 0.8), rgba(138, 106, 46, 0));
-}
+.checkout-crumbs .sep { color: rgba(74, 58, 36, 0.3); }
+.checkout-crumbs .current { color: rgba(74, 58, 36, 0.45); }
+
+/* ---------------------------------------------------------------------------
+   右栏：参考站是通透列表，没有卡片背景和边框
+   （原来是白卡片 + 边框 + 阴影，显得很"重"）
+--------------------------------------------------------------------------- */
+.summary-plain { background: transparent; border: none; box-shadow: none; }
+
 
 /* 合计行：给总额一点重量感 */
 .checkout-total-row {

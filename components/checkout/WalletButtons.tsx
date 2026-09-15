@@ -564,13 +564,18 @@ export default function WalletButtons({
   }
 
   return (
-    <div className={title ? 'bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8' : ''}>
+    <div className={title ? 'checkout-card p-6 md:p-8' : ''}>
       {title && (
         <>
-          <h2 className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-2">{title}</h2>
-          <p className="font-sans text-sm text-[#5A4A36]/60 mb-4">
-            {subtitle || 'Skip the form — pay in one tap with a saved card.'}
-          </p>
+          {/* 参考站的 "Express Checkout" 是居中的小号灰字，不是左对齐大写 */}
+          <h2 className="text-center font-sans text-[14px] mb-4" style={{ color: 'rgba(74,58,36,0.8)' }}>
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-center font-sans text-[12px] mb-4 -mt-2" style={{ color: 'rgba(74,58,36,0.5)' }}>
+              {subtitle}
+            </p>
+          )}
         </>
       )}
       <div className={`wallet-buttons ${layout === 'row' ? 'wallet-buttons-row' : 'wallet-buttons-stack'}`}>

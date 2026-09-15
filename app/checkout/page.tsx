@@ -689,12 +689,23 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-[#FBFAF7] min-h-screen">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
-        {/* 结账页不放返回入口 —— 要退就用浏览器自带的返回按钮。
-            页面上再放一个 Back to Cart 等于多给一个弃单出口。 */}
-        <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-5">Checkout</h1>
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-10">
+        {/* 站名：参考站把店名当纯文字 logo 放在表单列顶部，不另开一条导航栏 */}
 
-        {/* 预留倒计时（对齐参考站顶部那条紧迫感提示） */}
+        {/* 面包屑：Information > Shipping > Payment（参考站顶部那一行细灰字） */}
+        <nav className="checkout-crumbs mb-4" aria-label="Checkout progress">
+          <span className="current">Information</span>
+          <span className="sep">›</span>
+          <span className="current">Shipping</span>
+          <span className="sep">›</span>
+          <span className="current">Payment</span>
+        </nav>
+
+        <h1 className="font-en text-[26px] md:text-[32px] text-[#2A2118] font-medium tracking-[-0.01em] mb-5">
+          Low Flame™ Official Website
+        </h1>
+
+        {/* 紧迫提示条（对齐参考站：紧凑的浅色条 + 时钟图标） */}
         <CheckoutUrgency />
 
         {/* 参考站顶部没有步骤标签页 —— 这里也去掉编号步进条，
@@ -724,7 +735,7 @@ export default function CheckoutPage() {
                 />
               ) : paypalLoading ? (
                 <div className="checkout-card p-6 md:p-8">
-                  <h2 className="checkout-section-title mb-4">Express Checkout</h2>
+                  <h2 className="text-center font-sans text-[14px] mb-4" style={{ color: 'rgba(74,58,36,0.8)' }}>Express Checkout</h2>
                   <div className="flex items-center justify-center gap-2 py-3 font-sans text-xs tracking-[0.08em] uppercase text-[#5A4A36]/60">
                     <Loader2 size={14} className="animate-spin" /> Loading payment options...
                   </div>
@@ -758,12 +769,12 @@ export default function CheckoutPage() {
             {/* Contact —— 参考站把「邮箱」单独拎出来一段，右上角挂登录入口 */}
             <div className="checkout-card p-6 md:p-8">
               <div className="flex items-baseline justify-between gap-4 mb-5">
-                <h2 className="checkout-section-title">Contact</h2>
+                <h2 className="section-heading">Contact</h2>
                 {!isLoggedIn && (
                   <Link
                     href="/login?redirect=/checkout"
-                    className="font-sans text-[12px] underline underline-offset-4 transition-colors hover:opacity-70"
-                    style={{ color: '#8A6A2E' }}
+                    className="font-sans text-[13px] underline underline-offset-4 transition-colors hover:opacity-70"
+                    style={{ color: 'rgba(74,58,36,0.75)' }}
                   >
                     Already have an account? Log in
                   </Link>
@@ -775,13 +786,18 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              <input
-                type="email"
-                value={shipping.email}
-                onChange={e => updateField('email', e.target.value)}
-                placeholder="Email *"
-                className={'input-premium ' + (fieldErrors.email ? 'border-red-400' : '')}
-              />
+              {/* 浮动标签输入框（对齐参考站：标签在框内上方） */}
+              <div className="field-float">
+                <input
+                  id="co-email"
+                  type="email"
+                  value={shipping.email}
+                  onChange={e => updateField('email', e.target.value)}
+                  placeholder=" "
+                  style={fieldErrors.email ? { borderColor: '#f87171' } : undefined}
+                />
+                <label htmlFor="co-email">Email</label>
+              </div>
               {fieldErrors.email && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors.email}</p>}
 
               {/* 营销订阅（默认不勾，合规上更稳） */}
@@ -815,76 +831,87 @@ export default function CheckoutPage() {
 
             {/* Shipping address —— 字段顺序对齐参考站：国家 → 姓名 → 地址 → 邮编 → 电话 */}
             <div className="checkout-card p-6 md:p-8">
-              <h2 className="checkout-section-title mb-5">Shipping Address</h2>
+              <h2 className="section-heading mb-5">Shipping address</h2>
 
               <div className="space-y-3">
-                <div>
-                  <select value={shipping.country} onChange={e => updateField('country', e.target.value)}
-                    className="input-premium w-full">
+                {/* 国家：浮动标签 + 下拉（参考站同款，标签"Country/region"落在框内上方） */}
+                <div className="field-float">
+                  <select
+                    id="co-country"
+                    value={shipping.country}
+                    onChange={e => updateField('country', e.target.value)}
+                  >
                     <option>United States</option><option>Canada</option><option>United Kingdom</option>
                     <option>Germany</option><option>France</option><option>Italy</option>
                     <option>Spain</option><option>Netherlands</option><option>Australia</option>
                     <option>Japan</option><option>South Korea</option><option>Singapore</option>
                     <option>Other</option>
                   </select>
-                  {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区）。
-                      但要等客户真的填了地址再显示 —— 否则一进页面就报一个运费数字，不严谨。 */}
-                  <p className="mt-1.5 font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
-                    {!addressTouched
-                      ? 'Shipping cost is calculated from your address'
-                      : shippingCost > 0
-                        ? `Shipping to ${shipping.country}: ${formatPrice(convertPrice(shippingCost, currency), currency)}`
-                        : `Free shipping to ${shipping.country}`}
-                    {addressTouched && estimatedDays ? ` · ${estimatedDays} business days` : ''}
-                  </p>
+                  <label htmlFor="co-country">Country/region</label>
                 </div>
+                {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区）。
+                    但要等客户真的填了地址再显示 —— 否则一进页面就报一个运费数字，不严谨。 */}
+                <p className="font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                  {!addressTouched
+                    ? 'Shipping cost is calculated from your address'
+                    : shippingCost > 0
+                      ? `Shipping to ${shipping.country}: ${formatPrice(convertPrice(shippingCost, currency), currency)}`
+                      : `Free shipping to ${shipping.country}`}
+                  {addressTouched && estimatedDays ? ` · ${estimatedDays} business days` : ''}
+                </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { key: 'firstName', placeholder: 'First Name *', colSpan: false },
-                    { key: 'lastName', placeholder: 'Last Name', colSpan: false },
-                  ].map(({ key, placeholder, colSpan }) => (
-                    <div key={key} className={colSpan ? 'sm:col-span-2' : ''}>
+                    { key: 'firstName', label: 'First name (Optional)' },
+                    { key: 'lastName', label: 'Last name' },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="field-float">
                       <input
+                        id={'co-' + key}
                         value={(shipping as any)[key]}
                         onChange={e => updateField(key, e.target.value)}
-                        placeholder={placeholder}
-                        className={'input-premium ' + (fieldErrors[key] ? 'border-red-400' : '')}
+                        placeholder=" "
+                        style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                       />
+                      <label htmlFor={'co-' + key}>{label}</label>
                       {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
                     </div>
                   ))}
                 </div>
 
                 {[
-                  { key: 'address', placeholder: 'Address *', type: 'text' },
-                  { key: 'phone', placeholder: 'Phone', type: 'tel' },
-                ].map(({ key, placeholder, type }) => (
-                  <div key={key}>
+                  { key: 'address', label: 'Address', type: 'text' },
+                  { key: 'phone', label: 'Phone', type: 'tel' },
+                ].map(({ key, label, type }) => (
+                  <div key={key} className="field-float">
                     <input
+                      id={'co-' + key}
                       type={type}
                       value={(shipping as any)[key]}
                       onChange={e => updateField(key, e.target.value)}
-                      placeholder={placeholder}
-                      className={'input-premium ' + (fieldErrors[key] ? 'border-red-400' : '')}
+                      placeholder=" "
+                      style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                     />
+                    <label htmlFor={'co-' + key}>{label}</label>
                     {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
                   </div>
                 ))}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { key: 'city', placeholder: 'City *' },
-                    { key: 'state', placeholder: 'State' },
-                    { key: 'zipCode', placeholder: 'ZIP Code *' },
-                  ].map(({ key, placeholder }) => (
-                    <div key={key}>
+                    { key: 'city', label: 'City' },
+                    { key: 'state', label: 'State' },
+                    { key: 'zipCode', label: 'ZIP code' },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="field-float">
                       <input
+                        id={'co-' + key}
                         value={(shipping as any)[key]}
                         onChange={e => updateField(key, e.target.value)}
-                        placeholder={placeholder}
-                        className={'input-premium ' + (fieldErrors[key] ? 'border-red-400' : '')}
+                        placeholder=" "
+                        style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                       />
+                      <label htmlFor={'co-' + key}>{label}</label>
                       {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
                     </div>
                   ))}
@@ -893,7 +920,7 @@ export default function CheckoutPage() {
             </div>
             {/* Payment */}
             <div className="checkout-card p-6 md:p-8">
-              <h2 className="checkout-section-title mb-5">Payment</h2>
+              <h2 className="section-heading mb-5">Payment</h2>
               <p className="font-sans text-sm text-[#5A4A36]/60 mb-4">Secure payment options available</p>
               
               {(paypalError || payoneerError) && (
@@ -1028,7 +1055,7 @@ export default function CheckoutPage() {
           {/* Order Summary —— 右栏用暖米色底 + 左侧竖线，和左栏（净白卡片）形成明确分区 */}
           <div className="lg:col-span-1 checkout-zone-summary lg:pl-10 pt-8 lg:pt-0 pb-10 -mx-6 sm:-mx-8 lg:mx-0 px-6 sm:px-8 lg:px-0">
             <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 md:p-8 lg:sticky lg:top-24">
-              <h2 className="checkout-section-title mb-5">Order Summary</h2>
+              <h2 className="section-heading mb-5">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度）。
                     原来这里只有「名字 x 数量 …… 金额」一行文字，现在换成带图的明细。
