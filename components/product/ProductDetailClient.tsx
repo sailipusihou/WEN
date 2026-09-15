@@ -140,6 +140,22 @@ export default function ProductDetailClient({
   }, [variants, selectedVariantId])
 
   /**
+   * 配套商品 / 搭配购买（bundle）。
+   *
+   * 与赠品的区别：赠品免费；搭配仍计价，只是组合起来有 discount。
+   * 前台逻辑：默认勾选全部搭配（转化率更高），客户可取消。
+   * 实时算：单品价合计 / 组合优惠 / 应付总价。
+   */
+  const bundleList = useMemo(() => {
+    const b = (product as any)?.bundles
+    return Array.isArray(b) ? b.filter((x: any) => x && x.bundleProductId) : []
+  }, [product])
+
+  // 默认全选；用 Set 记录被取消的，这样商品数据变化时不会把新搭配漏掉
+  const [bundleOff, setBundleOff] = useState<Set<string>>(new Set())
+  const bundleSelected = bundleList.filter((b: any) => !bundleOff.has(b.bundleProductId))
+
+  /**
    * 价格展示：有选中款式且该款式设了独立价格时，**用款式的价格参与促销计算**。
    *
    * 为什么要换成「覆盖了价格的 product 对象」再算：
@@ -449,6 +465,31 @@ export default function ProductDetailClient({
   /** 加进购物车用的显示名：带上款式，方便客户在购物车里区分 */
   const cartName = activeVariant ? `${product.nameEn || product.name} · ${activeVariant.label}` : (product.nameEn || product.name)
 
+  /** 搭配相关金额：全部按「当前生效价格」算，和页面上展示的一致 */
+  const bundleCalc = useMemo(() => {
+    const items = bundleSelected.map((b: any) => {
+      const bp = b.product || {}
+      const p = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
+      return {
+        ...b,
+        name: bp.nameEn || bp.name || b.bundleProductId,
+        img: b.image || bp.image || '',
+        unitPrice: p,
+        discount: Number(b.discount) || 0,
+      }
+    })
+    const extra = items.reduce((s: number, x: any) => s + x.unitPrice, 0)
+    const saving = items.reduce((s: number, x: any) => s + x.discount, 0)
+    return {
+      items,
+      mainPrice: effectivePrice,
+      extra,
+      listTotal: effectivePrice + extra,
+      saving,
+      total: Math.max(0, effectivePrice + extra - saving),
+    }
+  }, [bundleSelected, effectivePrice])
+
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
       addItem({
@@ -479,6 +520,43 @@ export default function ProductDetailClient({
     }
     attachGift()
     router.push('/checkout')
+  }
+
+  /**
+   * 一键把「主商品 + 勾选的搭配商品」全部加进购物车。
+   *
+   * 主商品按当前款式价格计价；搭配商品按各自的套餐价（留空则用其原价）。
+   * 组合优惠（discount）由服务端在下单时核销 —— 前端不在单价上做手脚，
+   * 否则购物车单价和商品页显示会对不上。优惠额通过购物车备注/订单备注体现。
+   */
+  const handleAddBundle = () => {
+    // 主商品（数量按当前选择）
+    for (let i = 0; i < qty; i++) {
+      addItem({
+        id: product.id, name: product.name,
+        nameEn: cartName,
+        image: effectiveImage, price: effectivePrice,
+        category: product.category,
+      })
+    }
+    // 搭配商品各加一件
+    for (const b of bundleCalc.items) {
+      const bp = (b as any).product || {}
+      addItem({
+        id: b.bundleProductId,
+        name: bp.name || b.name,
+        nameEn: bp.nameEn || b.name,
+        image: b.img || bp.image || '',
+        price: b.unitPrice,
+        category: bp.category || '',
+      })
+    }
+    attachGift()
+    setAdded(true)
+    setShake(false)
+    requestAnimationFrame(() => setShake(true))
+    setTimeout(() => setShake(false), 500)
+    setTimeout(() => setAdded(false), 2000)
   }
 
   return (
@@ -828,6 +906,128 @@ export default function ProductDetailClient({
                 <Heart size={17} strokeWidth={1.6} fill={isWishlisted ? 'currentColor' : 'none'} />
               </button>
             </div>
+
+            {/* ===== 配套商品 / 搭配购买（Frequently bought together） =====
+                参考站右栏就是这个区块：主商品 + 搭配商品，显示单品价 / 组合优惠 / 总价，
+                一键把多件一起加购。默认全选，客户可以取消某个。 */}
+            {bundleList.length > 0 && (
+              <div className="mt-7 pt-6" data-bundle-section="1" style={{ borderTop: `1px solid ${LINE}` }}>
+                <p className="font-en text-[18px] mb-3" style={{ color: INK }}>
+                  {(product as any).bundleTitle || 'Frequently bought together'}
+                </p>
+
+                {/* 缩略图排：主商品 + 各搭配商品，用 + 连接 */}
+                <div className="flex items-center gap-3 flex-wrap mb-4">
+                  {[{
+                    img: effectiveImage,
+                    name: cartName,
+                  }, ...bundleCalc.items.map((b: any) => ({ img: b.img, name: b.name }))].map((it, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      {i > 0 && <span className="font-sans text-[16px]" style={{ color: 'rgba(74,58,36,0.4)' }}>+</span>}
+                      <div className="overflow-hidden"
+                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={it.img} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 勾选列表 */}
+                <div className="space-y-2.5">
+                  {/* 主商品那一行固定勾选、不可取消 */}
+                  <div className="flex items-center gap-2.5">
+                    <span className="shrink-0 w-4 h-4 flex items-center justify-center"
+                      style={{ border: `1px solid ${INK}`, backgroundColor: INK, borderRadius: 2 }}>
+                      <Check size={11} strokeWidth={3} color="#fff" />
+                    </span>
+                    <span className="flex-1 min-w-0 font-sans text-[12px] truncate" style={{ color: INK }}>
+                      This item: {cartName}
+                    </span>
+                    <span className="font-sans text-[12px] shrink-0" style={{ color: INK }}>
+                      {formatPrice(convertPrice(effectivePrice, currency), currency)}
+                    </span>
+                  </div>
+
+                  {bundleList.map((b: any) => {
+                    const on = !bundleOff.has(b.bundleProductId)
+                    const bp = b.product || {}
+                    const unit = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
+                    return (
+                      <div key={b.bundleProductId} className="flex items-start gap-2.5">
+                        <button
+                          type="button"
+                          data-bundle-toggle={b.bundleProductId}
+                          onClick={() => {
+                            const next = new Set(bundleOff)
+                            if (next.has(b.bundleProductId)) next.delete(b.bundleProductId)
+                            else next.add(b.bundleProductId)
+                            setBundleOff(next)
+                          }}
+                          className="shrink-0 mt-0.5 w-4 h-4 flex items-center justify-center"
+                          style={{
+                            border: `1px solid ${on ? INK : 'rgba(74,58,36,0.35)'}`,
+                            backgroundColor: on ? INK : 'transparent',
+                            borderRadius: 2,
+                          }}
+                          aria-label={on ? 'Remove from bundle' : 'Add to bundle'}
+                        >
+                          {on && <Check size={11} strokeWidth={3} color="#fff" />}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans text-[12px] truncate" style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}>
+                            {b.title || bp.nameEn || bp.name || b.bundleProductId}
+                          </p>
+                          {b.description && (
+                            <p className="font-sans text-[10px] mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                              {b.description}
+                            </p>
+                          )}
+                          {Number(b.discount) > 0 && (
+                            <p className="font-sans text-[10px] mt-0.5" style={{ color: '#4A665D' }}>
+                              Bundle saving −{formatPrice(convertPrice(Number(b.discount), currency), currency)}
+                            </p>
+                          )}
+                        </div>
+                        <span className="font-sans text-[12px] shrink-0" style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}>
+                          {formatPrice(convertPrice(unit, currency), currency)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* 金额明细：单品合计 / 优惠 / 总价 */}
+                <div className="mt-4 pt-3 space-y-1.5" style={{ borderTop: `1px solid ${LINE}` }}>
+                  <div className="flex justify-between font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                    <span>Items total</span>
+                    <span>{formatPrice(convertPrice(bundleCalc.listTotal, currency), currency)}</span>
+                  </div>
+                  {bundleCalc.saving > 0 && (
+                    <div className="flex justify-between font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                      <span>Bundle saving</span>
+                      <span>−{formatPrice(convertPrice(bundleCalc.saving, currency), currency)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="font-sans text-[12px] font-semibold" style={{ color: INK }}>Bundle total</span>
+                    <span className="font-en text-[19px] font-medium" style={{ color: INK }}>
+                      {formatPrice(convertPrice(bundleCalc.total, currency), currency)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  data-add-bundle="1"
+                  onClick={handleAddBundle}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px"
+                  style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
+                >
+                  <ShoppingBag size={14} strokeWidth={2} /> Add {bundleCalc.items.length + 1} items to cart
+                </button>
+              </div>
+            )}
 
             {/* ===== 赠品区（买一送一 / 免费搭配） =====
                 绑 1 个 → 直接展示"随货赠送"，不用客户操作

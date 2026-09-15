@@ -74,6 +74,31 @@ export interface Product {
   variants?: ProductVariant[]
   /** 规格维度的名字，如 "Style" / "Color"（前台选择器上显示） */
   optionName?: string
+  /**
+   * 配套商品 / 搭配购买（bundle）。
+   * 前台在商品页右侧展示「Frequently bought together」，
+   * 勾选后实时算 单品价 / 组合优惠 / 总价，并可一键把多件一起加购。
+   */
+  bundles?: ProductBundle[]
+}
+
+/** 一条搭配关系（对应 product_bundles 表一行） */
+export interface ProductBundle {
+  /** 被搭配的商品 id */
+  bundleProductId: string
+  /** 搭配标题，如 "Add a matching tray" */
+  title?: string
+  /** 搭配说明（为什么推荐一起买） */
+  description?: string
+  /** 搭配展示图；为空则用被搭配商品自己的主图 */
+  image?: string
+  /** 该商品在套餐里的价格；为空则用该商品原价 */
+  price?: number
+  /** 组合优惠金额（一起买能省多少） */
+  discount?: number
+  sortOrder?: number
+  /** 仓库层聚合进来的被搭配商品完整信息（前台展示用，读取时才有） */
+  product?: any
 }
 
 /** 单个商品款式（对应 product_variants 表一行） */

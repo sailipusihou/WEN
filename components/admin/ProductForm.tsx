@@ -73,6 +73,8 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
   // 赠品绑定：候选商品列表 + 搜索词
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [giftSearch, setGiftSearch] = useState("")
+  // 配套商品搜索词
+  const [bundleSearch, setBundleSearch] = useState("")
   const [seedForm, setSeedForm] = useState({
     author: "",
     avatar: "",
@@ -218,6 +220,16 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     // 规格款式：存 product_variants 表，同样单独提交。
     // 每个款式可有自己的价格 / 图片 / 库存；留空表示沿用主商品的值。
     optionName: (initial as any)?.optionName || "Style",
+    // 配套商品 / 搭配购买：存 product_bundles 表，单独提交
+    bundleTitle: (initial as any)?.bundleTitle || "Frequently bought together",
+    bundles: ((initial as any)?.bundles || []).map((b: any) => ({
+      bundleProductId: b.bundleProductId,
+      title: b.title || "",
+      description: b.description || "",
+      image: b.image || "",
+      price: b.price === undefined || b.price === null ? "" : String(b.price),
+      discount: b.discount === undefined || b.discount === null ? "" : String(b.discount),
+    })) as any[],
     variants: ((initial as any)?.variants || []).map((v: any) => ({
       id: v.id,
       label: v.label || "",
@@ -403,6 +415,39 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
             }
           } catch {
             setError("Product saved, but variants could not be reached.")
+            setSaving(false)
+            return
+          }
+
+          // 配套商品 / 搭配购买
+          const cleanBundles = (form.bundles || [])
+            .filter((b: any) => String(b.bundleProductId || '').trim())
+            .map((b: any) => ({
+              bundleProductId: String(b.bundleProductId).trim(),
+              title: b.title || '',
+              description: b.description || '',
+              image: b.image || undefined,
+              price: b.price === '' || b.price === undefined ? undefined : Number(b.price),
+              discount: b.discount === '' || b.discount === undefined ? 0 : Number(b.discount),
+            }))
+          try {
+            const bres = await fetch("/api/products/bundles", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: targetId,
+                bundleTitle: form.bundleTitle || '',
+                bundles: cleanBundles,
+              }),
+            })
+            if (!bres.ok) {
+              const berr = await bres.json().catch(() => ({}))
+              setError(`Product saved, but bundles failed: ${berr.error || bres.status}`)
+              setSaving(false)
+              return
+            }
+          } catch {
+            setError("Product saved, but bundles could not be reached.")
             setSaving(false)
             return
           }
@@ -882,6 +927,184 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
             style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
             + 添加款式
           </button>
+        </Section>
+
+        {/* ===== 配套商品 / 搭配购买 =====
+            和赠品的区别：赠品是免费送；搭配仍然计价，只是组合起来有个优惠。
+            前台在商品页右侧展示「Frequently bought together」。 */}
+        <Section title="配套商品 / 搭配购买（Bundle）">
+          <p className="text-xs mb-3" style={{ color: "var(--adm-text-secondary, rgba(255,255,255,0.6))" }}>
+            给这件商品设置可以一起买的搭配商品（比如茶具配托盘）。客户在前台勾选后，
+            页面会实时算出「单品价 / 组合优惠 / 总价」，并能一键把多件一起加购。
+            <strong>注意：搭配商品仍然计价</strong>，优惠金额填在「优惠」里；如果要是免费赠品，用上面的赠品绑定。
+          </p>
+
+          {/* 搭配标题（前台区块的小标题） */}
+          <div className="mb-4">
+            <label className="block text-xs mb-1.5" style={{ color: "var(--adm-text)" }}>
+              搭配区块标题（前台显示，如 "Complete the set"）
+            </label>
+            <input
+              type="text"
+              value={form.bundleTitle}
+              onChange={e => update("bundleTitle", e.target.value)}
+              placeholder="Frequently bought together"
+              className="w-full sm:w-80 px-4 py-2.5 rounded-lg text-sm"
+              style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+            />
+          </div>
+
+          {/* 已选搭配 */}
+          {form.bundles.length > 0 && (
+            <div className="space-y-3 mb-3">
+              {form.bundles.map((b: any, idx: number) => {
+                const bp = allProducts.find(p => p.id === b.bundleProductId)
+                return (
+                  <div key={b.bundleProductId} className="rounded-lg p-3"
+                    style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)" }}>
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <div className="shrink-0 rounded overflow-hidden flex items-center justify-center"
+                        style={{ width: 44, height: 52, backgroundColor: "var(--adm-bg)" }}>
+                        {b.image
+                          ? <img src={b.image} alt="" className="w-full h-full object-cover" />
+                          : bp?.image
+                            ? <img src={bp.image} alt="" className="w-full h-full object-cover" />
+                            : <span className="text-[9px] opacity-40" style={{ color: "var(--adm-text)" }}>无图</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate" style={{ color: "var(--adm-text)" }}>
+                          {bp ? (bp.nameEn || bp.name) : b.bundleProductId}
+                        </p>
+                        <p className="text-[11px] opacity-50" style={{ color: "var(--adm-text)" }}>
+                          原价 ${bp ? bp.price : '?'}
+                          {b.price !== '' && b.price !== undefined
+                            ? ` → 套餐价 $${b.price}`
+                            : ' （套餐价留空 = 用原价）'}
+                        </p>
+                      </div>
+                      <button type="button"
+                        onClick={() => update("bundles", form.bundles.filter((x: any) => x.bundleProductId !== b.bundleProductId))}
+                        className="px-2 py-1 rounded text-xs shrink-0"
+                        style={{ backgroundColor: "rgba(220,38,38,0.15)", color: "#f87171" }}>
+                        删除
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>搭配标题</label>
+                        <input type="text" value={b.title}
+                          onChange={e => {
+                            const next = [...form.bundles]
+                            next[idx] = { ...next[idx], title: e.target.value }
+                            update("bundles", next)
+                          }}
+                          placeholder="Add a matching tray"
+                          className="w-full px-3 py-2 rounded text-sm"
+                          style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>套餐价</label>
+                          <input type="number" step="0.01" value={b.price}
+                            onChange={e => {
+                              const next = [...form.bundles]
+                              next[idx] = { ...next[idx], price: e.target.value }
+                              update("bundles", next)
+                            }}
+                            placeholder="原价"
+                            className="w-full px-3 py-2 rounded text-sm"
+                            style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>组合优惠</label>
+                          <input type="number" step="0.01" value={b.discount}
+                            onChange={e => {
+                              const next = [...form.bundles]
+                              next[idx] = { ...next[idx], discount: e.target.value }
+                              update("bundles", next)
+                            }}
+                            placeholder="0"
+                            className="w-full px-3 py-2 rounded text-sm"
+                            style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>图片 URL</label>
+                          <input type="text" value={b.image}
+                            onChange={e => {
+                              const next = [...form.bundles]
+                              next[idx] = { ...next[idx], image: e.target.value }
+                              update("bundles", next)
+                            }}
+                            placeholder="用对方主图"
+                            className="w-full px-3 py-2 rounded text-sm"
+                            style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <label className="block text-[10px] mb-1 opacity-60" style={{ color: "var(--adm-text)" }}>搭配说明（前台显示，可选）</label>
+                      <input type="text" value={b.description}
+                        onChange={e => {
+                          const next = [...form.bundles]
+                          next[idx] = { ...next[idx], description: e.target.value }
+                          update("bundles", next)
+                        }}
+                        placeholder="Why they go well together"
+                        className="w-full px-3 py-2 rounded text-sm"
+                        style={{ backgroundColor: "var(--adm-bg)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 添加搭配商品：搜索后从候选里点选 */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={bundleSearch}
+              onChange={e => setBundleSearch(e.target.value)}
+              placeholder="搜索商品名称或编码，然后从下方选择要搭配的商品"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+              style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+            />
+          </div>
+
+          <div className="mt-2 max-h-56 overflow-y-auto rounded-lg" style={{ border: "1px solid var(--adm-input-border)" }}>
+            {allProducts
+              .filter(p => p.id !== initial?.id && !form.bundles.some((b: any) => b.bundleProductId === p.id))
+              .filter(p => {
+                const q = bundleSearch.trim().toLowerCase()
+                if (!q) return true
+                return (p.name || "").toLowerCase().includes(q)
+                  || (p.nameEn || "").toLowerCase().includes(q)
+                  || (p.code || "").toLowerCase().includes(q)
+              })
+              .slice(0, 40)
+              .map(p => (
+                <button key={p.id} type="button"
+                  onClick={() => update("bundles", [...form.bundles, {
+                    bundleProductId: p.id, title: "", description: "", image: "", price: "", discount: "",
+                  }])}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors"
+                  style={{ borderBottom: "1px solid var(--adm-input-border)" }}>
+                  {p.image && <img src={p.image} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                  <span className="flex-1 min-w-0 text-sm truncate" style={{ color: "var(--adm-text)" }}>
+                    {p.nameEn || p.name}
+                  </span>
+                  <span className="text-xs opacity-50 shrink-0" style={{ color: "var(--adm-text)" }}>${p.price}</span>
+                  <Plus size={14} className="shrink-0 opacity-60" style={{ color: "var(--adm-text)" }} />
+                </button>
+              ))}
+            {allProducts.filter(p => p.id !== initial?.id && !form.bundles.some((b: any) => b.bundleProductId === p.id)).length === 0 && (
+              <p className="px-3 py-4 text-xs opacity-50" style={{ color: "var(--adm-text)" }}>
+                没有其它可选商品（先把其它商品建好）
+              </p>
+            )}
+          </div>
         </Section>
 
         {/* Status */}

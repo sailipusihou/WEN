@@ -161,6 +161,28 @@ export function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(productId, sortOrder);
 
+    -- 配套商品 / 搭配购买表（bundle，"Frequently bought together"）
+    -- 语义：买 productId 时，可以一起加购 bundleProductId，组合成一个套餐价。
+    --   title       搭配标题，如 "Add a matching tray"（前台搭配区块的小标题）
+    --   description 搭配说明（为什么推荐一起买）
+    --   image       搭配展示图；NULL = 用被搭配商品自己的主图
+    --   price       搭配价（该商品在套餐里的价格）；NULL = 用该商品原价
+    --   discount    组合优惠金额（一起买能省多少）
+    -- 前台：商品页右侧「Frequently bought together」区块，
+    --       勾选搭配商品后实时算出 单品价 / 优惠 / 总价。
+    CREATE TABLE IF NOT EXISTS product_bundles (
+      productId TEXT NOT NULL,
+      bundleProductId TEXT NOT NULL,
+      title TEXT DEFAULT '',
+      description TEXT DEFAULT '',
+      image TEXT,
+      price REAL,
+      discount REAL NOT NULL DEFAULT 0,
+      sortOrder INTEGER DEFAULT 0,
+      PRIMARY KEY (productId, bundleProductId),
+      FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+    );
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

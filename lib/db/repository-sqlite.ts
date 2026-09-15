@@ -1,5 +1,5 @@
-// SQLite Repository 瀹炵幇
-// 杩斿洖鐨勬暟鎹粨鏋勪笌鐜版湁鐨?JSON 妯″潡瀹屽叏鍏煎, 鍙互鏃犵紳鍒囨崲
+// SQLite Repository 鐎圭偟骞?
+// 鏉╂柨娲栭惃鍕殶閹诡喚绮ㄩ弸鍕瑢閻滅増婀侀惃?JSON 濡€虫健鐎瑰苯鍙忛崗鐓庮啇, 閸欘垯浜掗弮鐘电闯閸掑洦宕?
 
 import { getDb, initDatabase } from './sqlite'
 import type { Product, Review, Supplier } from '@/lib/db'
@@ -11,7 +11,7 @@ import { DEFAULTS, getSettings, normalizeSavedSettings } from '@/lib/settings'
 import type { WorkLogEntry } from '@/lib/work-log'
 import type { Message, NewsletterSubscriber } from '@/lib/repository'
 
-// ========== 宸ュ叿鍑芥暟 ==========
+// ========== 瀹搞儱鍙块崙鑺ユ殶 ==========
 
 function rowToProduct(row: any): Product {
   return {
@@ -51,11 +51,11 @@ function rowToProduct(row: any): Product {
 }
 
 /**
- * 鎶?product_gifts 琛ㄩ噷鐨勮禒鍝佺粦瀹氳仛鍚堝埌鍟嗗搧涓娿€?
+ * 閹?product_gifts 鐞涖劑鍣烽惃鍕閸濅胶绮︾€规俺浠涢崥鍫濆煂閸熷棗鎼ф稉濞库偓?
  *
- * 璁捐璇存槑锛氳禒鍝佸叧绯诲瓨鍦ㄧ嫭绔嬬殑 product_gifts 琛紙涓€琛屼竴涓彲璧犲晢鍝侊級锛?
- * 鍒楄〃鎺ュ彛涓€娆℃€ф妸鍏ㄩ儴缁戝畾璇诲嚭鏉ュ啀鍒嗗彂锛堥伩鍏?N+1 鏌ヨ锛夈€?
- * 鍓嶅彴鍙渶璇?product.giftProductIds 灏辫兘鍐冲畾瑕佷笉瑕佹覆鏌撹禒鍝佸尯銆?
+ * 鐠佹崘顓哥拠瀛樻閿涙俺绂掗崫浣稿彠缁鐡ㄩ崷銊у缁斿娈?product_gifts 鐞涱煉绱欐稉鈧悰灞肩娑擃亜褰茬挧鐘叉櫌閸濅緤绱氶敍?
+ * 閸掓銆冮幒銉ュ經娑撯偓濞嗏剝鈧勫Ω閸忋劑鍎寸紒鎴濈暰鐠囪鍤弶銉ュ晙閸掑棗褰傞敍鍫ヤ缉閸?N+1 閺屻儴顕楅敍澶堚偓?
+ * 閸撳秴褰撮崣顏堟付鐠?product.giftProductIds 鐏忚精鍏橀崘鍐茬暰鐟曚椒绗夌憰浣硅閺屾捁绂掗崫浣稿隘閵?
  */
 export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
   if (!products.length) return products
@@ -79,7 +79,53 @@ export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
       }
     }
   } catch {
-    // 琛ㄨ繕娌″缓锛堟棫搴撻娆″惎鍔級鈥斺€?闈欓粯璺宠繃锛屼笉褰卞搷鍟嗗搧璇诲彇
+    // 鐞涖劏绻曞▽鈥崇紦閿涘牊妫惔鎾活浕濞嗏€虫儙閸旑煉绱氶垾鏂衡偓?闂堟瑩绮捄瀹犵箖閿涘奔绗夎ぐ鍗炴惙閸熷棗鎼х拠璇插絿
+  }
+  return products
+}
+
+/**
+ * 鎶?product_bundles 琛ㄩ噷鐨勬惌閰嶅叧绯昏仛鍚堝埌鍟嗗搧涓娿€?
+ *
+ * 涓庤禒鍝佺殑鍖哄埆锛?
+ *   璧犲搧鏄€屽厤璐归€併€嶏紝鎼厤鏄€屼竴璧蜂拱鑳界渷閽便€嶁€斺€?鎼厤鍟嗗搧浠嶇劧璁′环锛?
+ *   鍙槸缁勫悎璧锋潵鏈変竴涓?discount銆傛墍浠ヨ繖閲岃鎶婅鎼厤鍟嗗搧鐨勫畬鏁翠俊鎭?
+ *   锛堝悕绉?鍥剧墖/浠锋牸锛変竴骞跺甫鍑烘潵锛屽墠鍙版墠鑳界畻鍑?鍗曞搧浠?/ 浼樻儬 / 鎬讳环銆?
+ *
+ * 涓€娆℃煡瀹屽叏閮ㄥ垎鍙戯紝閬垮厤 N+1銆?
+ */
+export function attachBundlesToProducts(db: any, products: Product[]): Product[] {
+  if (!products.length) return products
+  try {
+    const rows = db.prepare(
+      'SELECT * FROM product_bundles ORDER BY productId, sortOrder'
+    ).all() as any[]
+    if (!rows.length) return products
+    const byId = new Map<string, Product>()
+    for (const p of products) byId.set(p.id, p)
+    const map = new Map<string, any[]>()
+    for (const r of rows) {
+      if (!map.has(r.productId)) map.set(r.productId, [])
+      map.get(r.productId)!.push({
+        bundleProductId: r.bundleProductId,
+        title: r.title || '',
+        description: r.description || '',
+        image: r.image || undefined,
+        price: r.price === null || r.price === undefined ? undefined : Number(r.price),
+        discount: Number(r.discount) || 0,
+        sortOrder: Number(r.sortOrder) || 0,
+      })
+    }
+    for (const p of products) {
+      const b = map.get(p.id)
+      if (b && b.length) {
+        // 灏介噺鎶婅鎼厤鍟嗗搧鐨勫畬鏁翠俊鎭寕涓婏紙鍚屼竴鎵瑰晢鍝侀噷鎵句笉鍒板氨鐣欑┖锛?
+        // 鍓嶅彴浼氶€€鍥炵敤璇ュ晢鍝佺殑榛樿淇℃伅鍘绘煡锛?
+        ;(p as any).bundles = b.map(x => ({ ...x, product: byId.get(x.bundleProductId) || null }))
+      }
+    }
+  } catch {
+    // 琛ㄨ繕娌″缓灏辫烦杩?
   }
   return products
 }
@@ -100,10 +146,10 @@ function rowToVariant(row: any): any {
 }
 
 /**
- * 鎶?product_variants 琛ㄩ噷鐨勮鏍艰仛鍚堟垚 product.variants銆?
- * 鍚屾牱涓€娆℃煡瀹屽叏閮ㄥ垎鍙戯紝閬垮厤 N+1銆?
- * 鍙甫涓?active 鐨勮鏍硷紱optionName 鍙栫涓€涓鏍肩殑缁村害鍚嶆斁鍒?product 涓婏紝
- * 鏂逛究鍓嶅彴鐩存帴鏄剧ず閫夋嫨鍣ㄦ爣棰樸€?
+ * 閹?product_variants 鐞涖劑鍣烽惃鍕潐閺嶈壈浠涢崥鍫熷灇 product.variants閵?
+ * 閸氬本鐗辨稉鈧▎鈩冪叀鐎瑰苯鍙忛柈銊ュ瀻閸欐埊绱濋柆鍨帳 N+1閵?
+ * 閸欘亜鐢稉?active 閻ㄥ嫯顫夐弽纭风幢optionName 閸欐牜顑囨稉鈧稉顏囶潐閺嶈偐娈戠紒鏉戝閸氬秵鏂侀崚?product 娑撳绱?
+ * 閺傞€涚┒閸撳秴褰撮惄瀛樺复閺勫墽銇氶柅澶嬪閸ｃ劍鐖ｆ０妯糕偓?
  */
 export function attachVariantsToProducts(db: any, products: Product[]): Product[] {
   if (!products.length) return products
@@ -125,7 +171,7 @@ export function attachVariantsToProducts(db: any, products: Product[]): Product[
       }
     }
   } catch {
-    // 琛ㄨ繕娌″缓灏辫烦杩?
+    // 鐞涖劏绻曞▽鈥崇紦鐏忚精鐑︽潻?
   }
   return products
 }
@@ -171,7 +217,7 @@ function rowToCategory(row: any, productCount = 0): Category {
     nameEn: row.nameEn || '',
     description: row.description || '',
     descriptionEn: row.descriptionEn || '',
-    icon: row.icon || '馃摝',
+    icon: row.icon || '棣冩憹',
     productCount,
     image: row.image || '',
   }
@@ -238,7 +284,7 @@ function rowToOrder(row: any, items: OrderItem[]): Order {
       url: row.trackingUrl || '',
     } as TrackingInfo : undefined,
     statusHistory: statusHistory.length > 0 ? statusHistory : undefined,
-    // 淇 C3: 璇诲洖鏀粯浜ゆ槗/閫€鎹㈣揣/鏀粯鐘舵€?(鍘熷厛 SQLite 鍚庣闈欓粯涓㈠け)
+    // 娣囶喖顦?C3: 鐠囪娲栭弨顖欑帛娴溿倖妲?闁偓閹广垼鎻?閺€顖欑帛閻樿埖鈧?(閸樼喎鍘?SQLite 閸氬海顏棃娆撶帛娑撱垹銇?
     paymentStatus: row.paymentStatus || undefined,
     paypalTransaction: row.paypalTransaction ? safeJsonParse(row.paypalTransaction) : undefined,
     payoneerTransaction: row.payoneerTransaction ? safeJsonParse(row.payoneerTransaction) : undefined,
@@ -309,7 +355,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
+    return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
   },
 
   listActive(): Product[] {
@@ -317,7 +363,7 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY sortOrder DESC, createdAt DESC').all() as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
+    return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
   },
 
   getById(id: string): Product | undefined {
@@ -326,7 +372,7 @@ export const productRepo = {
     if (!row) return undefined
     const product = rowToProduct(row)
     loadProductRelations(product)
-    attachVariantsToProducts(db, attachGiftsToProducts(db, [product]))
+    attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, [product])))
     return product
   },
 
@@ -335,10 +381,10 @@ export const productRepo = {
     const rows = db.prepare('SELECT * FROM products WHERE category = ? AND active = 1 ORDER BY sortOrder DESC, createdAt DESC').all(slug) as any[]
     const products = rows.map(rowToProduct)
     products.forEach(loadProductRelations)
-    return attachVariantsToProducts(db, attachGiftsToProducts(db, products))
+    return attachBundlesToProducts(db, attachVariantsToProducts(db, attachGiftsToProducts(db, products)))
   },
 
-  /** 璇诲彇鏌愬晢鍝佺粦瀹氱殑璧犲搧锛堝畬鏁村晢鍝佸璞★紝渚涘墠鍙版覆鏌撹禒鍝佸尯锛?*/
+  /** 鐠囪褰囬弻鎰櫌閸濅胶绮︾€规氨娈戠挧鐘叉惂閿涘牆鐣弫鏉戞櫌閸濅礁顕挒鈽呯礉娓氭稑澧犻崣鐗堣閺屾捁绂掗崫浣稿隘閿?*/
   listGifts(productId: string): Product[] {
     const db = getDb()
     try {
@@ -354,8 +400,8 @@ export const productRepo = {
   },
 
   /**
-   * 瑕嗙洊寮忚缃禒鍝佺粦瀹氥€?
-   * giftQuantity 瀛樺湪姣忎竴琛屼笂锛堜竴浠戒富鍟嗗搧閫佸嚑浠讹級锛屽彇绗竴涓富鍟嗗搧鐨勮缃啓鍏ュ叏閮ㄨ銆?
+   * 鐟曞棛娲婂蹇氼啎缂冾喛绂掗崫浣虹拨鐎规哎鈧?
+   * giftQuantity 鐎涙ê婀В蹇庣鐞涘奔绗傞敍鍫滅娴犳垝瀵岄崯鍡楁惂闁礁鍤戞禒璁圭礆閿涘苯褰囩粭顑跨娑擃亙瀵岄崯鍡楁惂閻ㄥ嫯顔曠純顔煎晸閸忋儱鍙忛柈銊攽閵?
    */
   setGifts(productId: string, giftProductIds: string[], giftQuantity = 1): void {
     const db = getDb()
@@ -368,7 +414,7 @@ export const productRepo = {
       const seen = new Set<string>()
       let i = 0
       for (const gid of giftProductIds) {
-        // 涓嶇粰鑷繁閫佽嚜宸憋紝涔熶笉閲嶅缁戝畾
+        // 娑撳秶绮伴懛顏勭箒闁浇鍤滃鎲嬬礉娑旂喍绗夐柌宥咁槻缂佹垵鐣?
         if (!gid || gid === productId || seen.has(gid)) continue
         seen.add(gid)
         ins.run(productId, gid, qty, i++)
@@ -377,7 +423,7 @@ export const productRepo = {
     tx()
   },
 
-  /** 鎵€鏈夊晢鍝佺殑璧犲搧缁戝畾锛堝悗鍙板垪琛ㄧ敤锛屼竴娆℃煡瀹岄伩鍏?N+1锛?*/
+  /** 閹碘偓閺堝鏅㈤崫浣烘畱鐠х姴鎼х紒鎴濈暰閿涘牆鎮楅崣鏉垮灙鐞涖劎鏁ら敍灞肩濞嗏剝鐓＄€瑰矂浼╅崗?N+1閿?*/
   allGiftBindings(): Record<string, string[]> {
     const db = getDb()
     try {
@@ -393,9 +439,9 @@ export const productRepo = {
     }
   },
 
-  // ===== 商品规格 / 款式（product_variants） =====
+  // ===== 鍟嗗搧瑙勬牸 / 娆惧紡锛坧roduct_variants锛?=====
 
-  /** 读取某商品的全部规格（含未启用的，后台编辑用） */
+  /** 璇诲彇鏌愬晢鍝佺殑鍏ㄩ儴瑙勬牸锛堝惈鏈惎鐢ㄧ殑锛屽悗鍙扮紪杈戠敤锛?*/
   listVariants(productId: string): any[] {
     const db = getDb()
     try {
@@ -409,12 +455,12 @@ export const productRepo = {
   },
 
   /**
-   * 覆盖式保存某商品的规格列表。
+   * 瑕嗙洊寮忎繚瀛樻煇鍟嗗搧鐨勮鏍煎垪琛ㄣ€?
    *
-   * 为什么用「先删后插」而不是逐条 diff：
-   *   规格是整体配置（顺序、增减都在一起改），diff 逻辑复杂且容易残留脏数据；
-   *   规格条数很少（通常 < 20），整表重写的代价可以忽略。
-   * 顺带做基本清洗：去掉空 label、去掉重复 label、按传入顺序写 sortOrder。
+   * 涓轰粈涔堢敤銆屽厛鍒犲悗鎻掋€嶈€屼笉鏄€愭潯 diff锛?
+   *   瑙勬牸鏄暣浣撻厤缃紙椤哄簭銆佸鍑忛兘鍦ㄤ竴璧锋敼锛夛紝diff 閫昏緫澶嶆潅涓斿鏄撴畫鐣欒剰鏁版嵁锛?
+   *   瑙勬牸鏉℃暟寰堝皯锛堥€氬父 < 20锛夛紝鏁磋〃閲嶅啓鐨勪唬浠峰彲浠ュ拷鐣ャ€?
+   * 椤哄甫鍋氬熀鏈竻娲楋細鍘绘帀绌?label銆佸幓鎺夐噸澶?label銆佹寜浼犲叆椤哄簭鍐?sortOrder銆?
    */
   setVariants(productId: string, variants: any[]): void {
     const db = getDb()
@@ -451,7 +497,7 @@ export const productRepo = {
     tx()
   },
 
-  /** 所有商品的规格（后台列表用，一次查完避免 N+1） */
+  /** 鎵€鏈夊晢鍝佺殑瑙勬牸锛堝悗鍙板垪琛ㄧ敤锛屼竴娆℃煡瀹岄伩鍏?N+1锛?*/
   allVariants(): Record<string, any[]> {
     const db = getDb()
     try {
@@ -460,6 +506,94 @@ export const productRepo = {
       for (const r of rows) {
         if (!out[r.productId]) out[r.productId] = []
         out[r.productId].push(rowToVariant(r))
+      }
+      return out
+    } catch {
+      return {}
+    }
+  },
+
+  // ===== 配套商品 / 搭配购买（product_bundles） =====
+
+  /** 读取某商品的搭配列表（带被搭配商品的完整信息，前台展示用） */
+  listBundles(productId: string): any[] {
+    const db = getDb()
+    try {
+      const rows = db.prepare(
+        'SELECT * FROM product_bundles WHERE productId = ? ORDER BY sortOrder'
+      ).all(productId) as any[]
+      return rows.map(r => {
+        const bp = db.prepare('SELECT * FROM products WHERE id = ?').get(r.bundleProductId) as any
+        return {
+          bundleProductId: r.bundleProductId,
+          title: r.title || '',
+          description: r.description || '',
+          image: r.image || undefined,
+          price: r.price === null || r.price === undefined ? undefined : Number(r.price),
+          discount: Number(r.discount) || 0,
+          sortOrder: Number(r.sortOrder) || 0,
+          product: bp ? rowToProduct(bp) : null,
+        }
+      })
+    } catch {
+      return []
+    }
+  },
+
+  /**
+   * 覆盖式保存某商品的搭配列表。
+   * 与赠品一样用「先删后插」：搭配是整体配置、条数少，整表重写更简单可靠。
+   * 清洗：不给自己搭配、去重、discount 不能为负。
+   */
+  setBundles(productId: string, bundles: any[]): void {
+    const db = getDb()
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM product_bundles WHERE productId = ?').run(productId)
+      const ins = db.prepare(`
+        INSERT INTO product_bundles
+          (productId, bundleProductId, title, description, image, price, discount, sortOrder)
+        VALUES (@productId, @bundleProductId, @title, @description, @image, @price, @discount, @sortOrder)
+      `)
+      const seen = new Set<string>()
+      let i = 0
+      for (const b of bundles || []) {
+        const bid = String(b?.bundleProductId || '').trim()
+        if (!bid || bid === productId || seen.has(bid)) continue
+        seen.add(bid)
+        const numOrNull = (x: any) =>
+          x === '' || x === null || x === undefined || Number.isNaN(Number(x)) ? null : Number(x)
+        ins.run({
+          productId,
+          bundleProductId: bid,
+          title: String(b?.title || '').trim(),
+          description: String(b?.description || '').trim(),
+          image: b?.image ? String(b.image) : null,
+          price: numOrNull(b?.price),
+          discount: Math.max(0, Number(b?.discount) || 0),
+          sortOrder: i,
+        })
+        i++
+      }
+    })
+    tx()
+  },
+
+  /** 所有商品的搭配（后台列表用，一次查完避免 N+1） */
+  allBundles(): Record<string, any[]> {
+    const db = getDb()
+    try {
+      const rows = db.prepare('SELECT * FROM product_bundles ORDER BY productId, sortOrder').all() as any[]
+      const out: Record<string, any[]> = {}
+      for (const r of rows) {
+        if (!out[r.productId]) out[r.productId] = []
+        out[r.productId].push({
+          bundleProductId: r.bundleProductId,
+          title: r.title || '',
+          description: r.description || '',
+          image: r.image || undefined,
+          price: r.price === null || r.price === undefined ? undefined : Number(r.price),
+          discount: Number(r.discount) || 0,
+        })
       }
       return out
     } catch {
@@ -567,7 +701,7 @@ export const productRepo = {
       featured: merged.featured ? 1 : 0,
       active: merged.active !== false ? 1 : 0,
     })
-    // 鏇存柊 tags 鍜?detailImages
+    // 閺囧瓨鏌?tags 閸?detailImages
     if (updates.tags) {
       db.prepare('DELETE FROM product_tags WHERE productId = ? AND lang = \'zh\'').run(id)
       const tagStmt = db.prepare('INSERT INTO product_tags (productId, tag, lang, sortOrder) VALUES (?, ?, \'zh\', ?)')
@@ -695,7 +829,7 @@ export const categoryRepo = {
     db.prepare(`
       INSERT INTO categories (id, name, nameEn, slug, description, descriptionEn, image, icon, sortOrder, active)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
-    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '馃摝')
+    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '棣冩憹')
     return category
   },
 
@@ -707,7 +841,7 @@ export const categoryRepo = {
     db.prepare(`
       UPDATE categories SET name = ?, nameEn = ?, description = ?, descriptionEn = ?, image = ?, icon = ?, updatedAt = datetime('now')
       WHERE slug = ?
-    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '馃摝', slug)
+    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '棣冩憹', slug)
     return categoryRepo.getBySlug(slug) || null
   },
 
@@ -728,8 +862,8 @@ export const orderRepo = {
       const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(row.id) as any[]
       const items: OrderItem[] = itemRows.map(r => ({
         id: r.id,
-        // 蹇呴』鍥炲～ productId锛歞eductStockForOrder 渚濊禆瀹冩墸搴撳瓨锛?
-        // 缂轰簡瀹?item.id锛堣鍗曢」 ID锛変細琚綋鎴愬晢鍝?ID锛屾煡涓嶅埌鍟嗗搧鑰岄潤榛樿烦杩囨墸鍑忋€?
+        // 韫囧懘銆忛崶鐐诧綖 productId閿涙瓰eductStockForOrder 娓氭繆绂嗙€瑰啯澧告惔鎾崇摠閿?
+        // 缂傝桨绨＄€?item.id閿涘牐顓归崡鏇€?ID閿涘绱扮悮顐㈢秼閹存劕鏅㈤崫?ID閿涘本鐓℃稉宥呭煂閸熷棗鎼ч懓宀勬饯姒涙鐑︽潻鍥ㄥ⒏閸戝繈鈧?
         productId: r.productId || undefined,
         name: r.name,
         nameEn: r.nameEn || '',
@@ -748,7 +882,7 @@ export const orderRepo = {
     const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(id) as any[]
     const items: OrderItem[] = itemRows.map(r => ({
       id: r.id,
-      // 鍚?list()锛氬洖濉?productId锛屽惁鍒欐寜璁㈠崟鍙栧洖鐨勮鍗曟墸涓嶄簡搴撳瓨
+      // 閸?list()閿涙艾娲栨繅?productId閿涘苯鎯侀崚娆愬瘻鐠併垹宕熼崣鏍ф礀閻ㄥ嫯顓归崡鏇熷⒏娑撳秳绨℃惔鎾崇摠
       productId: r.productId || undefined,
       name: r.name,
       nameEn: r.nameEn || '',
@@ -893,7 +1027,7 @@ export const orderRepo = {
       if (updates.attributionMatchedBy !== undefined) { fields.push('attributionMatchedBy = ?'); values.push(updates.attributionMatchedBy || null) }
       if (updates.attributionFallbackUsed !== undefined) { fields.push('attributionFallbackUsed = ?'); values.push(updates.attributionFallbackUsed ? 1 : 0) }
       if ((updates as any).paymentStatus !== undefined) { fields.push('paymentStatus = ?'); values.push((updates as any).paymentStatus || 'unpaid') }
-      // 淇 C3: 鏀粯浜ゆ槗/閫€鎹㈣揣鏁版嵁鍙洿鏂?(JSON 鍒?
+      // 娣囶喖顦?C3: 閺€顖欑帛娴溿倖妲?闁偓閹广垼鎻ｉ弫鐗堝祦閸欘垱娲块弬?(JSON 閸?
       if ((updates as any).paypalTransaction !== undefined) { fields.push('paypalTransaction = ?'); values.push((updates as any).paypalTransaction ? JSON.stringify((updates as any).paypalTransaction) : null) }
       if ((updates as any).payoneerTransaction !== undefined) { fields.push('payoneerTransaction = ?'); values.push((updates as any).payoneerTransaction ? JSON.stringify((updates as any).payoneerTransaction) : null) }
       if ((updates as any).returnInfo !== undefined) { fields.push('returnInfo = ?'); values.push((updates as any).returnInfo ? JSON.stringify((updates as any).returnInfo) : null) }
@@ -1001,16 +1135,16 @@ export const userRepo = {
     const db = getDb()
     const row = db.prepare('SELECT * FROM users WHERE token = ?').get(token) as any
     if (!row) return undefined
-    // 淇 H20: token 杩囨湡鏍￠獙 (鏃犺繃鏈熸椂闂寸殑鍘嗗彶鐢ㄦ埛瑙嗕负鏈夋晥, 鍏煎鏃т細璇?
+    // 娣囶喖顦?H20: token 鏉╁洦婀￠弽锟犵崣 (閺冪姾绻冮張鐔告闂傚娈戦崢鍡楀蕉閻劍鍩涚憴鍡曡礋閺堝鏅? 閸忕厧顔愰弮褌绱扮拠?
     if (row.tokenExpiresAt && new Date(row.tokenExpiresAt).getTime() < Date.now()) return undefined
     return userRepo.getById(row.id)
   },
 
   add(user: User): User {
     const db = getDb()
-    // 淇: 鍘?INSERT 婕忔帀浜?token / tokenExpiresAt 鈥斺€?娉ㄥ唽鎺ュ彛鏄€屽厛鍐欏簱鍐嶅彂 cookie銆?
-    // 浜庢槸鏂版敞鍐岀敤鎴锋祻瑙堝櫒閲岃櫧鐒舵嬁鍒颁簡 cookie, 浣嗗簱閲?token 涓?NULL,
-    // /api/auth/user 鏌ヤ笉鍒颁汉 鈫?鐩存帴琚涪鍥炵櫥褰曢〉 (娉ㄥ唽鍗虫帀绾?銆?
+    // 娣囶喖顦? 閸?INSERT 濠曞繑甯€娴?token / tokenExpiresAt 閳ユ柡鈧?濞夈劌鍞介幒銉ュ經閺勵垬鈧苯鍘涢崘娆忕氨閸愬秴褰?cookie閵?
+    // 娴滃孩妲搁弬鐗堟暈閸愬瞼鏁ら幋閿嬬セ鐟欏牆娅掗柌宀冩閻掕埖瀣侀崚棰佺啊 cookie, 娴ｅ棗绨遍柌?token 娑?NULL,
+    // /api/auth/user 閺屻儰绗夐崚棰佹眽 閳?閻╁瓨甯寸悮顐ユ丢閸ョ偟娅ヨぐ鏇€?(濞夈劌鍞介崡铏竴缁?閵?
     db.prepare(`
       INSERT INTO users (id, email, passwordHash, salt, firstName, lastName, phone, avatar, dob, gender, bio, preferredCurrency, coupons, role, token, tokenExpiresAt, createdAt, updatedAt)
       VALUES (@id, @email, @passwordHash, @salt, @firstName, @lastName, @phone, @avatar, @dob, @gender, @bio, @preferredCurrency, @coupons, @role, @token, @tokenExpiresAt, @createdAt, @updatedAt)
@@ -1024,7 +1158,7 @@ export const userRepo = {
       token: user.token || null, tokenExpiresAt: user.tokenExpiresAt || null,
       createdAt: user.createdAt, updatedAt: user.updatedAt || user.createdAt,
     })
-    // 淇濆瓨 addresses
+    // 娣囨繂鐡?addresses
     if (user.addresses?.length) {
       const addrStmt = db.prepare(`
         INSERT INTO user_addresses (id, userId, label, firstName, lastName, phone, address, city, state, zip, country, isDefault)
@@ -1035,7 +1169,7 @@ export const userRepo = {
         addr.address, addr.city, addr.state, addr.zip, addr.country, addr.isDefault ? 1 : 0
       ))
     }
-    // 淇濆瓨 wishlist
+    // 娣囨繂鐡?wishlist
     if (user.wishlist?.length) {
       const wishStmt = db.prepare('INSERT OR IGNORE INTO wishlist (userId, productId) VALUES (?, ?)')
       user.wishlist.forEach(pid => wishStmt.run(user.id, pid))
@@ -1061,7 +1195,7 @@ export const userRepo = {
       (updates as any).tokenExpiresAt !== undefined ? (updates as any).tokenExpiresAt : merged.tokenExpiresAt || null,
       id
     )
-    // 鏇存柊 addresses
+    // 閺囧瓨鏌?addresses
     if (updates.addresses) {
       db.prepare('DELETE FROM user_addresses WHERE userId = ?').run(id)
       const addrStmt = db.prepare(`
@@ -1073,7 +1207,7 @@ export const userRepo = {
         addr.address, addr.city, addr.state, addr.zip, addr.country, addr.isDefault ? 1 : 0
       ))
     }
-    // 鏇存柊 wishlist
+    // 閺囧瓨鏌?wishlist
     if (updates.wishlist) {
       db.prepare('DELETE FROM wishlist WHERE userId = ?').run(id)
       const wishStmt = db.prepare('INSERT INTO wishlist (userId, productId) VALUES (?, ?)')
@@ -1107,7 +1241,7 @@ export const reviewRepo = {
       INSERT INTO reviews (id, productId, author, avatar, rating, date, content, location, approved, orderId, customerEmail, source)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, data.productId, data.author || 'Anonymous', avatar, data.rating, date, data.content || '', data.location || 'Verified Buyer', data.approved ? 1 : 0, data.orderId || null, data.customerEmail || null, data.source || 'customer')
-    // 鏇存柊鍟嗗搧璇勮璁℃暟
+    // 閺囧瓨鏌婇崯鍡楁惂鐠囧嫯顔戠拋鈩冩殶
     db.prepare('UPDATE products SET reviewCount = (SELECT COUNT(*) FROM reviews WHERE productId = products.id) WHERE id = ?').run(data.productId)
     return { ...data, id, date, avatar, approved: !!data.approved, hidden: false, deleted: false, createdAt: new Date().toISOString() } as Review
   },
@@ -1305,15 +1439,15 @@ export const settingsRepo = {
       VALUES (?, ?, datetime('now'))
     `).run(DEFAULT_SETTINGS_KEY, JSON.stringify(merged))
 
-    // 鍏抽敭锛氭竻鎺?getSettings() 鐨勮繘绋嬪唴缂撳瓨銆?
-    // getSettings() 鐢?lib/cache 缂撳瓨 settings锛圱TL 60 绉掞紝涓斿彧鍦?JSON 鍐欏叆璺緞
-    // saveSettings() 閲屾墠澶辨晥锛夈€傚悗鍙颁繚瀛樿缃蛋鐨勬槸杩欓噷锛屼笉澶辨晥鐨勮瘽
-    // 鍚庡彴鏀逛簡閰嶇疆鏈€闀?60 绉掓墠鐢熸晥锛岃〃鐜颁负銆屾槑鏄庢敼浜嗗嵈娌″弽搴斻€嶃€?
+    // 閸忔娊鏁敍姘閹?getSettings() 閻ㄥ嫯绻樼粙瀣敶缂傛挸鐡ㄩ妴?
+    // getSettings() 閻?lib/cache 缂傛挸鐡?settings閿涘湵TL 60 缁夋帪绱濇稉鏂垮涧閸?JSON 閸愭瑥鍙嗙捄顖氱窞
+    // saveSettings() 闁插本澧犳径杈ㄦ櫏閿涘鈧倸鎮楅崣棰佺箽鐎涙顔曠純顔胯泲閻ㄥ嫭妲告潻娆撳櫡閿涘奔绗夋径杈ㄦ櫏閻ㄥ嫯鐦?
+    // 閸氬骸褰撮弨閫涚啊闁板秶鐤嗛張鈧梹?60 缁夋帗澧犻悽鐔告櫏閿涘矁銆冮悳棰佽礋閵嗗本妲戦弰搴㈡暭娴滃棗宓堝▽鈥冲冀鎼存柣鈧秲鈧?
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       require('@/lib/cache').invalidateCache('settings')
     } catch {
-      // 缂撳瓨妯″潡涓嶅彲鐢ㄤ笉搴斿奖鍝嶈缃繚瀛樻湰韬?
+      // 缂傛挸鐡ㄥΟ鈥虫健娑撳秴褰查悽銊ょ瑝鎼存柨濂栭崫宥堫啎缂冾喕绻氱€涙ɑ婀伴煬?
     }
 
     return merged
@@ -1565,7 +1699,7 @@ export const browsingHistoryRepo = {
     ip?: string
   }): any {
     const db = getDb()
-    // 鍘婚噸: 鍚屼竴 visitorId + productId 鍦?30 绉掑唴涓嶉噸澶嶆彃鍏?(闃叉 React StrictMode 鍙岃皟鐢?
+    // 閸樺鍣? 閸氬奔绔?visitorId + productId 閸?30 缁夋帒鍞存稉宥夊櫢婢跺秵褰冮崗?(闂冨弶顒?React StrictMode 閸欏矁鐨熼悽?
     const existing = db.prepare(`
       SELECT * FROM browsing_history
       WHERE visitorId = ? AND productId = ?
@@ -1573,7 +1707,7 @@ export const browsingHistoryRepo = {
       ORDER BY timestamp DESC LIMIT 1
     `).get(data.visitorId, data.productId) as any
     if (existing) {
-      // 濡傛灉鏂拌姹傚甫鏈夌敤鎴蜂俊鎭€屾棫璁板綍娌℃湁, 鏇存柊鏃ц褰?
+      // 婵″倹鐏夐弬鎷岊嚞濮瑰倸鐢張澶屾暏閹磋渹淇婇幁顖濃偓灞炬＋鐠佹澘缍嶅▽鈩冩箒, 閺囧瓨鏌婇弮褑顔囪ぐ?
       if ((data.userId || data.email) && (!existing.userId || !existing.email)) {
         const fields: string[] = []
         const values: any[] = []
@@ -1824,7 +1958,7 @@ export const customerRepo = {
   },
 }
 
-// ========== Shipments Repository (鐗╂祦鍙戣揣璁板綍) ==========
+// ========== Shipments Repository (閻椻晜绁﹂崣鎴ｆ彛鐠佹澘缍? ==========
 
 function rowToShipment(row: any): any {
   return {
@@ -1844,7 +1978,7 @@ function rowToShipment(row: any): any {
     events: row.events ? JSON.parse(row.events) : [],
     notes: row.notes || '',
     createdBy: row.createdBy || '',
-    // 鍙戣揣閫氱煡璁板綍 (鍚庡彴 "閫氱煡瀹㈡埛" 鐢?: 娓犻亾 email | message, 鍙戦€佹椂闂翠笌鐩爣
+    // 閸欐垼鎻ｉ柅姘辩叀鐠佹澘缍?(閸氬骸褰?"闁氨鐓＄€广垺鍩? 閻?: 濞撶娀浜?email | message, 閸欐垿鈧焦妞傞梻缈犵瑢閻╊喗鐖?
     notifiedAt: row.notifiedAt || '',
     notifiedChannel: row.notifiedChannel || '',
     notifiedTo: row.notifiedTo || '',
@@ -1937,7 +2071,7 @@ export const shipmentRepo = {
       fields.push('events = ?')
       values.push(JSON.stringify(updates.events))
     }
-    // 鑷姩璁剧疆 deliveredAt (褰撶姸鎬佸彉涓?delivered 涓旀湭鎵嬪姩璁剧疆鏃?
+    // 閼奉亜濮╃拋鍓х枂 deliveredAt (瑜版挾濮搁幀浣稿綁娑?delivered 娑撴梹婀幍瀣З鐠佸墽鐤嗛弮?
     if (updates.status === 'delivered' && !updates.deliveredAt && !existing.deliveredAt) {
       fields.push('deliveredAt = ?')
       values.push(new Date().toISOString())
@@ -1950,7 +2084,7 @@ export const shipmentRepo = {
     return shipmentRepo.getById(id)
   },
 
-  // 娣诲姞杞ㄨ抗鑺傜偣
+  // 濞ｈ濮炴潪銊ㄦ姉閼哄倻鍋?
   addTrackEvent(shipmentId: string, event: { timestamp: string; location: string; description: string; status: string; carrier?: string }): any | null {
     const shipment = shipmentRepo.getById(shipmentId)
     if (!shipment) return null
@@ -1959,7 +2093,7 @@ export const shipmentRepo = {
       ...event,
     }
     const events = [...(shipment.events || []), newEvent]
-    // 鎸?timestamp 鎺掑簭
+    // 閹?timestamp 閹烘帒绨?
     events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     return shipmentRepo.update(shipmentId, { events, status: event.status })
   },
@@ -1970,16 +2104,16 @@ export const shipmentRepo = {
     return result.changes > 0
   },
 
-  // 鍙栨秷鍙戣揣
-  // 灏嗙墿娴佸崟鏍囪涓?cancelled
-  // 濡傛灉璇ヨ鍗曟病鏈夊叾浠栨椿璺冪墿娴佸崟锛屽垯灏嗚鍗曞洖閫€鍒?processing 鐘舵€佸苟娓呴櫎 tracking 淇℃伅
-  // 鍙湁闈?delivered/returned/cancelled 鐘舵€佺殑鍙戣揣鍗曟墠鑳藉彇娑?
+  // 閸欐牗绉烽崣鎴ｆ彛
+  // 鐏忓棛澧垮ù浣稿礋閺嶅洩顔囨稉?cancelled
+  // 婵″倹鐏夌拠銉吂閸楁洘鐥呴張澶婂従娴犳牗妞跨捄鍐⒖濞翠礁宕熼敍灞藉灟鐏忓棜顓归崡鏇炴礀闁偓閸?processing 閻樿埖鈧礁鑻熷〒鍛存珟 tracking 娣団剝浼?
+  // 閸欘亝婀侀棃?delivered/returned/cancelled 閻樿埖鈧胶娈戦崣鎴ｆ彛閸楁洘澧犻懗钘夊絿濞?
   cancel(id: string, reason?: string, operator?: string): { shipment: any; order: any; orderReverted: boolean } | null {
     const db = getDb()
     const shipment = shipmentRepo.getById(id)
     if (!shipment) return null
 
-    // 妫€鏌ユ槸鍚﹀彲浠ュ彇娑?
+    // 濡偓閺屻儲妲搁崥锕€褰叉禒銉ュ絿濞?
     if (['delivered', 'returned', 'cancelled'].includes(shipment.status)) {
       throw new Error(`Cannot cancel shipment with status: ${shipment.status}`)
     }
@@ -1990,13 +2124,13 @@ export const shipmentRepo = {
     const now = new Date().toISOString()
     const cancelNote = reason || 'Shipment cancelled'
 
-    // 妫€鏌ヨ璁㈠崟鏄惁鏈夊叾浠栨椿璺冪墿娴佸崟
+    // 濡偓閺屻儴顕氱拋銏犲礋閺勵垰鎯侀張澶婂従娴犳牗妞跨捄鍐⒖濞翠礁宕?
     const allShipments = shipmentRepo.getByOrderId(shipment.orderId)
     const otherActiveShipments = allShipments.filter(s => s.id !== id && !['cancelled', 'delivered', 'returned'].includes(s.status))
     const hasOtherActiveShipment = otherActiveShipments.length > 0
 
     const tx = db.transaction(() => {
-      // 1. 娣诲姞鍙栨秷浜嬩欢鍒拌建杩?
+      // 1. 濞ｈ濮為崣鏍ㄧХ娴滃娆㈤崚鎷屽缓鏉?
       const cancelEvent = {
         id: 'EVT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
         timestamp: now,
@@ -2008,7 +2142,7 @@ export const shipmentRepo = {
       }
       const events = [...(shipment.events || []), cancelEvent]
 
-      // 2. 鏇存柊鍙戣揣鍗曠姸鎬佷负 cancelled
+      // 2. 閺囧瓨鏌婇崣鎴ｆ彛閸楁洜濮搁幀浣疯礋 cancelled
       const fields: string[] = ['status = ?', 'events = ?', 'updatedAt = datetime(\'now\')']
       const values: any[] = ['cancelled', JSON.stringify(events)]
       if (shipment.notes) {
@@ -2021,7 +2155,7 @@ export const shipmentRepo = {
       values.push(id)
       db.prepare(`UPDATE shipments SET ${fields.join(', ')} WHERE id = ?`).run(...values)
 
-      // 3. 鍙湁褰撴病鏈夊叾浠栨椿璺冪墿娴佸崟鏃讹紝鎵嶅洖閫€璁㈠崟鐘舵€佸苟娓呴櫎 tracking 淇℃伅
+      // 3. 閸欘亝婀佽ぐ鎾寸梾閺堝鍙炬禒鏍ㄦた鐠哄啰澧垮ù浣稿礋閺冭绱濋幍宥呮礀闁偓鐠併垹宕熼悩鑸碘偓浣歌嫙濞撳懘娅?tracking 娣団剝浼?
       if (!hasOtherActiveShipment) {
         const orderFields: string[] = ['status = ?']
         const orderValues: any[] = ['processing']
@@ -2031,7 +2165,7 @@ export const shipmentRepo = {
           VALUES (?, ?, ?, ?, ?)
         `).run(histId, shipment.orderId, 'processing', `Shipment ${shipment.shipmentNo || shipment.id.slice(0,12)} cancelled: ${cancelNote}`, now)
 
-        // 娓呴櫎tracking淇℃伅
+        // 濞撳懘娅巘racking娣団剝浼?
         orderFields.push('trackingNumber = ?')
         orderValues.push(null)
         orderFields.push('carrier = ?')
@@ -2053,13 +2187,13 @@ export const shipmentRepo = {
     return tx()
   },
 
-  // 妫€鏌ヨ鍗曟槸鍚︽湁娲昏穬鐨勫彂璐у崟 (闈?cancelled/delivered/returned)
+  // 濡偓閺屻儴顓归崡鏇熸Ц閸氾附婀佸ú鏄忕┈閻ㄥ嫬褰傜拹褍宕?(闂?cancelled/delivered/returned)
   hasActiveShipment(orderId: string): boolean {
     const shipments = shipmentRepo.getByOrderId(orderId)
     return shipments.some(s => !['cancelled', 'delivered', 'returned'].includes(s.status))
   },
 
-  // 缁熻
+  // 缂佺喕顓?
   getStats(): { total: number; inTransit: number; delivered: number; pending: number; cancelled: number } {
     const db = getDb()
     const total = (db.prepare('SELECT COUNT(*) as c FROM shipments').get() as any).c
@@ -2071,5 +2205,5 @@ export const shipmentRepo = {
   },
 }
 
-// 鍒濆鍖栨暟鎹簱
+// 閸掓繂顫愰崠鏍ㄦ殶閹诡喖绨?
 initDatabase()
