@@ -76,8 +76,8 @@ export default function Footer() {
   ]
   const contacts = footer.contacts || [
     { label: "Email", value: "hello@lowflame.store" },
-    { label: "Phone", value: "+86 400-888-8888" },
-    { label: "Hours", value: "Mon-Sat 9:00-18:00 (CST)" },
+    { label: "Phone", value: "+86 183 3734 0646" },
+    { label: "Hours", value: "Mon–Fri, 9:00 AM – 6:00 PM (EST)" },
   ]
   const bottomLinks = (footer.bottomLinks || [
     { label: "Privacy", href: settings?.footerPrivacyLink || "" },

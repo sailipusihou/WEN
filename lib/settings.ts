@@ -484,8 +484,12 @@ const DEFAULT_FRONTEND: FrontendContent = {
     ],
     contacts: [
       { label: "Email", value: "hello@lowflame.store" },
-      { label: "Phone", value: "+86 400-888-8888" },
-      { label: "Hours", value: "Mon-Sat 9:00-18:00 (CST)" },
+      // 真实客服电话 + 美国作息。三处必须一致：
+      //   lib/settings.ts（这里）、components/layout/Footer.tsx 的兜底值、
+      //   以及数据库里 settings.frontendContent.footer.contacts
+      // （Google Pay 商户审核会拿申请表和网站公布的信息对照，不一致会被质询）
+      { label: "Phone", value: "+86 183 3734 0646" },
+      { label: "Hours", value: "Mon–Fri, 9:00 AM – 6:00 PM (EST)" },
     ],
     socialLinks: [
       { label: "X", href: "https://x.com", color: "hover:text-white" },
@@ -532,7 +536,7 @@ export const DEFAULTS: SiteSettings = {
   featuredProductIds: [],
   aboutText: "Low Flame — contemporary craftsmanship with quiet character.",
   footerEmail: "hello@lowflame.store",
-  footerPhone: "+86 400-888-8888",
+  footerPhone: "+86 183 3734 0646",
   currency: "USD",
   shippingFreeThreshold: 416.67,
   // 默认换算汇率 7.2, 可在后台系统设置中修改
