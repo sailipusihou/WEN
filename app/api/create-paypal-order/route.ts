@@ -108,6 +108,10 @@ export async function POST(req: NextRequest) {
           // 把站内订单号带进 PayPal，后台对账时能直接对应（此前交易记录里 orderId 一直是空的）
           custom_id: existing.id,
           invoice_id: existing.id,
+          // GET_FROM_FILE：让 PayPal 自己收集/回传收货地址。
+          // Express Checkout 在结算页最顶部，客户本来就没填我们的表单 ——
+          // 由 PayPal 收地址、capture 时再写回站内订单，这才是"快捷结账"该有的行为。
+          shipping_preference: 'GET_FROM_FILE',
         }],
       }),
       signal: AbortSignal.timeout(30000),

@@ -182,6 +182,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // --- 用 PayPal 回传的收货地址补齐站内订单 ---
+    //
+    // Express Checkout 的意义就是让客户跳过我们的表单，由 PayPal 收集地址。
+    // 所以下单时站内订单的 shipping 可能是空的，必须在这里用 PayPal 返回的地址补上，
+    // 否则后台看到的是一张没有收货地址的已付款订单。
+    // 已填过地址的客户不覆盖（以客户自己填的为准）。
+    try {
+      const ppShipping = captureData.purchase_units?.[0]?.shipping
+      const addr = ppShipping?.address
+      const payerName = ppShipping?.name?.full_name
+        || [captureData.payer?.name?.given_name, captureData.payer?.name?.surname].filter(Boolean).join(' ')
+      const cur: any = (order as any).shipping || {}
+      const hasAddress = !!(cur.address && String(cur.address).trim())
+      if (!hasAddress && addr) {
+        const parts = String(payerName || '').trim().split(/\s+/)
+        const firstName = cur.firstName || (parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '')
+        const lastName = cur.lastName || (parts.length > 1 ? parts[parts.length - 1] : '')
+        repo.orders.update(order.id, {
+          shipping: {
+            ...cur,
+            firstName,
+            lastName,
+            email: cur.email || captureData.payer?.email_address || '',
+            address: [addr.address_line_1, addr.address_line_2].filter(Boolean).join(' ') || cur.address || '',
+            city: addr.admin_area_2 || cur.city || '',
+            state: addr.admin_area_1 || cur.state || '',
+            zipCode: addr.postal_code || cur.zipCode || '',
+            country: addr.country_code || cur.country || '',
+            // 明确标记地址来自 PayPal，后台看到时知道该复核
+            source: 'paypal',
+          },
+        } as any)
+        console.log(`[PayPal] 已用 PayPal 回传地址补齐订单 ${order.id}`)
+      }
+    } catch (e) {
+      // 补地址失败不影响收款
+      console.error('[PayPal] 补齐收货地址失败:', e)
+    }
+
     // --- 确认收款并落库 ---
     repo.orders.update(order.id, {
       paymentStatus: 'paid',

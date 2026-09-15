@@ -343,9 +343,13 @@ export default function CheckoutPage() {
       if (merged.email) setUserEmail(merged.email)
       // 钱包给了地址就等于「地址已知」，右侧可以直接显示真实运费
       setAddressTouched(true)
+      // 只有「钱包回传了联系方式但缺字段」才拦截。
+      // ⚠️ 绝不能对普通 PayPal 流程也做这个断言：Express Checkout 在页面最顶部，
+      // 客户还没填表就点 PayPal，地址必然是空的 —— 之前把断言放在公共路径上，
+      // 直接把 PayPal / Google Pay 按钮全部拦死了（点了不弹窗、只报一句错误）。
+      // 普通 PayPal 流程由 PayPal 自己收集地址，capture 时再写回站内订单。
+      assertShippingComplete(merged)
     }
-    // 拦住「钱包没给全地址」的情况，避免产生缺地址的订单
-    assertShippingComplete(merged)
 
     const res = await fetch('/api/orders', {
       method: 'POST',
