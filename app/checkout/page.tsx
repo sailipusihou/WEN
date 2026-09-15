@@ -1052,10 +1052,24 @@ export default function CheckoutPage() {
               )}
             </div>
           </div>
-          {/* Order Summary —— 右栏用暖米色底 + 左侧竖线，和左栏（净白卡片）形成明确分区 */}
-          <div className="lg:col-span-1 checkout-zone-summary lg:pl-10 pt-8 lg:pt-0 pb-10 -mx-6 sm:-mx-8 lg:mx-0 px-6 sm:px-8 lg:px-0">
-            <div className="bg-[#FFFFFF] border border-[#EFE7D4] rounded-xl shadow-[0_1px_2px_rgba(74,58,36,0.04),0_10px_30px_-22px_rgba(74,58,36,0.4)] p-6 md:p-8 lg:sticky lg:top-24">
-              <h2 className="section-heading mb-5">Order Summary</h2>
+          {/* Order Summary —— 右栏固定不动（下滑时留在视口里），左栏表单可滚。
+              sticky 失效的常见原因是 grid 子项默认 stretch 拉满行高，
+              粘性元素就没有可移动空间 —— 所以必须加 lg:self-start。 */}
+          <div
+            className="lg:col-span-1 lg:pl-10 lg:self-start lg:sticky lg:top-6 pt-8 lg:pt-0 pb-10 -mx-6 sm:-mx-8 lg:mx-0 px-6 sm:px-8 lg:px-0"
+          >
+            <div
+              className="p-6 md:p-7"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid rgba(74,58,36,0.10)',
+                borderRadius: 10,
+                // 内容比视口高时，右栏自己可滚，不会被裁掉（长订单 + 信任区很容易超高）
+                maxHeight: 'calc(100vh - 3rem)',
+                overflowY: 'auto',
+              }}
+            >
+              <h2 className="section-heading mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm font-sans">
                 {/* 商品明细：缩略图 + 促销标签 + 赠品提示（对齐参考站右栏的信息密度）。
                     原来这里只有「名字 x 数量 …… 金额」一行文字，现在换成带图的明细。
