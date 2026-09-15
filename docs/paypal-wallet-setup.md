@@ -43,9 +43,41 @@ https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilitie
 
 ---
 
+## Google Pay 的钱走哪里（架构，别搞混）
+
+**走 PayPal，不走 Google。**
+
+```
+客户点 [Buy with G Pay]
+        ↓
+① Google 弹出支付面板，客户选一张卡
+        ↓
+② Google 把卡号令牌化，返回一次性 token（不是真实卡号）
+        ↓
+③ token 通过 PayPal 的网关交给 PayPal
+   （配置里 gateway: "paypalppcp" 就是干这个的）
+        ↓
+④ PayPal 拿 token 向客户的卡实际扣款 → 钱进你的 PayPal 商业账户
+        ↓
+⑤ 服务端调 PayPal Capture API 确认收款 → 落库 → 发确认邮件
+```
+
+由此推出：
+
+| 问题 | 答案 |
+|---|---|
+| 客户需要 Google 账号余额吗 | 不需要，扣的是卡 |
+| 需要 Google 商户收款账户吗 | 不需要，PayPal 是实际收单方 |
+| 钱到哪 | **PayPal 商业账户**，和 Apple Pay 完全一样 |
+| 为什么 Google Pay 没有「管理」链接 | Google 侧的商户关系由 PayPal 持有（merchantId + authJwt 都是 PayPal 下发的） |
+| 对账在哪看 | PayPal 后台，和普通 PayPal 收款混在一起（custom_id 带了站内订单号，可一一对应） |
+
+---
+
 ## 排查 OR_BIBED_06（Google Pay 报"此商家无法接受付款"）
 
-如果 Google Pay 面板**能打开**但选中卡片后报 `OR_BIBED_06`：
+**⚠️ 先确认报错是在哪台站上截的。** 2026-09 的经过：用户给的报错截图其实是在**对比网站**
+（别家站）上截的，不是我们站 —— 差点因此误判成我们的问题。先问清楚再说。
 
 **已确认我方代码没问题** —— 完整请求配置逐项对照过 Google API 规范：
 
@@ -102,16 +134,20 @@ lowflame.store 是否已关联到该 merchantId。
 
 ```bash
 # 两个都开
-node /root/toggle-paypal-wallets.cjs all
+node /root/toggle-paypal-wallets.cjs on
 # 只开 Apple Pay（Google Pay 报错期间用这个）
 node /root/toggle-paypal-wallets.cjs apple-only
 # 只开 Google Pay
 node /root/toggle-paypal-wallets.cjs google-only
 # 两个都关
 node /root/toggle-paypal-wallets.cjs off
+# 只看当前状态
+node /root/toggle-paypal-wallets.cjs status
 ```
+
+⚠️ 全部开关关键字：`on` / `off` / `apple-only` / `google-only` / `status`
+（**没有 `all`** —— 我一开始在文档里写错了 `all`，脚本会报"未知命令"。已修正。）
 
 改完记得重启让设置缓存失效：`pm2 restart lowflame`
 
-**当前状态（2026-09）：只开 Apple Pay。** Google Pay 因为 `OR_BIBED_06` 报错暂时关闭，
-一个点了必然失败的支付按钮比不显示更伤转化。修好后一条命令开回来。
+**当前状态（2026-09）：两个都开。**
