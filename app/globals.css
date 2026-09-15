@@ -2026,6 +2026,8 @@ apple-pay-button {
 .wallet-buttons-row > .express-leading { grid-column: 1 / -1; }
 /* 只有一个钱包可用时也独占整行 */
 .wallet-buttons-row > *:only-child { grid-column: 1 / -1; }
+/* 只有一个钱包（前面还有 PayPal 那行）时也独占整行，否则右边会空出一半 */
+.wallet-buttons-row > .express-leading + *:last-child { grid-column: 1 / -1; }
 /* 手机上两列太窄，改成一条竖排 */
 @media (max-width: 640px) {
   .wallet-buttons-row { grid-template-columns: 1fr; }
