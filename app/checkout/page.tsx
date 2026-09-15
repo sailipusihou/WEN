@@ -69,6 +69,17 @@ export default function CheckoutPage() {
   // Apple Pay / Google Pay：额度开关来自 /api/paypal/config，默认关闭
   const [wallets, setWallets] = useState({ enabled: false, applePay: false, googlePay: false })
   const [paypalInstance, setPaypalInstance] = useState<any>(null)
+  // 信任区用的真实评价数据（服务端聚合，没有就不显示那一行）
+  const [reviewStats, setReviewStats] = useState<{ count: number; rating: number }>({ count: 0, rating: 0 })
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/products/review-stats')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled && d) setReviewStats({ count: d.count || 0, rating: d.rating || 0 }) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
   const [referralCode, setReferralCode] = useState('')
   const [referralInfo, setReferralInfo] = useState<any>(null)
   const [referralChannel, setReferralChannel] = useState('bio')
@@ -1118,6 +1129,9 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 )}
+
+                {/* 信任区：跨境客户在最后一步最需要确定性（真实要素，非媒体背书） */}
+                <ShopWithConfidence reviewCount={reviewStats.count} rating={reviewStats.rating} />
               </div>
             </div>
           </div>
