@@ -115,7 +115,48 @@ export default function ProductDetailClient({
   const cartSubtotal = useDiscountedCartSubtotal(cartItems)
   const { currency } = useCurrency()
   const { addToast } = useToast()
-  const eff = useProductPrice(product)
+
+  /**
+   * 商品规格 / 款式（variants）。
+   *
+   * 一件商品可以有多个款式，每个款式有自己的图片和价格。客户选不同款式时：
+   *   · 主图切换到该款式的图片
+   *   · 价格切换成该款式的价格（参与促销计算）
+   *   · 加购 / 立即购买带上款式信息
+   * 款式的价格/图片留空时沿用主商品的值。
+   *
+   * ⚠️ 这几个声明必须在 `useProductPrice` 与 `const images` **之前** ——
+   *    两者都依赖 activeVariant 决定价格/首图。第一版放后面导致 TS2448。
+   */
+  const variants = useMemo(() => {
+    const v = (product as any)?.variants
+    return Array.isArray(v) ? v.filter((x: any) => x && x.active !== false && x.label) : []
+  }, [product])
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const activeVariant = useMemo(() => {
+    if (!variants.length) return null
+    return variants.find((v: any) => v.id === selectedVariantId) || variants[0]
+  }, [variants, selectedVariantId])
+
+  /**
+   * 价格展示：有选中款式且该款式设了独立价格时，**用款式的价格参与促销计算**。
+   *
+   * 为什么要换成「覆盖了价格的 product 对象」再算：
+   *   useProductPrice 内部跑 computePromotionForProduct（按商品 id/分类匹配促销），
+   *   直接传原 product 的话页面显示的还是主商品价格 —— 实测就是这个问题：
+   *   选了 $78 的款式，页面仍显示主价的 $74.66，客户会以为选款式没用。
+   * 钩子必须无条件调用，所以用「价格被覆盖后的对象」而不是条件调用。
+   */
+  const priceSource = useMemo(() => {
+    if (!product) return product
+    const v = variants.find((x: any) => x.id === selectedVariantId) || variants[0]
+    if (v && v.price !== undefined && v.price !== null && Number(v.price) !== product.price) {
+      return { ...product, price: Number(v.price) }
+    }
+    return product
+  }, [product, variants, selectedVariantId])
+  const eff = useProductPrice(priceSource)
   const { labelFor } = useCategories()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -335,31 +376,6 @@ export default function ProductDetailClient({
       </div>
     )
   }
-
-  /**
-   * 商品规格 / 款式（variants）。
-   *
-   * 一件商品可以有多个款式，每个款式有自己的图片和价格。
-   * 客户选不同款式时：
-   *   · 主图切换到该款式的图片
-   *   · 价格切换成该款式的价格
-   *   · 加购 / 立即购买带上款式信息（购物车与订单里能看出买的是哪个款式）
-   *
-   * 款式的价格/图片留空时沿用主商品的值，所以下面到处都要做 `?? 主商品` 兜底。
-   *
-   * ⚠️ 这段必须放在 `const images` 之前 —— images 要用 activeVariant 决定首图。
-   */
-  const variants = useMemo(() => {
-    const v = (product as any)?.variants
-    return Array.isArray(v) ? v.filter((x: any) => x && x.active !== false && x.label) : []
-  }, [product])
-
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
-  // 默认选第一个款式（有款式时）
-  const activeVariant = useMemo(() => {
-    if (!variants.length) return null
-    return variants.find((v: any) => v.id === selectedVariantId) || variants[0]
-  }, [variants, selectedVariantId])
 
   // 图片列表：选中的款式图优先，其余仍用主图 + 详情图。
   // 这样切款式时大图/缩略图会一起换，客户能直观看到款式差异。
