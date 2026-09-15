@@ -236,13 +236,48 @@ export default function WalletButtons({
 
           const paymentsClient = new (window as any).google.payments.api.PaymentsClient({ environment: 'PRODUCTION' })
 
+          /**
+           * Google Pay 的 transactionInfo.countryCode 是「交易发生国」，必须是
+           * **Google Pay 支持的国家**。PayPal 的 config 给的是**商户国家**（我们是 CN），
+           * 而中国大陆不在 Google Pay 的支持列表里 —— 直接用会招来
+           * "此商家无法接受您的付款 [OR_BIBED_06]"。
+           *
+           * 取值优先级：
+           *   1. 买家浏览器所在国（navigator.language 的地区码），且在支持列表里 → 用它
+           *   2. 退回商户国家，且在支持列表里 → 用它
+           *   3. 都不行 → US（Google Pay 一定支持，且不会因为国家而拒绝）
+           *
+           * 出处：Google 官方排查文档「Registration and access」一节，
+           *      以及 Google Pay 支持国家列表。
+           */
+          const GPAY_SUPPORTED = new Set([
+            'AU','AT','BE','BG','BR','CA','CL','HR','CY','CZ','DK','EE','FI','FR','DE','GR',
+            'HK','HU','IS','IE','IL','IT','JP','KZ','KW','LV','LI','LT','LU','MY','MT','MX',
+            'MD','NL','NZ','NO','OM','PL','PT','QA','RO','SA','SG','SK','SI','ZA','ES','SE',
+            'CH','TW','TH','TR','UA','AE','GB','US','VN',
+          ])
+          const pickCountry = (): string => {
+            try {
+              const lang = navigator.language || ''
+              const m = lang.match(/[-_]([A-Za-z]{2})$/)
+              const buyer = m ? m[1].toUpperCase() : ''
+              if (buyer && GPAY_SUPPORTED.has(buyer)) return buyer
+            } catch { /* ignore */ }
+            const merchant = String(cfg.countryCode || '').toUpperCase()
+            if (merchant && GPAY_SUPPORTED.has(merchant)) return merchant
+            return 'US'
+          }
+          const gpayCountry = pickCountry()
+
           const paymentDataRequest = {
             ...cfg,
+            // 顶层 countryCode 也用同一个值，避免两处不一致
+            countryCode: gpayCountry,
             transactionInfo: {
               totalPriceStatus: 'FINAL',
               totalPrice: amount,
               currencyCode: currency,
-              countryCode: cfg.countryCode || 'US',
+              countryCode: gpayCountry,
             },
             // Express Checkout：主动索取邮箱 + 收货地址，拿到的地址直接用于建单
             emailRequired: true,

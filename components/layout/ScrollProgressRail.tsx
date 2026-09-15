@@ -54,45 +54,59 @@ export default function ScrollProgressRail() {
 
   if (!active) return null
 
+  // 分段显示当前处于页面的哪一段 —— 比单纯一个百分比更容易定位
+  const stage = progress < 34 ? 'Top' : progress < 67 ? 'Middle' : 'Bottom'
+
   return (
     <>
-      {/* 轨道 */}
+      {/* 轨道（加宽到 8px，之前 3px 太细看不清） */}
       <div
         aria-hidden="true"
         data-scroll-rail="1"
         className="fixed right-0 top-0 bottom-0 z-[60] pointer-events-none hidden sm:block"
-        style={{ width: 3, backgroundColor: 'rgba(74,58,36,0.07)' }}
+        style={{ width: 8, backgroundColor: 'rgba(74,58,36,0.10)' }}
       />
-      {/* 进度 */}
+      {/* 进度（带渐变，视觉更有分量） */}
       <div
         aria-hidden="true"
         data-scroll-rail-progress="1"
         className="fixed right-0 top-0 z-[61] pointer-events-none hidden sm:block"
         style={{
-          width: 3,
+          width: 8,
           height: `${progress}%`,
-          backgroundColor: '#8A6A2E',
+          background: 'linear-gradient(180deg, #B8944A 0%, #8A6A2E 100%)',
           transition: 'height 0.08s linear',
         }}
       />
-      {/* 右下角百分比：滚动时才出现，给一个明确的"读到哪了"锚点 */}
+      {/* 状态卡片：显示百分比 + 当前段落 + 进度条，内容展示完整 */}
       <div
         aria-hidden="true"
-        data-scroll-percent="1"
-        className="fixed z-[61] pointer-events-none hidden lg:flex items-center justify-center font-sans text-[10px] font-semibold"
+        data-scroll-status="1"
+        className="fixed z-[61] pointer-events-none hidden lg:block font-sans"
         style={{
-          right: 12,
-          bottom: 18,
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          color: '#8A6A2E',
-          backgroundColor: 'rgba(255,255,255,0.92)',
-          border: '1px solid rgba(138,106,46,0.35)',
-          boxShadow: '0 2px 10px -4px rgba(74,58,36,0.35)',
+          right: 22,
+          bottom: 22,
+          width: 112,
+          padding: '9px 11px 10px',
+          borderRadius: 10,
+          backgroundColor: 'rgba(255,255,255,0.96)',
+          border: '1px solid rgba(138,106,46,0.32)',
+          boxShadow: '0 4px 16px -6px rgba(74,58,36,0.35)',
+          backdropFilter: 'blur(6px)',
         }}
       >
-        {Math.round(progress)}%
+        <div className="flex items-baseline justify-between gap-2">
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#8A6A2E', lineHeight: 1 }}>
+            {Math.round(progress)}%
+          </span>
+          <span style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(74,58,36,0.6)' }}>
+            {stage}
+          </span>
+        </div>
+        {/* 卡片内的小进度条，和右侧竖条呼应 */}
+        <div style={{ marginTop: 7, height: 3, borderRadius: 2, backgroundColor: 'rgba(74,58,36,0.12)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, backgroundColor: '#8A6A2E', transition: 'width 0.08s linear' }} />
+        </div>
       </div>
     </>
   )
