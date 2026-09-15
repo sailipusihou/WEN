@@ -952,7 +952,7 @@ export default function ProductDetailClient({
                       This item: {cartName}
                     </span>
                     <span className="font-sans text-[12px] shrink-0" style={{ color: INK }}>
-                      {formatPrice(convertPrice(effectivePrice, currency), currency)}
+                      {formatPrice(convertPrice(bundleCalc.mainPrice, currency), currency)}
                     </span>
                   </div>
 
