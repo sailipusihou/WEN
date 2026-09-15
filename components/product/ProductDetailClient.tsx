@@ -465,7 +465,13 @@ export default function ProductDetailClient({
   /** 加进购物车用的显示名：带上款式，方便客户在购物车里区分 */
   const cartName = activeVariant ? `${product.nameEn || product.name} · ${activeVariant.label}` : (product.nameEn || product.name)
 
-  /** 搭配相关金额：全部按「当前生效价格」算，和页面上展示的一致 */
+  /**
+   * 搭配相关金额。
+   *
+   * ⚠️ 主商品用 eff.price（**促销后**价格），不是 effectivePrice（原价）：
+   *    页面上方的价格显示走的是 eff.price，如果这里用原价，
+   *    搭配区块会显示 $68 而页面上方显示 $54.40，客户会以为算错了。实测踩过。
+   */
   const bundleCalc = useMemo(() => {
     const items = bundleSelected.map((b: any) => {
       const bp = b.product || {}
@@ -480,15 +486,16 @@ export default function ProductDetailClient({
     })
     const extra = items.reduce((s: number, x: any) => s + x.unitPrice, 0)
     const saving = items.reduce((s: number, x: any) => s + x.discount, 0)
+    const mainPay = eff.price || effectivePrice
     return {
       items,
-      mainPrice: effectivePrice,
+      mainPrice: mainPay,
       extra,
-      listTotal: effectivePrice + extra,
+      listTotal: mainPay + extra,
       saving,
-      total: Math.max(0, effectivePrice + extra - saving),
+      total: Math.max(0, mainPay + extra - saving),
     }
-  }, [bundleSelected, effectivePrice])
+  }, [bundleSelected, eff.price, effectivePrice])
 
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {

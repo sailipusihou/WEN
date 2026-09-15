@@ -103,6 +103,26 @@ export function attachBundlesToProducts(db: any, products: Product[]): Product[]
     if (!rows.length) return products
     const byId = new Map<string, Product>()
     for (const p of products) byId.set(p.id, p)
+    /**
+     * 被搭配的商品不一定在本次查询的 products 里。
+     * 例如商品详情页只查了当前这一件（attachBundlesToProducts(db, [product])），
+     * 若只从 byId 取，搭配商品会取不到 -> product 为 null ->
+     * 前台名称会回退成商品 id（实测现象：购物车里显示 "ink-painting-scroll"）。
+     * 所以缺的从库里补查，并缓存避免重复查。
+     */
+    const fetchBundleProduct = (id: string): Product | null => {
+      if (byId.has(id)) return byId.get(id)!
+      try {
+        const row = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as any
+        if (!row) return null
+        const p = rowToProduct(row)
+        loadProductRelations(p)
+        byId.set(id, p)
+        return p
+      } catch {
+        return null
+      }
+    }
     const map = new Map<string, any[]>()
     for (const r of rows) {
       if (!map.has(r.productId)) map.set(r.productId, [])
@@ -121,7 +141,7 @@ export function attachBundlesToProducts(db: any, products: Product[]): Product[]
       if (b && b.length) {
         // 灏介噺鎶婅鎼厤鍟嗗搧鐨勫畬鏁翠俊鎭寕涓婏紙鍚屼竴鎵瑰晢鍝侀噷鎵句笉鍒板氨鐣欑┖锛?
         // 鍓嶅彴浼氶€€鍥炵敤璇ュ晢鍝佺殑榛樿淇℃伅鍘绘煡锛?
-        ;(p as any).bundles = b.map(x => ({ ...x, product: byId.get(x.bundleProductId) || null }))
+        ;(p as any).bundles = b.map(x => ({ ...x, product: fetchBundleProduct(x.bundleProductId) }))
       }
     }
   } catch {
