@@ -164,7 +164,12 @@ export default function AdminOrdersPage() {
     setOrderItems(prev => prev.filter((i: any) => i.productId !== productId))
   }
 
-  const orderSubtotal = orderItems.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0)
+  /**
+   * ⚠️ 求和时必须对每项兜底：
+   * 若某一项 price/quantity 为 undefined，`sum + undefined * 1` 会让整个小计变成 NaN，
+   * 页面上就会显示 "$NaN"。原来没兜底，属于同一类防御缺失。
+   */
+  const orderSubtotal = orderItems.reduce((sum: number, i: any) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0)
   const orderShippingCost = orderItems.length > 0 ? (createOrderForm.country === 'United States' ? (orderSubtotal >= 50 ? 0 : 5.99) : 12.99) : 0
   const orderTotal = orderSubtotal + orderShippingCost
 
@@ -1663,7 +1668,7 @@ export default function AdminOrdersPage() {
                               {order.returnInfo.refundedAt && order.returnInfo.refundAmount !== undefined && (
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-medium" style={{ color: "var(--adm-text-secondary)" }}>Refund Amount:</span>
-                                  <span className="text-xs font-bold text-rose-500">${order.returnInfo.refundAmount.toFixed(2)}</span>
+                                  <span className="text-xs font-bold text-rose-500">${Number(order.returnInfo.refundAmount || 0).toFixed(2)}</span>
                                 </div>
                               )}
                               {order.returnInfo.notes && (
@@ -1691,15 +1696,19 @@ export default function AdminOrdersPage() {
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-medium" style={{ color: "var(--adm-text-secondary)" }}>Gross Amount:</span>
-                                <span className="text-xs" style={{ color: "var(--adm-text)" }}>${order.paypalTransaction.amount.toFixed(2)}</span>
+                                {/* ⚠️ 必须带兜底：客户点了 PayPal 但没完成付款时，paypalTransaction 里
+                                    只有 paypalOrderId，没有 amount/fee/netAmount。
+                                    原来直接 .toFixed(2) 会抛 "Cannot read properties of undefined"，
+                                    导致整个后台订单页崩溃（实测 4 张订单触发）。 */}
+                                <span className="text-xs" style={{ color: "var(--adm-text)" }}>${Number(order.paypalTransaction.amount || 0).toFixed(2)}</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-medium" style={{ color: "var(--adm-text-secondary)" }}>PayPal Fee:</span>
-                                <span className="text-xs text-amber-500">-${order.paypalTransaction.fee.toFixed(2)}</span>
+                                <span className="text-xs text-amber-500">-${Number(order.paypalTransaction.fee || 0).toFixed(2)}</span>
                               </div>
                               <div className="flex items-center justify-between pt-1" style={{ borderTop: "1px solid var(--adm-border)" }}>
                                 <span className="text-xs font-bold" style={{ color: "var(--adm-text)" }}>Net Amount:</span>
-                                <span className="text-xs font-bold" style={{ color: "rgb(5, 150, 105)" }}>${order.paypalTransaction.netAmount.toFixed(2)}</span>
+                                <span className="text-xs font-bold" style={{ color: "rgb(5, 150, 105)" }}>${Number(order.paypalTransaction.netAmount || 0).toFixed(2)}</span>
                               </div>
                               {order.paypalTransaction.transactionId && (
                                 <div className="flex items-center justify-between">
@@ -1937,7 +1946,7 @@ export default function AdminOrdersPage() {
                               <span>Subtotal</span><span>${(order.subtotal || 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between" style={{ color: "var(--adm-text-secondary)" }}>
-                              <span>Shipping</span><span>{order.shippingCost === 0 ? "Free" : "$" + (order.shippingCost || 0).toFixed(2)}</span>
+                              <span>Shipping</span><span>{Number(order.shippingCost ?? order.shipping ?? 0) === 0 ? "Free" : "$" + (Number(order.shippingCost ?? order.shipping ?? 0)).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between font-bold border-t pt-1" style={{ borderColor: "var(--adm-border)", color: "var(--adm-text)" }}>
                               <span>Total</span><span>${(order.total || 0).toFixed(2)}</span>
@@ -2242,7 +2251,9 @@ export default function AdminOrdersPage() {
                             {item.image && <img src={item.image} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                             <span className="text-sm truncate" style={{ color: 'var(--adm-text)' }}>{item.name}</span>
                           </div>
-                          <div className="col-span-2 text-center text-sm" style={{ color: 'var(--adm-text)' }}>${item.price.toFixed(2)}</div>
+                          {/* ⚠️ item.price 必须兜底：order_items 里可能存在 price 为空的旧数据，
+                              直接 .toFixed() 会抛错并让整个后台订单页崩溃（实测踩过）。 */}
+                          <div className="col-span-2 text-center text-sm" style={{ color: 'var(--adm-text)' }}>${Number(item.price || 0).toFixed(2)}</div>
                           <div className="col-span-2 flex items-center justify-center gap-1">
                             <button
                               onClick={() => updateItemQty(item.productId, item.quantity - 1)}
@@ -2269,7 +2280,7 @@ export default function AdminOrdersPage() {
                             </button>
                           </div>
                           <div className="col-span-1 text-center text-sm font-medium" style={{ color: 'var(--adm-text)' }}>
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
                           </div>
                           <div className="col-span-1 flex justify-center">
                             <button
