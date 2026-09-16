@@ -151,7 +151,7 @@ function http(url) {
    * 但服务器 BUILD_ID 仍是上一个版本 —— 静态资源和代码都没换，
    * 我却以为生效了，白跑了一轮排查。页面 200 不能证明新构建上线了。
    */
-  const localBuildId = fs.readFileSync(path.join(ROOT, '.next', 'BUILD_ID'), 'utf8').trim()
+  // localBuildId 已在第 75 行读取（本地 build 后立即读，用于一开始就打印）
   const remoteBuildId = (dep.out.match(/解压完成 BUILD_ID=(\S+)/) || [])[1]
   if (remoteBuildId !== localBuildId) {
     console.error(`\n❌ 部署未生效！`)
