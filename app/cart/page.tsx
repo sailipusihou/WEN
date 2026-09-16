@@ -216,9 +216,17 @@ export default function CartPage() {
                   <span className="font-en text-lg font-semibold">{formatPrice(totalConverted, currency)}</span>
                 </div>
               </div>
+              {/*
+                参考站右栏是「钱包快捷支付」+「Checkout」两个按钮。
+                钱包按钮（Buy with PayPal / Apple Pay / G Pay）需要买家联系信息才能建单，
+                购物车页拿不到（要等结算页填完表单），所以这里只保留 Checkout 一个按钮，
+                按参考站样式改成深墨绿实心；钱包快捷支付仍在结算页右栏。
+              */}
               <Link href="/checkout"
-                className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#2A2118] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
-                Proceed to Checkout <ArrowRight size={14} strokeWidth={1.5} />
+                data-cart-checkout="1"
+                className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-4 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
+                style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
+                Checkout <ArrowRight size={14} strokeWidth={2.2} />
               </Link>
               <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
                 <ArrowLeft size={12} strokeWidth={1.5} /> Continue Shopping

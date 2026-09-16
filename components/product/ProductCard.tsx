@@ -1,9 +1,9 @@
-﻿'use client'
+'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Plus, Heart, Star } from 'lucide-react'
+import { Plus, Heart, Star, Eye, ShoppingBag } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useToast } from '@/context/ToastContext'
@@ -13,6 +13,7 @@ import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag, promoPriceClass } from '@/components/product/PromoBadge'
 import { useCategories } from '@/lib/use-categories'
+import QuickViewModal from '@/components/product/QuickViewModal'
 
 interface ProductCardProps { product: Product; index?: number }
 
@@ -23,6 +24,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const eff = useProductPrice(product)
   const { labelFor } = useCategories()
   const videoRef = useRef<HTMLVideoElement>(null)
+  // Quick view 弹窗开关（点卡片上的「Quick view」打开，不跳转页面）
+  const [quickView, setQuickView] = useState(false)
 
   const handleVideoEnter = () => {
     videoRef.current?.play().catch(() => {})
@@ -62,6 +65,17 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       image: product.image, price: product.price,
       category: product.category,
     })
+    addToast(`${product.nameEn || product.name} added to cart`, 'success')
+  }
+
+  /**
+   * 打开快速查看弹窗。不跳转页面，直接在卡片上弹出缩略图 + 可加购/可支付。
+   * 和加购按钮一样要阻止冒泡，否则会触发外层 <Link> 跳到详情页。
+   */
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setQuickView(true)
   }
 
   const hoverImage = product.detailImages?.[0] || product.image
@@ -122,15 +136,41 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           </button>
           {/* 促销角标: 商品图左下角显示促销价格字样 */}
           <PromoImageBadge eff={eff} currency={currency} />
-          {/* Quick add */}
-          <button
-            onClick={handleAddToCart}
-            type="button"
-            className="absolute bottom-3 right-3 w-9 h-9 bg-[#FFFFFF]/85 hover:bg-[#FFFFFF] text-[#2A2118] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
-            aria-label="Add to cart"
+
+          {/*
+            悬停浮出的两个操作按钮 —— 对齐参考站：
+              上面「Quick view」白底深字（打开快速查看弹窗，不跳页面）
+              下面「Add to cart」深墨绿底白字（直接加购）
+            桌面端悬停出现；移动端（没有 hover）常驻显示，否则手机上根本点不到。
+            整张卡片外面套着 <Link>，所以两个按钮都要 preventDefault + stopPropagation，
+            否则会连带触发跳转。
+          */}
+          <div
+            data-card-actions="1"
+            className="absolute left-3 right-3 bottom-3 flex flex-col gap-2 transition-all duration-300
+                       opacity-100 translate-y-0
+                       md:opacity-0 md:translate-y-2 md:pointer-events-none
+                       md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto"
           >
-            <Plus size={15} strokeWidth={1.5} />
-          </button>
+            <button
+              onClick={handleQuickView}
+              type="button"
+              data-quick-view={product.id}
+              className="w-full py-3 font-sans text-[11px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px"
+              style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
+            >
+              Quick view
+            </button>
+            <button
+              onClick={handleAddToCart}
+              type="button"
+              data-card-add={product.id}
+              className="w-full py-3 font-sans text-[11px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
+            >
+              <ShoppingBag size={13} strokeWidth={2} /> Add to cart
+            </button>
+          </div>
         </div>
 
         {/* Info */}
@@ -160,6 +200,11 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
         </div>
       </Link>
+
+      {/* Quick view 弹窗：只在打开时挂载，所以不会给列表增加额外 DOM 开销 */}
+      {quickView && (
+        <QuickViewModal product={product} onClose={() => setQuickView(false)} />
+      )}
     </motion.div>
   )
 }
