@@ -55,6 +55,42 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
     return () => { alive = false }
   }, [])
 
+  /**
+   * 渲染 PayPal 按钮。
+   *
+   * ⚠️ 关键：WalletButtons 自己**不渲染** PayPal 按钮 —— 它只负责 Apple Pay / Google Pay，
+   *    PayPal 按钮由父组件通过 `leading` 容器传进去（结算页就是这么做的）。
+   *    少了这一步，购物车右栏会只剩钱包按钮、没有 PayPal 主按钮。
+   */
+  useEffect(() => {
+    if (!paypal) return
+    const el = document.getElementById('cart-paypal-container')
+    if (!el || el.dataset.rendered) return
+    el.dataset.rendered = '1'
+    try {
+      paypal.Buttons({
+        fundingSource: paypal.FUNDING?.PAYPAL,
+        style: { layout: 'vertical', shape: 'rect', height: 44, tagline: false, label: 'paypal' },
+        createOrder: () => createOrderId(),
+        onApprove: async (data: any) => {
+          setProcessing(true)
+          setError('')
+          try {
+            await captureOrder(data.orderID)
+          } catch (e: any) {
+            setError(e.message || 'Payment verification failed')
+          } finally {
+            setProcessing(false)
+          }
+        },
+        onError: () => setError('A PayPal error occurred. Please try again.'),
+      }).render(el)
+    } catch (e) {
+      console.warn('[paypal] cart express render failed', e)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paypal])
+
   // 购物车为空时不渲染（避免客户点下去建出一张空单）
   if (!items.length) return null
 
@@ -180,6 +216,8 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
           amount={subtotalUsd.toFixed(2)}
           currency="USD"
           layout="stack"
+          // ⚠️ 必须提供 leading：PayPal 按钮挂在这个容器里，WalletButtons 自己不会渲染它
+          leading={<div id="cart-paypal-container" data-cart-paypal="1" style={{ width: '100%', minHeight: 44 }} />}
           createOrderId={createOrderId}
           captureOrder={captureOrder}
           onError={m => setError(m)}
