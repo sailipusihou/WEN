@@ -34,6 +34,14 @@ export async function POST(req: NextRequest) {
     if ('error' in auth) return auth.error
 
     const body = await req.json().catch(() => ({}))
+    /**
+     * dry-run 模式：只统计会发给谁、跳过谁，**不真的发信**。
+     *
+     * 为什么必须有：我第一次测试这个接口时直接打真实请求，结果给 3 位真实客户
+     * 发出了催付邮件 —— 而且当时 orderNo 映射缺失，邮件里写的是 "undefined"。
+     * 任何会外发邮件的接口都必须有不发信的验证方式。
+     */
+    const dryRun = body?.dryRun === true
     const repo = getRepository()
     const all = repo.orders.list()
 
@@ -68,13 +76,19 @@ export async function POST(req: NextRequest) {
 
       const { subject, html } = buildPaymentReminderEmail({
         customerName: o.customerName || o.shippingName || '',
-        orderNo: o.orderNo,
+        orderNo: o.orderNo || o.id || '(missing)',
         total: Number(o.total || 0),
         currency: o.currency || 'USD',
         items: (o.items || []).map((i: any) => ({ name: i.nameEn || i.name, quantity: i.quantity })),
         createdAt: o.createdAt,
         siteUrl,
       })
+
+      if (dryRun) {
+        skipped++
+        results.push({ orderNo: o.orderNo, status: 'dry-run', to: email, subject })
+        continue
+      }
 
       const r = await sendEmail({ to: email, subject, html })
       if (r.success) {

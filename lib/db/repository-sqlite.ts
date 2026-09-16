@@ -283,6 +283,13 @@ function rowToOrder(row: any, items: OrderItem[]): Order {
     createdAt: row.createdAt,
     notes: row.notes || undefined,
     paymentMethod: row.paymentMethod || undefined,
+    // ⚠️ orderNo 必须映射：数据库里有这个字段，但之前漏了映射。
+    //    后果是所有服务端代码拿到的 o.orderNo 都是 undefined ——
+    //    实测踩过：催付邮件写成了 "Order reference: undefined"。
+    orderNo: row.orderNo,
+    // 待付款催付记录（后台「待付款」专区的冷却期判断用）
+    lastReminderAt: row.lastReminderAt || undefined,
+    reminderCount: row.reminderCount || 0,
     customerEmail: row.customerEmail,
     customerName: row.customerName,
     userEmail: row.userEmail,
@@ -1065,6 +1072,9 @@ export const orderRepo = {
       if (updates.attributionMatchedBy !== undefined) { fields.push('attributionMatchedBy = ?'); values.push(updates.attributionMatchedBy || null) }
       if (updates.attributionFallbackUsed !== undefined) { fields.push('attributionFallbackUsed = ?'); values.push(updates.attributionFallbackUsed ? 1 : 0) }
       if ((updates as any).paymentStatus !== undefined) { fields.push('paymentStatus = ?'); values.push((updates as any).paymentStatus || 'unpaid') }
+      // 待付款催付记录（后台「待付款」专区发信后写入，用于 24 小时冷却）
+      if ((updates as any).lastReminderAt !== undefined) { fields.push('lastReminderAt = ?'); values.push((updates as any).lastReminderAt || null) }
+      if ((updates as any).reminderCount !== undefined) { fields.push('reminderCount = ?'); values.push(Number((updates as any).reminderCount) || 0) }
       // 娣囶喖顦?C3: 閺€顖欑帛娴溿倖妲?闁偓閹广垼鎻ｉ弫鐗堝祦閸欘垱娲块弬?(JSON 閸?
       if ((updates as any).paypalTransaction !== undefined) { fields.push('paypalTransaction = ?'); values.push((updates as any).paypalTransaction ? JSON.stringify((updates as any).paypalTransaction) : null) }
       if ((updates as any).payoneerTransaction !== undefined) { fields.push('payoneerTransaction = ?'); values.push((updates as any).payoneerTransaction ? JSON.stringify((updates as any).payoneerTransaction) : null) }

@@ -112,6 +112,12 @@ export interface Order {
   estimatedDeliveryDays?: number
   returnInfo?: ReturnInfo
   paymentStatus?: "paid" | "unpaid" | "pending_verification" | "refunded"
+  /**
+   * 待付款催付记录。后台「待付款」专区发过催付邮件后写入，
+   * 用于 24 小时冷却判断（避免反复轰炸同一个客户）。
+   */
+  lastReminderAt?: string
+  reminderCount?: number
   paypalTransaction?: PayPalTransactionInfo
   payoneerTransaction?: PayoneerTransaction
   paymentMethod?: "paypal" | "stripe" | "bank_transfer" | "other"
