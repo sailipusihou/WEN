@@ -340,11 +340,13 @@ export default function Header() {
           >
             <div className="flex items-center justify-between px-5 h-16 border-b border-[#F2EBD8]/40 shrink-0">
               <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 group">
-                <div className="w-9 h-9 rounded-full bg-[#EDE3D2] shadow-soft overflow-hidden flex items-center justify-center shrink-0">
+                {/* 手机端侧边菜单的 logo —— 与桌面端保持一致：深色圆底 + 白色 logo */}
+                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-soft"
+                  style={{ backgroundColor: '#2A2118' }}>
                   <img
                     src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                     alt="Low Flame"
-                    className="h-[70%] w-auto object-contain"
+                    className="h-[86%] w-auto object-contain"
                   />
                 </div>
                 <span className="font-en text-xs md:text-sm tracking-[0.22em] text-[#2A2118] font-semibold group-hover:text-[#5F7D72] transition-colors">

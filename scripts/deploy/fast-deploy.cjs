@@ -144,6 +144,24 @@ function http(url) {
   )
   console.log(dep.out.trim())
 
+  /*
+   * ⚠️ 关键校验：服务器上的 BUILD_ID 必须等于本地刚构建的那个。
+   *
+   * 为什么必须断言：有一次部署"看起来成功"（页面全 200、脚本打印成功），
+   * 但服务器 BUILD_ID 仍是上一个版本 —— 静态资源和代码都没换，
+   * 我却以为生效了，白跑了一轮排查。页面 200 不能证明新构建上线了。
+   */
+  const localBuildId = fs.readFileSync(path.join(ROOT, '.next', 'BUILD_ID'), 'utf8').trim()
+  const remoteBuildId = (dep.out.match(/解压完成 BUILD_ID=(\S+)/) || [])[1]
+  if (remoteBuildId !== localBuildId) {
+    console.error(`\n❌ 部署未生效！`)
+    console.error(`   本地 BUILD_ID : ${localBuildId}`)
+    console.error(`   服务器 BUILD_ID: ${remoteBuildId || '(没读到 —— 解压步骤可能失败)'}`)
+    console.error('   → 不要相信"页面 200"，必须重跑部署。')
+    process.exit(1)
+  }
+  console.log(`  ✓ BUILD_ID 校验通过: ${remoteBuildId}`)
+
   // ---------- 5. 验证 ----------
   console.log('\n=== 5. 线上验证 ===')
   await sleep(4000)
