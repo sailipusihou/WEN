@@ -85,7 +85,11 @@ function http(url) {
   console.log('  产物对应 commit:', gitHead)
 
   if (fs.existsSync(TARBALL)) fs.unlinkSync(TARBALL)
-  const t = sh('tar', ['-czf', TARBALL, '--exclude=.next/cache', '--exclude=.next/standalone', '.next'], { timeout: 300000 })
+  // ⚠️ 用**相对文件名**而不是 TARBALL 绝对路径。
+  //    Windows 绝对路径含盘符冒号（D:\...），而 Git Bash / MSYS 自带的 GNU tar 会把
+  //    "D:..." 当成「远程主机:路径」，直接报 "Cannot connect to D: resolve failed"。
+  //    相对名可同时兼容 GNU tar 与 Windows 自带 bsdtar（sh() 的 cwd 就是 ROOT）。
+  const t = sh('tar', ['-czf', path.basename(TARBALL), '--exclude=.next/cache', '--exclude=.next/standalone', '.next'], { timeout: 300000 })
   if (!fs.existsSync(TARBALL)) { console.error('  ✗ 打包失败\n' + t.out.slice(-800)); process.exit(1) }
   const mb = fs.statSync(TARBALL).size / 1024 / 1024
   console.log(`  ✓ 产物包: ${mb.toFixed(1)} MB`)
@@ -105,7 +109,7 @@ function http(url) {
   if (fs.existsSync(PUBLIC_TARBALL)) fs.unlinkSync(PUBLIC_TARBALL)
   const pubDir = path.join(ROOT, 'public')
   if (fs.existsSync(pubDir)) {
-    const pt = sh('tar', ['-czf', PUBLIC_TARBALL, '--exclude=public/uploads', 'public'], { timeout: 300000 })
+    const pt = sh('tar', ['-czf', path.basename(PUBLIC_TARBALL), '--exclude=public/uploads', 'public'], { timeout: 300000 })
     if (fs.existsSync(PUBLIC_TARBALL)) {
       publicMb = fs.statSync(PUBLIC_TARBALL).size / 1024 / 1024
       console.log(`  ✓ 静态资源包: ${publicMb.toFixed(1)} MB（已排除 public/uploads 用户上传目录）`)
