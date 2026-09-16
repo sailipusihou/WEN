@@ -54,7 +54,9 @@ html {
 }
 
 body {
-  background-color: #ffffff;
+  /* 页面底用暖白而不是纯白 —— 与内容面（paper-light #FFFDF9）拉开一档，
+     形成层次。纯白满屏会偏冷偏硬，像后台界面而不是纸质画册。 */
+  background-color: #FAF8F2;
   color: var(--ink);
   font-feature-settings: 'palt' on;
 }

@@ -284,13 +284,18 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               素材被染成"泛黄"。改用中性黑只压亮度、不动色相，保住原生色彩；
               厚度集中在左侧文案区，右半幅视频几乎不动，让画面尽量还原。 */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/60" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent" />
+          {/* 左侧遮罩要够厚：文案区正好压在照片最亮/最杂的地方（实测陶艺师的手臂
+              会横穿段落），之前的 from-black/60 via-black/25 不够，白字读不出来。
+              加厚并把过渡拉长，让文字始终落在足够暗的底上。 */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
         </motion.div>
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.2\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'0.3\'/%3E%3C/g%3E%3C/svg%3E")' }} />
         <motion.div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" style={{ opacity: heroOpacity }}>
           <div className="max-w-2xl">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}>
-              <span className="font-en italic text-[15px] tracking-[0.01em] text-coral border-b border-coral/25 pb-1 inline-block">
+              {/* 这行小字此前是 text-coral（#A8472E 暗红）—— 压在深色照片上几乎看不见。
+                  改用暖金 bronze-pale：既保留品牌暖调，在深底上又有足够对比度。 */}
+              <span className="font-en italic text-[15px] tracking-[0.01em] text-[#D6C49E] border-b border-[#D6C49E]/35 pb-1 inline-block">
                 {hero.eyebrow || "Low Flame · Contemporary Craftsmanship"}
               </span>
             </motion.div>
@@ -306,13 +311,16 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               ))}
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
-              className="mt-5 text-sm md:text-base text-paper-light/76 font-sans font-light leading-relaxed max-w-md">
+              className="mt-5 text-sm md:text-base text-paper-light/95 font-sans font-light leading-relaxed max-w-md">
               {hero.subtitle || "Celadon, silk, bamboo, and incense — each piece hand-selected from master craftspeople."}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* 主 CTA 用暖白实底 + 深字，而不是高饱和的珊瑚色 ——
+                  珊瑚红压在深色照片上偏"促销按钮"，与整站的低饱和暖调不搭；
+                  竞品的主 CTA 也是一颗干净的白色按钮。深色几处小点缀仍保留珊瑚色。 */}
               <Link href={hero.buttonLink || "/products"}
-                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-coral text-paper-light text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-coral-dark transition-all duration-300">
+                className="group inline-flex items-center gap-2.5 px-8 py-3.5 bg-paper-light text-ink text-[12px] tracking-[0.2em] uppercase font-sans font-medium hover:bg-paper transition-all duration-300">
                 {hero.buttonText || "Explore the Collection"} <ArrowUpRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
               <Link href={hero.secondaryLink || "/#philosophy"}
@@ -376,7 +384,8 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* PHILOSOPHY STRIP */}
-      <section className="py-14 md:py-18 border-b border-paper bg-[#FFFFFF]">
+      {/* 价值主张 4 宫格 —— 暖调底，与上一屏的深色首屏形成第一层节奏 */}
+      <section className="py-14 md:py-18 border-b border-paper-warm/60 bg-paper">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             {(philosophyStrip.length > 0 ? philosophyStrip : [
@@ -396,7 +405,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* COLLECTIONS CAROUSEL */}
-      <section className="py-20 md:py-28 bg-[#FFFFFF] overflow-hidden">
+      <section className="py-20 md:py-28 bg-paper-light overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">Curated by Heritage</span>
@@ -418,7 +427,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* FEATURED PRODUCTS - 3D Showroom */}
-      <section id="products" ref={featuredRef} className="py-20 md:py-28 bg-paper-light">
+      <section id="products" ref={featuredRef} className="py-20 md:py-28 bg-paper">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} style={{ y: featuredHeadY }} className="flex items-end justify-between mb-10">
             <div>
@@ -436,7 +445,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* ARTISAN STORY */}
-      <section className="py-20 md:py-28 bg-[#FFFFFF]">
+      <section className="py-20 md:py-28 bg-paper-light">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="relative">
@@ -497,7 +506,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* JOURNAL */}
-      <section id="journal" className="py-20 md:py-28 bg-paper-light">
+      <section id="journal" className="py-20 md:py-28 bg-paper">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <motion.div {...fadeUp} className="mb-12">
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{journal.eyebrow || "Stories & Essays"}</span>
@@ -544,7 +553,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* 客户评价（真实评价优先；无真实评价且处于开发模式时显示带 SAMPLE 角标的示例数据） */}
-      <div className="bg-[#FFFFFF]">
+      <div className="bg-paper-light">
         <HomeReviews reviews={reviews} />
       </div>
 
@@ -581,7 +590,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
       </section>
 
       {/* NEWSLETTER */}
-      <section className="py-16 md:py-20 bg-[#FFFFFF] border-b border-paper">
+      <section className="py-16 md:py-20 bg-paper border-b border-paper-warm/60">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
             <span className="font-en italic text-[15px] tracking-[0.01em] text-coral">{newsletter.eyebrow || "Stay Connected"}</span>
