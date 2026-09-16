@@ -13,6 +13,7 @@ import { useCurrency } from '@/context/CurrencyContext'
 import { useToast } from '@/context/ToastContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { trackReferralVisit } from '@/lib/referral-client'
+import HomeReviews from '@/components/layout/HomeReviews'
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -27,7 +28,7 @@ const stagger = {
   transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
 }
 
-export default function HomeClient({ featuredProducts, heroBgImage = "", initialContent = null }: { featuredProducts: Product[], heroBgImage?: string, initialContent?: any }) {
+export default function HomeClient({ featuredProducts, heroBgImage = "", initialContent = null, reviews = [] }: { featuredProducts: Product[], heroBgImage?: string, initialContent?: any, reviews?: any[] }) {
   const heroRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
   const heroParallax = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
@@ -542,6 +543,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
         </div>
       </section>
 
+      {/* 客户评价（真实评价优先；无真实评价且处于开发模式时显示带 SAMPLE 角标的示例数据） */}
+      <div className="bg-[#FFFFFF]">
+        <HomeReviews reviews={reviews} />
+      </div>
+
       {/* SEASONAL */}
       <section className="relative py-24 md:py-32 overflow-hidden bg-ink-deep">
         <div className="absolute inset-0 opacity-30">
@@ -673,9 +679,12 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
           <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#F2EBD8]/60">
             <span className="font-sans text-[12px] text-ink-soft/76">{current.productCount ?? 0} items</span>
-            <Link href={`/category/${current.slug || 'cultural-gifts'}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.2em] uppercase font-sans font-medium hover:text-coral transition-colors">
-              View Collection <ArrowUpRight size={11} strokeWidth={1.5} />
-            </Link>
+            {/* 没有 slug 就不渲染链接 —— 此前会兜底成早已废弃的 'cultural-gifts'，点了必然 404 */}
+            {current.slug ? (
+              <Link href={`/category/${current.slug}`} className="inline-flex items-center gap-1 text-[12px] text-ink-deep tracking-[0.2em] uppercase font-sans font-medium hover:text-coral transition-colors">
+                View Collection <ArrowUpRight size={11} strokeWidth={1.5} />
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>

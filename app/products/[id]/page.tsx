@@ -102,5 +102,15 @@ export default async function ProductPage({
     .map((gid: string) => repo.products.getById(gid))
     .filter((p: any) => p && p.active !== false)
 
-  return <ProductDetailClient product={product} reviews={reviews} giftProducts={giftProducts} />
+  // 分享栏的初始地址由服务端给出 —— 这样分享按钮会出现在首屏 HTML 里，
+  // 而不是等客户端水合后才冒出来。客户端挂载后会用 window.location.href 覆盖它，
+  // 以便带上 ?ref= 之类的推广参数（归因要用）。
+  return (
+    <ProductDetailClient
+      product={product}
+      reviews={reviews}
+      giftProducts={giftProducts}
+      productUrl={`${getSiteBaseUrl()}/products/${id}`}
+    />
+  )
 }

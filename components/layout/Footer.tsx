@@ -62,13 +62,28 @@ export default function Footer() {
     { label: "PT", href: settings?.socialPinterest || "" },
     { label: "YT", href: settings?.socialYoutube || "" },
   ]).filter((s: any) => s.href && s.href.startsWith('http'))
-  const collections = footer.collections || (categories.length > 0
-    ? categories.map(c => ({ label: c.nameEn || c.name, href: `/category/${c.slug}` }))
-    : [
-        { label: "Tea Ceremony", href: "/category/tea-ceremony" },
-        { label: "Ceramic Art", href: "/category/ceramic-art" },
-        { label: "Incense Rituals", href: "/category/incense-rituals" },
-      ])
+  // 页脚 Collections 列。
+  // 坑：settings 里存的 footer.collections 历史上被写成了 frontendContent.collections
+  // 的结构（{title, subtitle, slug, image}）—— 既没有 label 也没有 href，而且 slug
+  // 还是早已失效的旧分类。它是"非空"的，所以一直把下面那个正确的分类兜底顶掉，
+  // 页脚于是渲染出 6 个空文字链接、全部兜底指向 /products。
+  // 现在：只有存的数据确实带可用 href 时才采用（保留手工配置的能力），
+  // 否则一律用后台的真实分类。
+  const storedCollections: any[] = Array.isArray(footer.collections) ? footer.collections : []
+  const usableStored = storedCollections
+    .filter((c: any) => c && typeof c.href === 'string' && c.href.startsWith('/'))
+    .map((c: any) => ({ label: c.label || c.title || '', href: c.href }))
+  const collections = usableStored.length > 0
+    ? usableStored
+    : categories.length > 0
+      ? categories.map(c => ({ label: c.nameEn || c.name, href: `/category/${c.slug}` }))
+      : [
+          { label: "Tea Ceremony", href: "/category/tea-ceremony" },
+          { label: "Ceramic Art", href: "/category/ceramic-art" },
+          { label: "Incense Rituals", href: "/category/incense-rituals" },
+          { label: "Textile & Lacquer", href: "/category/textile-lacquer" },
+          { label: "Lighting & Décor", href: "/category/lighting-decor" },
+        ]
   const companyLinks = footer.companyLinks || [
     { label: "About", href: "/#philosophy" },
     { label: "Journal", href: "/#journal" },

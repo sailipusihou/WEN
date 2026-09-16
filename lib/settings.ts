@@ -409,13 +409,16 @@ const DEFAULT_FRONTEND: FrontendContent = {
     { number: "03", label: "Ethical Sourcing", desc: "Fair partnerships supporting traditional communities" },
     { number: "04", label: "Timeless Design", desc: "Objects made to last, designed to be cherished" },
   ],
+  // 默认首页精选集。slug 必须与后台真实分类一致，否则「View Collection」会 404。
+  // 注意：首页轮播实际读的是 /api/categories 的真实分类（见 HomeClient），
+  // 这里只作为后台「Collections」面板的初始内容。
   collections: [
-    { title: "Tea Ceremony", subtitle: "The Art of Cha Dao", slug: "cultural-gifts", image: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1200&q=80", description: "Hand-thrown celadon and Yixing teaware that transforms tea brewing into a meditative ritual." },
-    { title: "Ceramic Living", subtitle: "Daily Vessels, Timeless Beauty", slug: "home-decor", image: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=1200&q=80", description: "Porcelain and stoneware made for everyday use, each shaped by centuries of tradition." },
-    { title: "Silk & Embroidery", subtitle: "Threads of Heritage", slug: "cultural-gifts", image: "https://images.unsplash.com/photo-1607532941432-5e0d3cba768b?w=1200&q=80", description: "Suzhou double-sided embroidery preserving an endangered craft." },
-    { title: "Bamboo Craft", subtitle: "Sustainable Artistry", slug: "home-decor", image: "https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=1200&q=80", description: "Baskets and objects woven by master artisans in Zhejiang." },
-    { title: "Natural Incense", subtitle: "Sacred Scents", slug: "creative-gifts", image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=80", description: "Agarwood, sandalwood, and herbal blends using ancient formulas." },
-    { title: "Scholar's Desk", subtitle: "The Art of Writing", slug: "creative-gifts", image: "https://images.unsplash.com/photo-1496096265110-f83ad7f96608?w=1200&q=80", description: "Brush pots, ink stones, and writing sets for the modern scholar." },
+    { title: "Tea Ceremony", subtitle: "The Art of Cha Dao", slug: "tea-ceremony", image: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1200&q=80", description: "Hand-thrown celadon and Yixing teaware that transforms tea brewing into a meditative ritual." },
+    { title: "Ceramic Living", subtitle: "Daily Vessels, Timeless Beauty", slug: "ceramic-art", image: "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=1200&q=80", description: "Porcelain and stoneware made for everyday use, each shaped by centuries of tradition." },
+    { title: "Silk & Embroidery", subtitle: "Threads of Heritage", slug: "textile-lacquer", image: "https://images.unsplash.com/photo-1607532941432-5e0d3cba768b?w=1200&q=80", description: "Suzhou double-sided embroidery preserving an endangered craft." },
+    { title: "Bamboo Craft", subtitle: "Sustainable Artistry", slug: "lighting-decor", image: "https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=1200&q=80", description: "Baskets and objects woven by master artisans in Zhejiang." },
+    { title: "Natural Incense", subtitle: "Sacred Scents", slug: "incense-rituals", image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1200&q=80", description: "Agarwood, sandalwood, and herbal blends using ancient formulas." },
+    { title: "Scholar's Desk", subtitle: "The Art of Writing", slug: "lighting-decor", image: "https://images.unsplash.com/photo-1496096265110-f83ad7f96608?w=1200&q=80", description: "Brush pots, ink stones, and writing sets for the modern scholar." },
   ],
   collectionsSlideshowEnabled: true,
   collectionsSlideshowInterval: 6,
@@ -944,8 +947,21 @@ export function saveSettings(updates: Partial<SiteSettings>): SiteSettings {
 }
 
 export function getShippingZoneForCountry(country: string): ShippingZone | undefined {
-  const settings = getSettings()
-  return settings.shippingZones.find(z => z.countries.some(c => c.toLowerCase() === country.toLowerCase()))
+  const zones = getSettings().shippingZones || []
+  const key = String(country || '').trim().toLowerCase()
+  if (!key) return undefined
+
+  // 1) 先按具体国家名精确匹配，且排除兜底项 "Other"。
+  //    原先是直接 .find() 取首个匹配，而 europe 与 rest-of-world 的 countries 里
+  //    都写了 "Other"，于是 "Other" 永远命中列表靠前的 europe —— rest-of-world
+  //    分区形同虚设，任何未列出的国家（如巴西）也都被算成欧洲时效与运费。
+  const exact = zones.find(z =>
+    z.countries.some(c => c.toLowerCase() === key && c.toLowerCase() !== 'other')
+  )
+  if (exact) return exact
+
+  // 2) 没命中具体国家时才用兜底分区（countries 里含 "Other" 的那个）
+  return zones.find(z => z.countries.some(c => c.toLowerCase() === 'other'))
 }
 
 export function hashStaffPassword(password: string, salt?: string): { hash: string; salt: string } {

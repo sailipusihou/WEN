@@ -489,8 +489,17 @@ function sanitizeSettings(settings: any): any {
     siteName: settings.siteName,
     siteTagline: settings.siteTagline,
     currency: settings.currency,
-    shippingFreeThreshold: settings.shippingFreeThreshold,
-    shippingCost: settings.shippingCost,
+    // 运费信息给 AI 必须来自分区表。
+    // shippingFreeThreshold / shippingCost 是已废弃的全局字段（值正好等于美加分区），
+    // 喂给 AI 会让它对所有国家的客户都报同一个免邮门槛 —— 欧洲实际是 555.56
+    // 而不是 416.67，AI 会答错。改成按分区列出，AI 才能按客户所在地区回答。
+    shippingZones: (settings.shippingZones || []).map((z: any) => ({
+      name: z.name,
+      countries: z.countries,
+      baseCost: z.baseCost,
+      freeThreshold: z.freeThreshold,
+      estimatedDays: `${z.estimatedDaysMin}-${z.estimatedDaysMax} days`,
+    })),
   }
   return safe
 }

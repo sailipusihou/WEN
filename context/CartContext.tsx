@@ -10,7 +10,13 @@ import { useCurrency } from '@/context/CurrencyContext'
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (item: Omit<CartItem, 'quantity'>) => void
+  /**
+   * 加入购物车。
+   * @param opts.silent 静默加入 —— 不弹「Added to Cart」提示浮层。
+   *   用于「立即购买」这类**加完就跳走**的场景：弹层会盖在页面上然后立刻被跳转打断，
+   *   观感上就是"凭空冒出一个框"，而且此时它也不提供任何有用信息。
+   */
+  addItem: (item: Omit<CartItem, 'quantity'>, opts?: { silent?: boolean }) => void
   /** 加入赠品（价格 0；真正免费与否由服务端核销） */
   addGiftItem: (item: Omit<CartItem, 'quantity'>, forProductId: string) => void
   /** 移除某个主商品带进来的赠品 */
@@ -64,7 +70,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // 任何人都可以加入购物车；下单环节再要求登录
-  const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
+  const addItem = useCallback((item: Omit<CartItem, 'quantity'>, opts?: { silent?: boolean }) => {
     fetchIsLoggedIn().then(setIsLoggedIn)
     setItems(prev => {
       // 只在「同为付费行」或「同为赠品行」之间合并数量。
@@ -81,7 +87,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('otm_cart', JSON.stringify(updated))
       return updated
     })
-    setJustAdded({ ...item, quantity: 1 })
+    // silent：用于「立即购买」—— 加完立刻跳结算页，弹层只会闪一下还挡住页面
+    if (!opts?.silent) setJustAdded({ ...item, quantity: 1 })
   }, [])
 
   /**

@@ -13,6 +13,7 @@ import '@fontsource/playfair-display/600-italic.css'
 import { CartProvider } from "@/context/CartContext"
 import { CurrencyProvider } from "@/context/CurrencyContext"
 import { ToastProvider } from "@/context/ToastContext"
+import { WishlistProvider } from "@/context/WishlistContext"
 import FrontendLayout from "@/components/layout/FrontendLayout"
 import { WebVitals } from "@/components/WebVitals"
 import "./globals.css"
@@ -53,9 +54,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WebVitals />
         <CurrencyProvider>
           <CartProvider>
-            <ToastProvider>
-              <FrontendLayout>{children}</FrontendLayout>
-            </ToastProvider>
+            {/* 收藏状态必须嵌在 CartProvider 内 —— 它复用 CartContext 已经探过的登录态，
+                不重复请求 /api/auth/user */}
+            <WishlistProvider>
+              <ToastProvider>
+                <FrontendLayout>{children}</FrontendLayout>
+              </ToastProvider>
+            </WishlistProvider>
           </CartProvider>
         </CurrencyProvider>
       </body>

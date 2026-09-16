@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ShoppingBag, Search, User, MessageCircle, Heart, ChevronDown } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { useWishlist } from '@/context/WishlistContext'
 import SearchBox from '@/components/ui/SearchBox'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { fetchCategories } from '@/lib/use-categories'
@@ -108,6 +109,7 @@ export default function Header() {
   }, [loggedIn])
 
   const { totalItems } = useCart()
+  const { count: wishlistCount } = useWishlist()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -207,8 +209,14 @@ export default function Header() {
               >
                 <Search size={15} strokeWidth={1.5} />
               </button>
-              <Link href={loggedIn ? "/account/wishlist" : "/login"} className={`p-2 rounded-full transition-all duration-300 ${iconText} ${iconChip}`} aria-label="Wishlist">
+              <Link href={loggedIn ? "/account/wishlist" : "/login"} className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Wishlist">
                 <Heart size={15} strokeWidth={1.5} />
+                {/* 收藏件数角标（未登录时 wishlistCount 恒为 0，不显示） */}
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#A8472E] text-white text-[10px] font-sans font-bold rounded-full flex items-center justify-center">
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
+                  </span>
+                )}
               </Link>
               <Link href={loggedIn ? "/account" : "/login"} className={`p-2 rounded-full transition-all duration-300 ${iconText} ${iconChip}`} aria-label="Account">
                 <User size={15} strokeWidth={1.5} />
@@ -375,7 +383,16 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
-              <div className="flex items-center gap-2 px-4 pt-4 border-t border-[#F2EBD8]/30 mt-3">
+              {/* 移动端此前只有桌面端才有收藏入口 —— 补上，并带件数 */}
+              <div className="px-4 pt-4">
+                <Link href={loggedIn ? "/account/wishlist" : "/login"}
+                  className="flex items-center justify-center gap-1.5 py-3 border border-[#F2EBD8] text-[#2A2118] text-[10px] tracking-[0.22em] uppercase font-sans"
+                  onClick={() => setMenuOpen(false)}>
+                  <Heart size={12} strokeWidth={1.6} />
+                  Wishlist{wishlistCount > 0 && ` (${wishlistCount})`}
+                </Link>
+              </div>
+              <div className="flex items-center gap-2 px-4 pt-2 border-t border-[#F2EBD8]/30 mt-3">
                 <Link href="/search" className="flex-1 text-center py-3 border border-[#2A2118] text-[#2A2118] text-[10px] tracking-[0.22em] uppercase font-sans" onClick={() => setMenuOpen(false)}>Search</Link>
                 <Link href="/cart" className="flex-1 text-center py-3 bg-[#2A2118] text-white text-[10px] tracking-[0.22em] uppercase font-sans flex items-center justify-center gap-1" onClick={() => setMenuOpen(false)}>
                   Cart {totalItems > 0 && `(${totalItems})`}

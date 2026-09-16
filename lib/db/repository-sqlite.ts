@@ -11,7 +11,7 @@ import { DEFAULTS, getSettings, normalizeSavedSettings } from '@/lib/settings'
 import type { WorkLogEntry } from '@/lib/work-log'
 import type { Message, NewsletterSubscriber } from '@/lib/repository'
 
-// ========== 瀹搞儱鍙块崙鑺ユ殶 ==========
+// ========== 工具函数 ==========
 
 function rowToProduct(row: any): Product {
   return {
@@ -57,8 +57,8 @@ function rowToProduct(row: any): Product {
 /**
  * 閹?product_gifts 鐞涖劑鍣烽惃鍕閸濅胶绮︾€规俺浠涢崥鍫濆煂閸熷棗鎼ф稉濞库偓?
  *
- * 鐠佹崘顓哥拠瀛樻閿涙俺绂掗崫浣稿彠缁鐡ㄩ崷銊у缁斿娈?product_gifts 鐞涱煉绱欐稉鈧悰灞肩娑擃亜褰茬挧鐘叉櫌閸濅緤绱氶敍?
- * 閸掓銆冮幒銉ュ經娑撯偓濞嗏剝鈧勫Ω閸忋劑鍎寸紒鎴濈暰鐠囪鍤弶銉ュ晙閸掑棗褰傞敍鍫ヤ缉閸?N+1 閺屻儴顕楅敍澶堚偓?
+ * 鐠佹崘顓哥拠瀛樻閿涙俺绂掗崫浣稿彠缁鐡ㄩ崷銊у缁斿娈?product_gifts 琛紙涓€琛屼竴涓彲璧犲晢鍝侊級锛?
+ * 閸掓銆冮幒銉ュ經娑撯偓濞嗏剝鈧勫Ω閸忋劑鍎寸紒鎴濈暰鐠囪鍤弶銉ュ晙閸掑棗褰傞敍鍫ヤ缉閸?N+1 鏌ヨ锛夈€?
  * 閸撳秴褰撮崣顏堟付鐠?product.giftProductIds 鐏忚精鍏橀崘鍐茬暰鐟曚椒绗夌憰浣硅閺屾捁绂掗崫浣稿隘閵?
  */
 export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
@@ -83,7 +83,7 @@ export function attachGiftsToProducts(db: any, products: Product[]): Product[] {
       }
     }
   } catch {
-    // 鐞涖劏绻曞▽鈥崇紦閿涘牊妫惔鎾活浕濞嗏€虫儙閸旑煉绱氶垾鏂衡偓?闂堟瑩绮捄瀹犵箖閿涘奔绗夎ぐ鍗炴惙閸熷棗鎼х拠璇插絿
+    // 鐞涖劏绻曞▽鈥崇紦閿涘牊妫惔鎾活浕濞嗏€虫儙閸旑煉绱氶垾鏂衡偓?静默跳过，不影响商品读取
   }
   return products
 }
@@ -121,6 +121,11 @@ export function attachBundlesToProducts(db: any, products: Product[]): Product[]
         if (!row) return null
         const p = rowToProduct(row)
         loadProductRelations(p)
+        // 搭配商品也要带上自己的规格。
+        // attachVariantsToProducts 只给「传进数组的商品」挂 variants，而搭配商品是在
+        // 这里单独查出来的、走 loadProductRelations —— 那个函数不含 variants。结果是
+        // 即使后台给搭配商品配了规格，前台也拿不到，搭配区无法显示规格下拉。
+        loadProductVariants(p)
         byId.set(id, p)
         return p
       } catch {
@@ -170,9 +175,9 @@ function rowToVariant(row: any): any {
 }
 
 /**
- * 閹?product_variants 鐞涖劑鍣烽惃鍕潐閺嶈壈浠涢崥鍫熷灇 product.variants閵?
+ * 閹?product_variants 表里的规格聚合成 product.variants閵?
  * 閸氬本鐗辨稉鈧▎鈩冪叀鐎瑰苯鍙忛柈銊ュ瀻閸欐埊绱濋柆鍨帳 N+1閵?
- * 閸欘亜鐢稉?active 閻ㄥ嫯顫夐弽纭风幢optionName 閸欐牜顑囨稉鈧稉顏囶潐閺嶈偐娈戠紒鏉戝閸氬秵鏂侀崚?product 娑撳绱?
+ * 閸欘亜鐢稉?active 的规格；optionName 閸欐牜顑囨稉鈧稉顏囶潐閺嶈偐娈戠紒鏉戝閸氬秵鏂侀崚?product 娑撳绱?
  * 閺傞€涚┒閸撳秴褰撮惄瀛樺复閺勫墽銇氶柅澶嬪閸ｃ劍鐖ｆ０妯糕偓?
  */
 export function attachVariantsToProducts(db: any, products: Product[]): Product[] {
@@ -232,6 +237,28 @@ function loadProductRelations(product: Product) {
   // detailImages
   const imgRows = db.prepare('SELECT imageUrl FROM product_images WHERE productId = ? ORDER BY sortOrder').all(product.id) as any[]
   product.detailImages = imgRows.map(r => r.imageUrl)
+}
+
+/**
+ * 给单个商品挂上它自己的规格（product.variants / product.optionName）。
+ *
+ * 与 attachVariantsToProducts 的区别：那个是批量版，只处理传进数组的商品。
+ * 搭配商品是在 attachBundlesToProducts 里单独查出来的，需要这个单件版补上规格，
+ * 否则搭配区拿不到规格数据、无法显示规格下拉。
+ */
+function loadProductVariants(product: Product): void {
+  try {
+    const db = getDb()
+    const rows = db.prepare(
+      'SELECT * FROM product_variants WHERE productId = ? AND active = 1 ORDER BY sortOrder, rowid'
+    ).all(product.id) as any[]
+    if (!rows.length) return
+    const variants = rows.map(rowToVariant)
+    ;(product as any).variants = variants
+    ;(product as any).optionName = variants[0].optionName || 'Style'
+  } catch {
+    // 读不到就当作没有规格 —— 搭配区会优雅降级为不显示下拉
+  }
 }
 
 function rowToCategory(row: any, productCount = 0): Category {
@@ -481,7 +508,7 @@ export const productRepo = {
     }
   },
 
-  // ===== 鍟嗗搧瑙勬牸 / 娆惧紡锛坧roduct_variants锛?=====
+  // ===== 商品规格 / 娆惧紡锛坧roduct_variants锛?=====
 
   /** 璇诲彇鏌愬晢鍝佺殑鍏ㄩ儴瑙勬牸锛堝惈鏈惎鐢ㄧ殑锛屽悗鍙扮紪杈戠敤锛?*/
   listVariants(productId: string): any[] {
@@ -500,7 +527,7 @@ export const productRepo = {
    * 瑕嗙洊寮忎繚瀛樻煇鍟嗗搧鐨勮鏍煎垪琛ㄣ€?
    *
    * 涓轰粈涔堢敤銆屽厛鍒犲悗鎻掋€嶈€屼笉鏄€愭潯 diff锛?
-   *   瑙勬牸鏄暣浣撻厤缃紙椤哄簭銆佸鍑忛兘鍦ㄤ竴璧锋敼锛夛紝diff 閫昏緫澶嶆潅涓斿鏄撴畫鐣欒剰鏁版嵁锛?
+   *   规格是整体配置（顺序、增减都在一起改），diff 閫昏緫澶嶆潅涓斿鏄撴畫鐣欒剰鏁版嵁锛?
    *   瑙勬牸鏉℃暟寰堝皯锛堥€氬父 < 20锛夛紝鏁磋〃閲嶅啓鐨勪唬浠峰彲浠ュ拷鐣ャ€?
    * 椤哄甫鍋氬熀鏈竻娲楋細鍘绘帀绌?label銆佸幓鎺夐噸澶?label銆佹寜浼犲叆椤哄簭鍐?sortOrder銆?
    */
@@ -907,7 +934,7 @@ export const orderRepo = {
       const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(row.id) as any[]
       const items: OrderItem[] = itemRows.map(r => ({
         id: r.id,
-        // 韫囧懘銆忛崶鐐诧綖 productId閿涙瓰eductStockForOrder 娓氭繆绂嗙€瑰啯澧告惔鎾崇摠閿?
+        // 韫囧懘銆忛崶鐐诧綖 productId锛歞eductStockForOrder 娓氭繆绂嗙€瑰啯澧告惔鎾崇摠閿?
         // 缂傝桨绨＄€?item.id閿涘牐顓归崡鏇€?ID閿涘绱扮悮顐㈢秼閹存劕鏅㈤崫?ID閿涘本鐓℃稉宥呭煂閸熷棗鎼ч懓宀勬饯姒涙鐑︽潻鍥ㄥ⒏閸戝繈鈧?
         productId: r.productId || undefined,
         name: r.name,
@@ -927,7 +954,7 @@ export const orderRepo = {
     const itemRows = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(id) as any[]
     const items: OrderItem[] = itemRows.map(r => ({
       id: r.id,
-      // 閸?list()閿涙艾娲栨繅?productId閿涘苯鎯侀崚娆愬瘻鐠併垹宕熼崣鏍ф礀閻ㄥ嫯顓归崡鏇熷⒏娑撳秳绨℃惔鎾崇摠
+      // 閸?list()锛氬洖濉?productId，否则按订单取回的订单扣不了库存
       productId: r.productId || undefined,
       name: r.name,
       nameEn: r.nameEn || '',
@@ -1183,7 +1210,7 @@ export const userRepo = {
     const db = getDb()
     const row = db.prepare('SELECT * FROM users WHERE token = ?').get(token) as any
     if (!row) return undefined
-    // 娣囶喖顦?H20: token 鏉╁洦婀￠弽锟犵崣 (閺冪姾绻冮張鐔告闂傚娈戦崢鍡楀蕉閻劍鍩涚憴鍡曡礋閺堝鏅? 閸忕厧顔愰弮褌绱扮拠?
+    // 娣囶喖顦?H20: token 杩囨湡鏍￠獙 (閺冪姾绻冮張鐔告闂傚娈戦崢鍡楀蕉閻劍鍩涚憴鍡曡礋閺堝鏅? 閸忕厧顔愰弮褌绱扮拠?
     if (row.tokenExpiresAt && new Date(row.tokenExpiresAt).getTime() < Date.now()) return undefined
     return userRepo.getById(row.id)
   },
@@ -1191,8 +1218,8 @@ export const userRepo = {
   add(user: User): User {
     const db = getDb()
     // 娣囶喖顦? 閸?INSERT 濠曞繑甯€娴?token / tokenExpiresAt 閳ユ柡鈧?濞夈劌鍞介幒銉ュ經閺勵垬鈧苯鍘涢崘娆忕氨閸愬秴褰?cookie閵?
-    // 娴滃孩妲搁弬鐗堟暈閸愬瞼鏁ら幋閿嬬セ鐟欏牆娅掗柌宀冩閻掕埖瀣侀崚棰佺啊 cookie, 娴ｅ棗绨遍柌?token 娑?NULL,
-    // /api/auth/user 閺屻儰绗夐崚棰佹眽 閳?閻╁瓨甯寸悮顐ユ丢閸ョ偟娅ヨぐ鏇€?(濞夈劌鍞介崡铏竴缁?閵?
+    // 于是新注册用户浏览器里虽然拿到了 cookie, 娴ｅ棗绨遍柌?token 娑?NULL,
+    // /api/auth/user 鏌ヤ笉鍒颁汉 閳?閻╁瓨甯寸悮顐ユ丢閸ョ偟娅ヨぐ鏇€?(濞夈劌鍞介崡铏竴缁?閵?
     db.prepare(`
       INSERT INTO users (id, email, passwordHash, salt, firstName, lastName, phone, avatar, dob, gender, bio, preferredCurrency, coupons, role, token, tokenExpiresAt, createdAt, updatedAt)
       VALUES (@id, @email, @passwordHash, @salt, @firstName, @lastName, @phone, @avatar, @dob, @gender, @bio, @preferredCurrency, @coupons, @role, @token, @tokenExpiresAt, @createdAt, @updatedAt)
@@ -1267,6 +1294,35 @@ export const userRepo = {
 
 // ========== Reviews Repository ==========
 
+/**
+ * 把某商品的 rating / reviewCount 重算为「真实可见评价」的统计值。
+ *
+ * 为什么必须收敛到一处：原来只有 add 里内联同步了 reviewCount，而且
+ *   · 不同步 rating —— 分数是建站时手动填的，与真实评价对不上
+ *   · 不排除 hidden / deleted / 未审核 —— 后台隐藏或删除一条评价，计数不减
+ *   · update 完全没同步 —— 审核、隐藏、删除之后计数和分数都不会变
+ * 结果是前台在商品卡、详情页，以及首页 JSON-LD 的 aggregateRating 里，
+ * 向客户和搜索引擎展示了编造的评价数与评分。
+ *
+ * 可见性口径必须与前台严格一致：approved=1 且 hidden=0 且 deleted=0
+ * （见 app/api/reviews/route.ts 与 app/products/[id]/page.tsx 的过滤条件）。
+ */
+function syncProductReviewStats(db: any, productId: string): void {
+  if (!productId) return
+  const s = db.prepare(`
+    SELECT COUNT(*) AS n, AVG(rating) AS avg
+    FROM reviews
+    WHERE productId = ? AND approved = 1 AND hidden = 0 AND deleted = 0
+  `).get(productId) as any
+
+  const n = Number(s?.n) || 0
+  // 没有可见评价时分数清零。前台靠 reviewCount > 0 决定是否展示星级，
+  // 留着旧分数会让「0 条评价」的商品看起来有评分。
+  const avg = n > 0 ? Math.round((Number(s?.avg) || 0) * 10) / 10 : 0
+
+  db.prepare('UPDATE products SET rating = ?, reviewCount = ? WHERE id = ?').run(avg, n, productId)
+}
+
 export const reviewRepo = {
   list(): Review[] {
     const db = getDb()
@@ -1289,8 +1345,8 @@ export const reviewRepo = {
       INSERT INTO reviews (id, productId, author, avatar, rating, date, content, location, approved, orderId, customerEmail, source)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, data.productId, data.author || 'Anonymous', avatar, data.rating, date, data.content || '', data.location || 'Verified Buyer', data.approved ? 1 : 0, data.orderId || null, data.customerEmail || null, data.source || 'customer')
-    // 閺囧瓨鏌婇崯鍡楁惂鐠囧嫯顔戠拋鈩冩殶
-    db.prepare('UPDATE products SET reviewCount = (SELECT COUNT(*) FROM reviews WHERE productId = products.id) WHERE id = ?').run(data.productId)
+    // 重算该商品的评分与评价数（口径见 syncProductReviewStats）
+    syncProductReviewStats(db, data.productId)
     return { ...data, id, date, avatar, approved: !!data.approved, hidden: false, deleted: false, createdAt: new Date().toISOString() } as Review
   },
 
@@ -1313,6 +1369,9 @@ export const reviewRepo = {
       updates.date || existing.date,
       id
     )
+    // 审核 / 隐藏 / 删除 / 改分 都会影响统计值，必须重算。
+    // 此前 update 完全不同步 —— 后台隐藏一条评价，商品上仍挂着它的分数。
+    syncProductReviewStats(db, existing.productId)
     return reviewRepo.list().find(r => r.id === id) || null
   },
 }
@@ -1488,7 +1547,7 @@ export const settingsRepo = {
     `).run(DEFAULT_SETTINGS_KEY, JSON.stringify(merged))
 
     // 閸忔娊鏁敍姘閹?getSettings() 閻ㄥ嫯绻樼粙瀣敶缂傛挸鐡ㄩ妴?
-    // getSettings() 閻?lib/cache 缂傛挸鐡?settings閿涘湵TL 60 缁夋帪绱濇稉鏂垮涧閸?JSON 閸愭瑥鍙嗙捄顖氱窞
+    // getSettings() 閻?lib/cache 缂傛挸鐡?settings锛圱TL 60 缁夋帪绱濇稉鏂垮涧閸?JSON 写入路径
     // saveSettings() 闁插本澧犳径杈ㄦ櫏閿涘鈧倸鎮楅崣棰佺箽鐎涙顔曠純顔胯泲閻ㄥ嫭妲告潻娆撳櫡閿涘奔绗夋径杈ㄦ櫏閻ㄥ嫯鐦?
     // 閸氬骸褰撮弨閫涚啊闁板秶鐤嗛張鈧梹?60 缁夋帗澧犻悽鐔告櫏閿涘矁銆冮悳棰佽礋閵嗗本妲戦弰搴㈡暭娴滃棗宓堝▽鈥冲冀鎼存柣鈧秲鈧?
     try {
@@ -2119,7 +2178,7 @@ export const shipmentRepo = {
       fields.push('events = ?')
       values.push(JSON.stringify(updates.events))
     }
-    // 閼奉亜濮╃拋鍓х枂 deliveredAt (瑜版挾濮搁幀浣稿綁娑?delivered 娑撴梹婀幍瀣З鐠佸墽鐤嗛弮?
+    // 鑷姩璁剧疆 deliveredAt (瑜版挾濮搁幀浣稿綁娑?delivered 娑撴梹婀幍瀣З鐠佸墽鐤嗛弮?
     if (updates.status === 'delivered' && !updates.deliveredAt && !existing.deliveredAt) {
       fields.push('deliveredAt = ?')
       values.push(new Date().toISOString())
@@ -2152,8 +2211,8 @@ export const shipmentRepo = {
     return result.changes > 0
   },
 
-  // 閸欐牗绉烽崣鎴ｆ彛
-  // 鐏忓棛澧垮ù浣稿礋閺嶅洩顔囨稉?cancelled
+  // 取消发货
+  // 灏嗙墿娴佸崟鏍囪涓?cancelled
   // 婵″倹鐏夌拠銉吂閸楁洘鐥呴張澶婂従娴犳牗妞跨捄鍐⒖濞翠礁宕熼敍灞藉灟鐏忓棜顓归崡鏇炴礀闁偓閸?processing 閻樿埖鈧礁鑻熷〒鍛存珟 tracking 娣団剝浼?
   // 閸欘亝婀侀棃?delivered/returned/cancelled 閻樿埖鈧胶娈戦崣鎴ｆ彛閸楁洘澧犻懗钘夊絿濞?
   cancel(id: string, reason?: string, operator?: string): { shipment: any; order: any; orderReverted: boolean } | null {
@@ -2190,7 +2249,7 @@ export const shipmentRepo = {
       }
       const events = [...(shipment.events || []), cancelEvent]
 
-      // 2. 閺囧瓨鏌婇崣鎴ｆ彛閸楁洜濮搁幀浣疯礋 cancelled
+      // 2. 更新发货单状态为 cancelled
       const fields: string[] = ['status = ?', 'events = ?', 'updatedAt = datetime(\'now\')']
       const values: any[] = ['cancelled', JSON.stringify(events)]
       if (shipment.notes) {
@@ -2213,7 +2272,7 @@ export const shipmentRepo = {
           VALUES (?, ?, ?, ?, ?)
         `).run(histId, shipment.orderId, 'processing', `Shipment ${shipment.shipmentNo || shipment.id.slice(0,12)} cancelled: ${cancelNote}`, now)
 
-        // 濞撳懘娅巘racking娣団剝浼?
+        // 娓呴櫎tracking娣団剝浼?
         orderFields.push('trackingNumber = ?')
         orderValues.push(null)
         orderFields.push('carrier = ?')

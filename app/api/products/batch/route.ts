@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
     const existingIds = new Set(existing.map(p => p.id))
     // 收集所有已存在的商品编码, 用于唯一性校验和自动生成
     const existingCodes = new Set<string>(existing.map(p => p.code).filter(Boolean) as string[])
+    // 批量导入时若某行没给分类，用后台的第一个真实分类兜底
+    // （此前写死 'cultural-gifts'，那是个早已不存在的分类）
+    const defaultCategory = repo.categories.list()[0]?.slug || ''
 
     const parseArr = (val: any): string[] => {
       if (Array.isArray(val)) return val
@@ -71,7 +74,7 @@ export async function POST(req: NextRequest) {
           if (item.costPrice !== undefined) updates.costPrice = item.costPrice ? Number(item.costPrice) : undefined
           if (item.stock !== undefined) updates.stock = Number(item.stock) || 0
           if (item.supplierId !== undefined) updates.supplierId = item.supplierId || undefined
-          if (item.category !== undefined) updates.category = item.category || 'cultural-gifts'
+          if (item.category !== undefined) updates.category = item.category || defaultCategory
           if (item.tags !== undefined) updates.tags = parseArr(item.tags)
           if (item.tagsEn !== undefined) updates.tagsEn = parseArr(item.tagsEn)
           if (item.image !== undefined) updates.image = item.image
@@ -104,7 +107,7 @@ export async function POST(req: NextRequest) {
             }
             code = candidate
           } else {
-            code = generateProductCode(item.category || 'cultural-gifts', existingCodes)
+            code = generateProductCode(item.category || defaultCategory, existingCodes)
           }
           existingCodes.add(code)
 
@@ -124,7 +127,7 @@ export async function POST(req: NextRequest) {
             costPrice: item.costPrice ? Number(item.costPrice) : undefined,
             stock: Number(item.stock) || 0,
             supplierId: item.supplierId || undefined,
-            category: item.category || 'cultural-gifts',
+            category: item.category || defaultCategory,
             tags: parseArr(item.tags),
             tagsEn: item.tagsEn ? parseArr(item.tagsEn) : undefined,
             image: item.image || 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',

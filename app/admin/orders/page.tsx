@@ -91,6 +91,12 @@ export default function AdminOrdersPage() {
     notes: '',
   })
   const [creating, setCreating] = useState(false)
+  // 手工建单的运费「预览」。必须与前台、服务端同一套分区规则。
+  // 此前这里写死「美国 满 $50 免、否则 $5.99；其它 $12.99」，与后台 shippingZones 毫无关系 ——
+  // 运营看到 $5.99，实际落库的是分区价（美加 $34.72），对不上账。
+  // null = 还没取到，此时预览按 0 显示而不是编一个数。
+  // 注意：这只是预览；真正入账的运费由服务端 /api/orders 按分区重算，所以不会算错钱。
+  const [previewShipping, setPreviewShipping] = useState<number | null>(null)
 
   const normalStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]
   const returnStatuses: OrderStatus[] = ["return_requested", "return_approved", "return_shipped", "return_delivered", "refunded"]
@@ -248,8 +254,20 @@ export default function AdminOrdersPage() {
    * 页面上就会显示 "$NaN"。原来没兜底，属于同一类防御缺失。
    */
   const orderSubtotal = orderItems.reduce((sum: number, i: any) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0)
-  const orderShippingCost = orderItems.length > 0 ? (createOrderForm.country === 'United States' ? (orderSubtotal >= 50 ? 0 : 5.99) : 12.99) : 0
+  const orderShippingCost = orderItems.length > 0 ? (previewShipping ?? 0) : 0
   const orderTotal = orderSubtotal + orderShippingCost
+
+  // 运费预览：走前台的 /api/shipping，与结算页、服务端完全同一套分区规则。
+  // 手续费由服务端重算，这里只是让运营在下单前看到正确的金额。
+  useEffect(() => {
+    if (!showCreateModal || orderItems.length === 0) { setPreviewShipping(null); return }
+    let alive = true
+    fetch(`/api/shipping?country=${encodeURIComponent(createOrderForm.country)}&subtotal=${orderSubtotal}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive && d) setPreviewShipping(Number(d.cost) || 0) })
+      .catch(() => { if (alive) setPreviewShipping(null) })
+    return () => { alive = false }
+  }, [showCreateModal, createOrderForm.country, orderSubtotal, orderItems.length])
 
   const handleCreateOrder = async () => {
     if (orderItems.length === 0) { alert('Please add at least one product') ; return }

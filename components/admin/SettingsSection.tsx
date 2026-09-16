@@ -296,7 +296,7 @@ export function CollectionEditor({ items, onChange, slideshowEnabled, slideshowI
           <div className="grid grid-cols-2 gap-3">
             <Input value={item.title} onChange={v => updateItem(i, "title", v)} placeholder="Title" />
             <Input value={item.subtitle} onChange={v => updateItem(i, "subtitle", v)} placeholder="Subtitle" />
-            <Input value={item.slug} onChange={v => updateItem(i, "slug", v)} placeholder="Slug (e.g. cultural-gifts)" />
+            <Input value={item.slug} onChange={v => updateItem(i, "slug", v)} placeholder="Slug (e.g. tea-ceremony)" />
             <Input value={item.description} onChange={v => updateItem(i, "description", v)} placeholder="Description" />
           </div>
           <ImageUploader value={item.image} onChange={v => updateItem(i, "image", v)} label="Image" />

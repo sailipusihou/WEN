@@ -7,8 +7,10 @@ import { PlusCircle, Edit, Trash2, Search, Eye, EyeOff, Package, Upload, Downloa
 import type { Product } from '@/lib/db'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { parseFile } from '@/lib/file-parser'
+import { useCategories } from '@/lib/use-categories'
 
 export default function AdminProductsPage() {
+  const { labelFor } = useCategories()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showImport, setShowImport] = useState(false)
@@ -130,7 +132,9 @@ export default function AdminProductsPage() {
     }
   }
 
-  const getCatLabel = (s: string) => ({ 'cultural-gifts': 'Cultural Gifts', 'home-decor': 'Home Decor', 'creative-gifts': 'Gift Ideas' }[s] || s)
+  // 分类显示名取自后台真实分类（与商品卡同一套 labelFor），
+  // 不再用写死的旧分类映射 —— 那三个分类早已不存在，新分类只会原样显示 slug。
+  const getCatLabel = (s: string) => labelFor(s) || s
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
 

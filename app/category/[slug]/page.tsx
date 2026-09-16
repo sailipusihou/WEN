@@ -1,6 +1,7 @@
 import { getRepository } from '@/lib/repository'
 import CategoryClient from '@/components/product/CategoryClient'
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
 // 修复 M11: 与 /products 一致强制动态渲染, 促销/价格变更后分类页即时刷新
@@ -14,10 +15,12 @@ export async function generateMetadata(
   const category = repo.categories.getBySlug(slug)
 
   if (!category) {
-    return {
-      title: 'Category Not Found',
-      description: 'The category you are looking for does not exist.',
-    }
+    // 必须在这里（generateMetadata）调 notFound()，而不是只在页面组件里。
+    // 本路由有 app/category/loading.tsx —— 它形成 Suspense 边界，Next 会先把
+    // loading 壳以 200 流出去，页面组件里再调 notFound() 时状态码已经锁定成 200，
+    // 就变成"内容是对的 404 页、状态码却是 200"的软 404。
+    // generateMetadata 在响应流出前完成，所以只有在这里抛才能真正返回 404。
+    notFound()
   }
 
   const title = `${category.nameEn || category.name} | Low Flame`
@@ -66,6 +69,10 @@ export default async function CategoryPage({
   const { slug } = await params
   const repo = getRepository()
   const category = repo.categories.getBySlug(slug) || null
+  // 分类不存在就返回真正的 404 状态码。
+  // 此前是渲染 "Collection not found" 但状态码 200（软 404），
+  // 结果失效分类 URL 会被搜索引擎当成有效页收录，白白消耗抓取预算。
+  if (!category) notFound()
   const categoryProducts = repo.products.getByCategory(slug)
 
   return <CategoryClient category={category} products={categoryProducts} />

@@ -11,16 +11,20 @@ import {
 import { useToast } from '@/context/ToastContext'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
+import { useWishlist } from '@/context/WishlistContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product, Review } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import ProductCard from '@/components/product/ProductCard'
 import StickyBuyBar from '@/components/product/StickyBuyBar'
+import VariantOptionPicker from '@/components/product/VariantOptionPicker'
+import ShareRow from '@/components/product/ShareRow'
 import { useProductPrice, useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
 import { trackReferralVisit } from '@/lib/referral-client'
 import { useCategories } from '@/lib/use-categories'
+import { detectShipCountry, shipCountryLabel, OTHER_COUNTRY } from '@/lib/ship-country'
 
 function getVisitorId() {
   let id = localStorage.getItem('visitor_id')
@@ -104,11 +108,14 @@ export default function ProductDetailClient({
   product,
   reviews: reviewsProp,
   giftProducts = [],
+  productUrl,
 }: {
   product: Product | null
   reviews: Review[]
   /** 服务端取好的赠品商品（来自 product.giftProductIds） */
   giftProducts?: any[]
+  /** 服务端拼好的本页地址，供分享栏首屏渲染用（客户端会换成带推广参数的实时地址） */
+  productUrl?: string
 }) {
   const { addItem, addGiftItem, items: cartItems } = useCart()
   // 免邮进度/小计一律用「促销后」金额，与购物车页、结算页、服务端 calculateShipping 口径一致
@@ -155,6 +162,43 @@ export default function ProductDetailClient({
   const [bundleOff, setBundleOff] = useState<Set<string>>(new Set())
   const bundleSelected = bundleList.filter((b: any) => !bundleOff.has(b.bundleProductId))
   /**
+   * 搭配商品各自的规格选择：bundleProductId → 选中的 variantId。
+   *
+   * 没在这里存过的项 = 用该商品的第一个规格（与主商品的默认行为一致）。
+   * 商品数据变化时旧 key 会自然失效（bundleList 里已经没有它了），不影响渲染。
+   */
+  const [bundleVariantSel, setBundleVariantSel] = useState<Record<string, string>>({})
+
+  /**
+   * 搭配商品的规格与「该用哪个价」。
+   *
+   * 价格优先级：款式自带价 > 搭配专属价（后台为这个组合单独设的）> 商品原价。
+   * 越具体越优先 —— 与主商品一致（主商品也是款式价覆盖原价后参与促销计算）。
+   * 这样即便两种价格都配了，客户切换款式时价格也会跟着动，不会看起来像坏了。
+   *
+   * 搭配商品没配规格时 variants 为空数组，UI 不渲染下拉，价格回退到原有逻辑。
+   */
+  const bundleOptions = useMemo(() => {
+    return bundleList.map((b: any) => {
+      const bp = b.product || {}
+      const vs = Array.isArray(bp.variants)
+        ? bp.variants.filter((x: any) => x && x.active !== false && x.label)
+        : []
+      const selected = vs.find((v: any) => v.id === bundleVariantSel[b.bundleProductId]) || vs[0] || null
+      const bundlePrice = b.price !== undefined && b.price !== null ? Number(b.price) : null
+      const basePrice = bundlePrice !== null ? bundlePrice : Number(bp.price) || 0
+      const hasVariantPrice = selected && selected.price !== undefined && selected.price !== null
+      return {
+        bundleProductId: b.bundleProductId as string,
+        variants: vs,
+        optionName: bp.optionName || 'Style',
+        selected,
+        unitPrice: hasVariantPrice ? Number(selected.price) : basePrice,
+        image: (selected && selected.image) || b.image || bp.image || '',
+      }
+    })
+  }, [bundleList, bundleVariantSel])
+  /**
    * 搭配商品的详情预览：点击列表里任意一项，在下方展示该商品的
    * 缩略图 + 名称 + 价格 + 说明，客户不用跳走就能看清要买的是什么。
    * null = 没选中任何项（不显示预览）。
@@ -194,14 +238,19 @@ export default function ProductDetailClient({
   /** 绑了多个赠品时，客户选中的那个 */
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
-  const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistLoading, setWishlistLoading] = useState(false)
   const [visitRecord, setVisitRecord] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState(false)
   const [showStickyBar, setShowStickyBar] = useState(false)
   const buyBoxRef = useRef<HTMLDivElement | null>(null)
   const [related, setRelated] = useState<Product[]>([])
-  const [shipping, setShipping] = useState<{ days: number; freeThreshold: number; cost: number } | null>(null)
+  // 配送估算按「客户所在分区」算，不再写死美国。
+  // 分区之间的时效与门槛差得很远（美加 7–14 天 / 满 $416.67 免邮，
+  // 欧洲 10–18 天 / 满 $555.56，其它地区 12–21 天 / 满 $694.44）——
+  // 写死美国等于对非美客户做出错误的免邮承诺。
+  const [shipping, setShipping] = useState<{ daysMin: number; daysMax: number; freeThreshold: number; cost: number } | null>(null)
+  const [shipCountry, setShipCountry] = useState('')
+  const [shipCountries, setShipCountries] = useState<string[]>([])
   const pageStartTime = useRef(Date.now())
   const recordedRef = useRef<string | null>(null)
   const referralCode = searchParams.get('ref')
@@ -244,23 +293,39 @@ export default function ProductDetailClient({
     return () => { alive = false }
   }, [product?.id, product?.category])
 
-  // 配送时效 + 免邮门槛
+  // 首次进入：按浏览器语言推断客户所在国家。
+  // 只做一次，之后由客户自己在下拉框里改。推断不出就落到「其它地区」兜底分区 ——
+  // 宁可显示保守的时效，也不要像以前那样一律按美国显示（那会让非美客户
+  // 以为满 $416.67 就免邮，实际结算时门槛更高）。
+  useEffect(() => {
+    setShipCountry(detectShipCountry())
+  }, [])
+
+  // 配送时效 + 免邮门槛（随所选国家变化重新取）
   // 免邮门槛取「分区」的 freeThreshold（lib/settings.ts calculateShipping 真正用它判定），
   // 而不是全局 shippingFreeThreshold —— 两者只在美加相同，其它地区差异很大。
   useEffect(() => {
-    fetch('/api/shipping?country=United%20States&subtotal=0')
+    if (!shipCountry) return
+    let alive = true
+    fetch(`/api/shipping?country=${encodeURIComponent(shipCountry)}&subtotal=0`)
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
-        if (!d) return
-        const nums = String(d.estimatedDays || '').match(/\d+/g) || []
+        if (!alive || !d) return
+        // 后台分区本身就有 min/max 两档，直接取用，别再用「min + 固定 7 天」硬凑
+        const nums = (String(d.estimatedDays || '').match(/\d+/g) || []).map(Number)
+        const daysMin = nums[0] || 12
+        const daysMax = nums[1] || daysMin + 7
         setShipping({
-          days: nums.length ? Number(nums[0]) : 12,
+          daysMin,
+          daysMax,
           freeThreshold: Number(d.zone?.freeThreshold) || 0,
           cost: Number(d.cost) || 0,
         })
+        if (Array.isArray(d.countries) && d.countries.length) setShipCountries(d.countries)
       })
       .catch(() => {})
-  }, [])
+    return () => { alive = false }
+  }, [shipCountry])
 
   useEffect(() => {
     if (!referralCode) return
@@ -367,25 +432,23 @@ export default function ProductDetailClient({
     window.dispatchEvent(new CustomEvent('pdp:qty', { detail: { qty } }))
   }, [qty])
 
+  // 收藏走共享 context。顺带修掉一个既有问题：此前 isWishlisted 只有本地 state、
+  // 没有初始加载，所以「已收藏」的商品进详情页会显示成未收藏，要再点一次才知道。
+  const { toggle: toggleWishlist, has: wishlistHas } = useWishlist()
+  const isWishlisted = product ? wishlistHas(product.id) : false
+
   const handleToggleWishlist = async () => {
     if (!product || wishlistLoading) return
     setWishlistLoading(true)
     try {
-      const res = await fetch('/api/wishlist', {
-        method: isWishlisted ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id }),
-      })
-      if (res.ok) {
-        setIsWishlisted(!isWishlisted)
-        addToast(isWishlisted ? 'Removed from wishlist' : 'Saved to wishlist', 'success')
-      } else if (res.status === 401) {
+      const r = await toggleWishlist(product.id)
+      if (r.ok) {
+        addToast(r.added ? 'Saved to wishlist' : 'Removed from wishlist', 'success')
+      } else if (r.reason === 'not-logged-in') {
         addToast('Please sign in to save items', 'error')
       } else {
         addToast('Could not update wishlist', 'error')
       }
-    } catch {
-      addToast('Connection error', 'error')
     } finally {
       setWishlistLoading(false)
     }
@@ -416,12 +479,12 @@ export default function ProductDetailClient({
     ['Origin', product.origin || ''],
   ].filter(([, v]) => v) as [string, string][]
 
-  // 预计到达区间（区间按后台默认时效推算，展示为「下单后 N–M 个工作日」+ 具体日期）
+  // 预计到达区间（用后台分区自己的 min/max 时效，展示为具体日期）
   let deliveryText = ''
   if (shipping) {
     const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const from = new Date(Date.now() + shipping.days * 86400000)
-    const to = new Date(Date.now() + (shipping.days + 7) * 86400000)
+    const from = new Date(Date.now() + shipping.daysMin * 86400000)
+    const to = new Date(Date.now() + shipping.daysMax * 86400000)
     deliveryText = `${fmt(from)} – ${fmt(to)}`
   }
 
@@ -479,14 +542,17 @@ export default function ProductDetailClient({
    *    搭配区块会显示 $68 而页面上方显示 $54.40，客户会以为算错了。实测踩过。
    */
   const bundleCalc = useMemo(() => {
+    // 价格与图片统一取自 bundleOptions（已按「款式价 > 搭配专属价 > 原价」算好），
+    // 避免同一份逻辑在「列表行 / 缩略图 / 详情预览 / 加入购物车」四处各写一遍而走样。
+    const optById = new Map(bundleOptions.map(o => [o.bundleProductId, o]))
     const items = bundleSelected.map((b: any) => {
       const bp = b.product || {}
-      const p = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
+      const o = optById.get(b.bundleProductId)
       return {
         ...b,
         name: bp.nameEn || bp.name || b.bundleProductId,
-        img: b.image || bp.image || '',
-        unitPrice: p,
+        img: o?.image || b.image || bp.image || '',
+        unitPrice: o ? o.unitPrice : (b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0),
         discount: Number(b.discount) || 0,
       }
     })
@@ -501,7 +567,7 @@ export default function ProductDetailClient({
       saving,
       total: Math.max(0, mainPay + extra - saving),
     }
-  }, [bundleSelected, eff.price, effectivePrice])
+  }, [bundleSelected, bundleOptions, eff.price, effectivePrice])
 
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
@@ -521,7 +587,12 @@ export default function ProductDetailClient({
     setTimeout(() => setAdded(false), 2000)
   }
 
-  /** 立即购买：加购后直接进结算页（跳过购物车） */
+  /**
+   * 立即购买：加购后直接进结算页（跳过购物车）。
+   *
+   * 用 silent 加购：这条路径加完就跳走，弹「Added to Cart」浮层只会盖住页面、
+   * 随即被跳转打断，观感上就是凭空冒出一个框 —— 而且它此时不提供任何有用信息。
+   */
   const handleBuyNow = () => {
     for (let i = 0; i < qty; i++) {
       addItem({
@@ -529,7 +600,7 @@ export default function ProductDetailClient({
         nameEn: cartName,
         image: effectiveImage, price: effectivePrice,
         category: product.category,
-      })
+      }, { silent: true })
     }
     attachGift()
     router.push('/checkout')
@@ -798,49 +869,25 @@ export default function ProductDetailClient({
             })()}
 
             {/* ===== 规格 / 款式选择器 =====
-                有款式时显示。选中不同款式 → 图片与价格联动切换。
-                款式的价格/图片留空则沿用主商品的值（所以这里要显示"实际生效"的价格）。 */}
+                有款式时显示。选中不同款式 → 主图与价格联动切换。
+                款式配了图就渲染成缩略图（款式的差异多半是颜色/纹样，光看名字判断不出来），
+                没配图则退回文字按钮 —— 见 VariantOptionPicker。 */}
             {variants.length > 0 && (
               <div className="mt-6" data-variant-picker="1">
-                <div className="flex items-baseline gap-3 mb-2.5">
-                  <span className="font-sans text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: SOFT }}>
-                    {(product as any).optionName || 'Style'}
-                  </span>
-                  <span className="font-sans text-[12px]" style={{ color: INK }}>
-                    {activeVariant?.label}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {variants.map((v: any) => {
-                    const on = activeVariant && v.id === activeVariant.id
-                    const vPrice = v.price !== undefined && v.price !== null ? Number(v.price) : product.price
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        data-variant-option={v.id}
-                        onClick={() => setSelectedVariantId(v.id)}
-                        className="relative px-4 py-2.5 font-sans text-[12px] transition-all duration-200"
-                        style={{
-                          border: `1px solid ${on ? INK : 'rgba(74,58,36,0.28)'}`,
-                          backgroundColor: on ? INK : 'transparent',
-                          color: on ? '#FFFFFF' : SOFT,
-                          borderRadius: 3,
-                        }}
-                        title={`${v.label} — ${formatPrice(convertPrice(vPrice, currency), currency)}`}
-                      >
-                        {v.label}
-                        {/* 有独立价格的款式在按钮上标出来，客户一眼看到差价 */}
-                        {v.price !== undefined && v.price !== null && Number(v.price) !== product.price && (
-                          <span className="ml-2 opacity-70">
-                            {formatPrice(convertPrice(vPrice, currency), currency)}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                <VariantOptionPicker
+                  options={variants.map((v: any) => ({
+                    id: v.id,
+                    label: v.label,
+                    image: v.image,
+                    price: v.price !== undefined && v.price !== null ? Number(v.price) : product.price,
+                  }))}
+                  value={activeVariant?.id}
+                  onChange={setSelectedVariantId}
+                  optionName={(product as any).optionName || 'Style'}
+                  currency={currency}
+                  basePrice={product.price}
+                  dataAttr="variant-option"
+                />
               </div>
             )}
 
@@ -857,7 +904,9 @@ export default function ProductDetailClient({
               )}
               {deliveryText && (
                 <p className="flex items-center gap-2.5 font-sans text-[13px]" style={{ color: SOFT }}>
-                  <Clock size={14} strokeWidth={1.6} style={{ color: GOLD }} /> Order today, estimated arrival <strong style={{ color: INK, fontWeight: 600 }}>{deliveryText}</strong>
+                  <Clock size={14} strokeWidth={1.6} style={{ color: GOLD }} /> Order today, estimated arrival{' '}
+                  <strong style={{ color: INK, fontWeight: 600 }}>{deliveryText}</strong>
+                  <span>to {shipCountry === OTHER_COUNTRY ? 'other regions' : shipCountry}</span>
                 </p>
               )}
             </div>
@@ -981,7 +1030,11 @@ export default function ProductDetailClient({
                   {bundleList.map((b: any) => {
                     const on = !bundleOff.has(b.bundleProductId)
                     const bp = b.product || {}
-                    const unit = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
+                    // 规格感知的价格/图片（与缩略图、详情预览、加入购物车共用同一份 bundleOptions）
+                    const o = bundleOptions.find(x => x.bundleProductId === b.bundleProductId)
+                    const unit = o ? o.unitPrice
+                      : (b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0)
+                    const vs = o?.variants || []
                     return (
                       <div key={b.bundleProductId} className="flex items-start gap-2.5">
                         <button
@@ -1024,6 +1077,35 @@ export default function ProductDetailClient({
                               Bundle saving −{formatPrice(convertPrice(Number(b.discount), currency), currency)}
                             </p>
                           )}
+                          {/* 搭配商品自己的款式选择。
+                              与竞品对齐用**紧凑下拉**，而不是主商品那种图片色块 ——
+                              搭配行左侧已经有一张会联动的缩略图，图片反馈由它承担；
+                              再在每个选项上放一张图，同一件商品的图会在一个小区块里
+                              出现两遍，反而臃肿。（实测竞品就是这样：改下拉 → 该行缩略图切换）
+                              只配了 1 个规格时不渲染 —— 没有可选项。 */}
+                          {on && vs.length > 1 && (
+                            <div className="mt-2">
+                              <VariantOptionPicker
+                                options={vs.map((v: any) => ({
+                                  id: v.id,
+                                  label: v.label,
+                                  image: v.image,
+                                  price: v.price !== undefined && v.price !== null ? Number(v.price) : null,
+                                }))}
+                                value={o?.selected?.id}
+                                onChange={id => setBundleVariantSel(prev => ({ ...prev, [b.bundleProductId]: id }))}
+                                optionName={o?.optionName || 'Style'}
+                                currency={currency}
+                                mode="dropdown"
+                                dataAttr="bundle-variant"
+                              />
+                            </div>
+                          )}
+                          {on && vs.length === 1 && (
+                            <p className="font-sans text-[10px] mt-1" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                              {o?.optionName || 'Style'}: {vs[0].label}
+                            </p>
+                          )}
                         </div>
                         <span className="font-sans text-[12px] shrink-0" style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}>
                           {formatPrice(convertPrice(unit, currency), currency)}
@@ -1040,8 +1122,12 @@ export default function ProductDetailClient({
                   const b = bundleList.find((x: any) => x.bundleProductId === bundlePreview)
                   if (!b) return null
                   const bp = b.product || {}
-                  const unit = b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0
-                  const img = b.image || bp.image || ''
+                  // 预览的价格/图片也走 bundleOptions —— 客户在预览里看到的
+                  // 必须和选中款式后的实际单价一致
+                  const o = bundleOptions.find(x => x.bundleProductId === b.bundleProductId)
+                  const unit = o ? o.unitPrice
+                    : (b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0)
+                  const img = o?.image || b.image || bp.image || ''
                   return (
                     <div className="mt-3 p-3 flex gap-3"
                       data-bundle-preview={b.bundleProductId}
@@ -1258,14 +1344,30 @@ export default function ProductDetailClient({
 
               <Accordion title="Shipping & Returns" icon={Truck}>
                 <ul className="space-y-3">
+                  {/* 目的地区域选择：下面两条（时效、免邮门槛）都按所选分区显示。
+                      此前国家写死美国，非美客户会看到偏低的门槛与偏快的时效。 */}
+                  <li className="flex items-center gap-2 flex-wrap">
+                    <span>Shipping to</span>
+                    <select
+                      value={shipCountry}
+                      onChange={e => setShipCountry(e.target.value)}
+                      aria-label="Shipping destination"
+                      className="font-sans text-[13px] px-2 py-1 rounded-sm cursor-pointer"
+                      style={{ color: INK, border: `1px solid ${LINE}`, backgroundColor: 'transparent' }}
+                    >
+                      {(shipCountries.length ? shipCountries : (shipCountry ? [shipCountry] : [])).map(c => (
+                        <option key={c} value={c}>{shipCountryLabel(c)}</option>
+                      ))}
+                    </select>
+                  </li>
                   <li>
                     Dispatched from the workshop within 1–2 business days.
-                    {shipping && shipping.days > 0 && <> Estimated delivery <strong style={{ color: INK, fontWeight: 600 }}>{shipping.days}–{shipping.days + 7} days</strong>{deliveryText && <> ({deliveryText})</>}.</>}
+                    {shipping && shipping.daysMin > 0 && <> Estimated delivery <strong style={{ color: INK, fontWeight: 600 }}>{shipping.daysMin}–{shipping.daysMax} days</strong>{deliveryText && <> ({deliveryText})</>}.</>}
                   </li>
                   {shipping && shipping.freeThreshold > 0 && (
                     <li>
-                      Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>${shipping.freeThreshold.toFixed(2)}</strong>
-                      {shipping.cost > 0 && <> · flat rate ${shipping.cost.toFixed(2)} below that</>}.
+                      Free shipping on orders over <strong style={{ color: INK, fontWeight: 600 }}>{formatPrice(convertPrice(shipping.freeThreshold, currency), currency)}</strong>
+                      {shipping.cost > 0 && <> · flat rate {formatPrice(convertPrice(shipping.cost, currency), currency)} below that</>}.
                     </li>
                   )}
                   <li>Every piece is packed in protective, gift-ready packaging. Damaged in transit? We replace it free.</li>
@@ -1291,6 +1393,9 @@ export default function ProductDetailClient({
                   </div>
                 </dl>
               </Accordion>
+
+              {/* 社交分享 —— 位置与竞品一致：紧接在四个手风琴之后 */}
+              <ShareRow title={product.nameEn || product.name} image={effectiveImage} initialUrl={productUrl} />
             </div>
 
             {/* ===== 以下是右栏延长区：左主图钉住时，这里持续下滑 ===== */}

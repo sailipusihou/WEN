@@ -122,8 +122,10 @@ export default function QuickViewModal({
     setTimeout(() => setAdded(false), 1800)
   }
 
+  // 与商品详情页的「立即购买」一致：加完直接跳结算页，不要弹「Added to Cart」浮层
+  // （会盖在已经打开的快速查看弹窗之上闪一下，然后被跳转打断）
   const handleBuyNow = () => {
-    for (let i = 0; i < qty; i++) addItem(buildItem())
+    for (let i = 0; i < qty; i++) addItem(buildItem(), { silent: true })
     attachGiftIfAny()
     onClose()
     router.push('/checkout')

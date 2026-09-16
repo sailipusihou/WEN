@@ -2373,7 +2373,7 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
                 <Field label="Auto-Confirm (minutes)" desc="0 = manual only">
                   <Input type="number" value={String(settings.autoConfirmMinutes ?? 0)} onChange={v => update("autoConfirmMinutes", Number(v))} />
                 </Field>
-                <Field label="Default Shipping Days">
+                <Field label="Default Shipping Days" desc="Fallback only — used when the customer's country matches no shipping zone. Normal orders use the zone's own day range.">
                   <Input type="number" value={String(settings.defaultShippingDays ?? 14)} onChange={v => update("defaultShippingDays", Number(v))} />
                 </Field>
               </div>
@@ -2428,21 +2428,22 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
         {subTab === "shipping" && settings && (
           <Section icon={Truck} title="Shipping Settings">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-              <Field label="Free Threshold ($)"><Input type="number" value={String(settings.shippingFreeThreshold ?? 0)} onChange={v => update("shippingFreeThreshold", Number(v))} /></Field>
-              <Field label="Default Cost ($)"><Input type="number" value={String(settings.shippingCost ?? 0)} onChange={v => update("shippingCost", Number(v))} /></Field>
               <Field label="Default Carrier"><Input value={settings.defaultCarrier || ""} onChange={v => update("defaultCarrier", v)} /></Field>
               <Field label="Tracking URL"><Input value={settings.trackingUrlTemplate || ""} onChange={v => update("trackingUrlTemplate", v)} /></Field>
             </div>
-            {/* 这里必须说清楚：实际免邮判定走的是下面「每个分区自己的 Free at $」，
-                上面这个全局值不参与计算（calculateShipping 只读 zone.freeThreshold）。
-                不标注的话，后台改了上面的值会发现前台毫无变化。 */}
+            {/* 运费的唯一真相源是下面每个分区自己的 Base cost / Free at $。
+                原先这里还有两个全局输入框（Free Threshold / Default Cost），但它们不参与
+                任何计算（calculateShipping 只读 zone 的值），值恰好等于美加分区 ——
+                留着只会让人以为改了它们能改运费，已移除。 */}
             <div className="mb-6 px-3 py-2.5 rounded-lg text-xs flex items-start gap-2"
-              style={{ backgroundColor: "rgba(245,158,11,0.10)", color: "#b45309" }}>
+              style={{ backgroundColor: "rgba(59,130,246,0.10)", color: "#1d4ed8" }}>
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               <span>
-                <strong>Above values do not decide free shipping.</strong> Free shipping is decided per zone by
-                each zone&apos;s own <strong>Free at $</strong> below — e.g. United States &amp; Canada 416.67,
-                Europe 555.56, Asia Pacific 486.11, Rest of World 694.44. Change the zone value, not the one above.
+                <strong>Shipping is decided per zone.</strong> Each zone below sets its own
+                <strong> Base cost</strong> and <strong>Free at $</strong>, plus its delivery window
+                and country list. That table is the single source of truth for the storefront,
+                the cart, checkout and the server. A country not listed in any zone falls back to
+                the zone whose country list contains <strong>Other</strong>.
               </span>
             </div>
             <div style={{ borderTop: "1px solid var(--adm-border)" }} className="pt-6">

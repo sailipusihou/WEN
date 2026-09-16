@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useToast } from '@/context/ToastContext'
+import { useWishlist } from '@/context/WishlistContext'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
 import type { Product } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
@@ -31,6 +32,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
   const [tilt, setTilt] = useState<Record<string, string>>({})
   const { addItem } = useCart()
   const { currency } = useCurrency()
+  const { toggle: toggleWishlist, has: wishlistHas } = useWishlist()
   const { addToast } = useToast()
   const eff = useProductPrice(product)
   // Quick view 弹窗
@@ -62,21 +64,14 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
     videoRef.current?.play().catch(() => {})
   }
 
+  // 收藏走共享 context —— 与商品卡、详情页、页头角标共用一份状态
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    try {
-      const res = await fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id }),
-      })
-      if (res.ok) addToast('Saved to wishlist', 'success')
-      else if (res.status === 401) addToast('Please sign in to save items', 'error')
-      else addToast('Could not save to wishlist', 'error')
-    } catch {
-      addToast('Connection error', 'error')
-    }
+    const r = await toggleWishlist(product.id)
+    if (r.ok) addToast(r.added ? 'Saved to wishlist' : 'Removed from wishlist', 'success')
+    else if (r.reason === 'not-logged-in') addToast('Please sign in to save items', 'error')
+    else addToast('Could not update wishlist', 'error')
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -159,14 +154,19 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           {/* 促销角标: 商品图显示促销价格字样 (序号右侧) */}
           <PromoImageBadge eff={eff} currency={currency} className="top-3 left-10" />
 
-          {/* Wishlist */}
+          {/* Wishlist —— 已收藏时实心 + 陶土色 */}
           <button
             onClick={handleToggleWishlist}
             type="button"
-            aria-label="Add to wishlist"
+            aria-label={wishlistHas(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-pressed={wishlistHas(product.id)}
             className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-[#FFFFFF]/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-[#FFFFFF] shadow-soft"
           >
-            <Heart size={14} strokeWidth={1.5} />
+            <Heart
+              size={14}
+              strokeWidth={1.5}
+              style={wishlistHas(product.id) ? { fill: '#A8472E', color: '#A8472E' } : undefined}
+            />
           </button>
 
           {/*

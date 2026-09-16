@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { getRepository } from '@/lib/repository'
 import HomeClient from '@/components/layout/HomeClient'
+import { getHomepageSampleReviews } from '@/lib/sample-reviews'
 import { getSiteBaseUrl } from '@/lib/site-url'
 import { convertPrice } from '@/lib/cart-types'
 
@@ -24,6 +25,30 @@ export default async function HomePage() {
     const selected = allActive.filter(p => settings.featuredProductIds.includes(p.id))
     if (selected.length > 0) featuredProducts = selected
   }
+
+  /**
+   * 首页评价区数据。
+   *
+   * 真实评价优先 —— 只取已审核、未隐藏、未删除的（与商品详情页同一口径）。
+   * 一条都没有时才回退到开发模式的示例评价，且每条都带 isSample 标记，
+   * 渲染时会显示可见的 SAMPLE 角标。生产构建下示例数据恒为空（见 lib/sample-reviews.ts
+   * 的门禁说明），所以线上要么显示真实评价，要么整段不渲染。
+   */
+  const realReviews = repo.reviews.list()
+    .filter(r => r.approved && !r.hidden && !r.deleted)
+    .slice(0, 3)
+    .map(r => ({
+      id: r.id,
+      productId: r.productId,
+      author: r.author,
+      avatar: r.avatar,
+      rating: r.rating,
+      date: r.date,
+      content: r.content,
+      location: r.location,
+      isSample: false as const,
+    }))
+  const homepageReviews = realReviews.length > 0 ? realReviews : getHomepageSampleReviews(3)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -64,10 +89,14 @@ export default async function HomePage() {
       description: p.subtitleEn || p.subtitle,
       image: p.image,
       offers,
-      ...((p.reviewCount && p.reviewCount > 0) ? {
+      // 只有「确实有评价」且「分数有效」时才输出 aggregateRating。
+      // 原来写的是 ratingValue: p.rating || 4.8 —— 那个 4.8 是编造的兜底值，
+      // 会把「0 条评价」的商品包装成有评分提交给搜索引擎。加上 rating > 0 的判断，
+      // 并去掉默认分，保证提交出去的每一个数字都来自真实评价。
+      ...((p.reviewCount > 0 && p.rating > 0) ? {
         aggregateRating: {
           '@type': 'AggregateRating',
-          ratingValue: p.rating || 4.8,
+          ratingValue: p.rating,
           reviewCount: p.reviewCount,
         },
       } : {}),
@@ -94,6 +123,7 @@ export default async function HomePage() {
         featuredProducts={featuredProducts}
         heroBgImage={settings.heroBackgroundImage}
         initialContent={settings.frontendContent || null}
+        reviews={homepageReviews}
       />
     </>
   )

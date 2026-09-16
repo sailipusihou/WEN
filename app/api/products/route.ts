@@ -154,6 +154,9 @@ export async function POST(req: NextRequest) {
     const repo = getRepository()
     const allProducts = repo.products.list()
     const existingCodes = new Set(allProducts.map(p => p.code).filter(Boolean) as string[])
+    // 未指定分类时用后台的第一个真实分类 —— 此前默认写死 'cultural-gifts'，
+    // 而那个分类早已不存在，新商品会静默落进一个查不到的分类里。
+    const defaultCategory = repo.categories.list()[0]?.slug || ''
 
     let code: string | undefined
     if (body.code !== undefined && body.code !== null && String(body.code).trim() !== '') {
@@ -168,7 +171,7 @@ export async function POST(req: NextRequest) {
       code = candidate
     } else {
       // 自动生成规律性编码
-      const category = body.category || 'cultural-gifts'
+      const category = body.category || defaultCategory
       code = generateProductCode(category, existingCodes)
     }
 
@@ -188,7 +191,7 @@ export async function POST(req: NextRequest) {
       costPrice: body.costPrice ? Number(body.costPrice) : undefined,
       stock: Number(body.stock) || 0,
       supplierId: body.supplierId || undefined,
-      category: body.category || 'cultural-gifts',
+      category: body.category || defaultCategory,
       tags: Array.isArray(body.tags) ? body.tags : [],
       tagsEn: Array.isArray(body.tagsEn) ? body.tagsEn : undefined,
       image: body.image || 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',

@@ -15,6 +15,7 @@ import { computePromotionForProduct } from '@/lib/promotion-shared'
 import OrderSummaryLines from '@/components/cart/OrderSummaryLines'
 import ShopWithConfidence from '@/components/cart/ShopWithConfidence'
 import CartExpressCheckout from '@/components/cart/CartExpressCheckout'
+import { detectShipCountry, shipCountryLabel } from '@/lib/ship-country'
 
 export default function CartPage() {
   // 快捷支付成功后记下订单号：购物车会被清空，但这时要显示「下单成功」而不是「购物车是空的」
@@ -47,10 +48,22 @@ export default function CartPage() {
   // (lib/settings.ts calculateShipping: subtotal >= zone.freeThreshold ? 0 : zone.baseCost),
   // 而不是全局 shippingFreeThreshold。两者对美加恰好相同(416.67), 但欧洲是 555.56、
   // 亚太 486.11、其他 694.44 —— 用全局值会对这些地区的客户承诺出并不存在的免邮。
-  const [freeThreshold, setFreeThreshold] = useState(416.67)
+  //
+  // 但光换数据源还不够：此前 country 写死 'United States'，所以取到的仍然是美加分区，
+  // 非美客户看到的门槛依旧偏低。现在按浏览器语言推断目的国。
+  // null = 还没取到，此时不显示免邮提示（避免先闪一个美国数字出来）。
+  const [freeThreshold, setFreeThreshold] = useState<number | null>(null)
+  const [shipCountry, setShipCountry] = useState('')
+
+  // 首次进入：按浏览器语言推断目的国
   useEffect(() => {
+    setShipCountry(detectShipCountry())
+  }, [])
+
+  useEffect(() => {
+    if (!shipCountry) return
     let cancelled = false
-    fetch(`/api/shipping?country=United%20States&subtotal=${subtotal}`)
+    fetch(`/api/shipping?country=${encodeURIComponent(shipCountry)}&subtotal=${subtotal}`)
       .then(r => r.ok ? r.json() : { cost: 250, zone: null })
       .then(d => {
         if (cancelled) return
@@ -60,7 +73,7 @@ export default function CartPage() {
       })
       .catch(() => { if (!cancelled) setShippingCost(250) })
     return () => { cancelled = true }
-  }, [subtotal])
+  }, [subtotal, shipCountry])
 
   const shipping = shippingCost
   const shippingConverted = convertPrice(shipping, currency)
@@ -229,10 +242,10 @@ export default function CartPage() {
                   <span className="text-[#2A2118]">{formatPrice(subtotalConverted, currency)}</span>
                 </div>
                 <div className="flex justify-between text-[#5A4A36]/70">
-                  <span>Shipping</span>
+                  <span>Shipping{shipCountry ? ` to ${shipCountryLabel(shipCountry)}` : ''}</span>
                   <span className="text-[#2A2118]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
-                {shipping > 0 ? (
+                {shipping > 0 && freeThreshold !== null ? (
                   <div className="pt-1">
                     <p className="font-sans text-[11px] text-[#5A4A36]/70 mb-2">
                       Add <strong className="text-[#2A2118]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
@@ -247,11 +260,11 @@ export default function CartPage() {
                       />
                     </div>
                   </div>
-                ) : (
+                ) : shipping === 0 ? (
                   <p className="font-sans text-[11px] font-medium text-green-600 flex items-center gap-1.5">
                     <Check size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
                   </p>
-                )}
+                ) : null}
                 <div className="border-t border-[#EFE7D4]/60 pt-3 flex justify-between font-medium text-[#2A2118]">
                   <span className="font-sans text-sm">Total</span>
                   <span className="font-en text-lg font-semibold">{formatPrice(totalConverted, currency)}</span>

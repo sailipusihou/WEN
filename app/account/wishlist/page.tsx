@@ -9,6 +9,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 import { useCategories } from '@/lib/use-categories'
+import { useWishlist } from '@/context/WishlistContext'
 
 export default function WishlistPage() {
   const { labelFor } = useCategories()
@@ -17,28 +18,32 @@ export default function WishlistPage() {
   const { addItem } = useCart()
   const { currency } = useCurrency()
   const { addToast } = useToast()
+  // 收藏 id 一律取自共享 context —— 这样在这里移除商品，页头角标会同步减少；
+  // 也省掉了本页原先那次重复的 /api/wishlist 请求。
+  const { ids, loaded, toggle: toggleWishlist } = useWishlist()
   // 促销价与全站一致 (修复: 原先收藏夹只显示原价)
   const promotions = useActivePromotions()
 
-  const loadWishlist = () => {
-    setLoading(true)
-    fetch('/api/wishlist')
-      .then(r => r.ok ? r.json() : { ids: [] })
-      .then(async (d) => {
-        const ids = d.ids || []
-        if (ids.length === 0) { setItems([]); setLoading(false); return }
-        const res = await fetch('/api/products')
-        const rawData = res.ok ? await res.json() : []
+  useEffect(() => {
+    if (!loaded) return                 // 还没取到收藏 id，保持 loading 态
+    if (ids.length === 0) { setItems([]); setLoading(false); return }
+    let alive = true
+    fetch('/api/products')
+      .then(r => (r.ok ? r.json() : []))
+      .then((rawData: any) => {
+        if (!alive) return
         const allProducts = Array.isArray(rawData) ? rawData : (rawData.items || [])
-        const filtered = allProducts.filter((p: any) => ids.includes(p.id))
-        setItems(filtered); setLoading(false)
-      }).catch(() => setLoading(false))
-  }
-  useEffect(loadWishlist, [])
+        setItems(allProducts.filter((p: any) => ids.includes(p.id)))
+        setLoading(false)
+      })
+      .catch(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [ids, loaded])
 
   const removeFromWishlist = async (id: string) => {
-    await fetch('/api/wishlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: id }) })
-    setItems(prev => prev.filter(i => i.id !== id))
+    const r = await toggleWishlist(id)
+    if (r.ok) setItems(prev => prev.filter(i => i.id !== id))
+    else addToast('Could not update wishlist', 'error')
   }
 
   const addToCart = (product: any) => {

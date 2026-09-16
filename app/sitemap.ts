@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next'
 import { getRepository } from '@/lib/repository'
-import { getAllCategories } from '@/lib/categories'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -30,10 +29,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
-  } catch {}
 
-  try {
-    const categories = getAllCategories()
+    // 分类也必须走 repository —— 此前这里直接调 lib/categories 的 getAllCategories(),
+    // 那是读 data/categories.json 的遗留 JSON 层, 与 SQLite 早已分叉,
+    // 结果是 sitemap 一直在收录不存在的分类 URL (含带空格的坏 slug)。
+    const categories = repo.categories.list().filter((c: any) => c.active !== false)
     categoryPages = categories.map(c => ({
       url: `${baseUrl}/category/${c.slug}`,
       lastModified: now,

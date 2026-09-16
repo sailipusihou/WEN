@@ -2,6 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getCachedData, invalidateCache, CACHE_TTL } from '@/lib/cache'
+import { categoryCodePrefix } from './product-code'
 
 const DATA_DIR = path.join(process.cwd(), 'data')
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
@@ -134,16 +135,14 @@ export interface ProductVariant {
   active?: boolean
 }
 
-// 商品编码分类前缀映射 — 规律性: {前缀}-{4位序号}, 如 CG-0001
-const CATEGORY_CODE_PREFIX: Record<string, string> = {
-  'cultural-gifts': 'CG',
-  'home-decor': 'HD',
-  'creative-gifts': 'GI',
-}
+// 商品编码前缀推导已抽到 lib/product-code.ts —— 那是纯函数模块，
+// 客户端组件（管理后台的商品表单）也要用它，而这个文件依赖 fs，不能进客户端包。
+// 这里重新导出，保持服务端原有的 `import { categoryCodePrefix } from '@/lib/db'` 可用。
+export { categoryCodePrefix }
 
 // 根据分类生成规律性商品编码 (在该前缀下递增, 跳过已占用)
 export function generateProductCode(category: string, existingCodes: Set<string>): string {
-  const prefix = CATEGORY_CODE_PREFIX[category] || 'GEN'
+  const prefix = categoryCodePrefix(category)
   let maxNum = 0
   const re = new RegExp(`^${prefix}-(\\d+)$`)
   for (const code of existingCodes) {

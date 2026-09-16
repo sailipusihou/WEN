@@ -68,11 +68,13 @@ if (!APPLY) { console.log('\n只报告模式，加 --apply 执行'); db.close();
 // ---------- 写入 ----------
 const now = new Date().toISOString()
 const tx = db.transaction(() => {
-  // 1) 重命名旧 slug
+  // 1) 重命名旧 slug（id 一起改 —— 脏 id 'CAT-Chinese Tea Culture' 会被
+  //    前端 categoryLabel() 当成兜底匹配键，留着是隐患）
   for (const [from, to] of Object.entries(SLUG_RENAMES)) {
     const c = db.prepare('SELECT * FROM categories WHERE slug = ?').get(from)
     if (c) {
-      db.prepare('UPDATE categories SET slug = ?, updatedAt = ? WHERE id = ?').run(to, now, c.id)
+      const newId = String(c.id).startsWith('CAT-') ? 'CAT-' + to : c.id
+      db.prepare('UPDATE categories SET slug = ?, id = ?, updatedAt = ? WHERE id = ?').run(to, newId, now, c.id)
       db.prepare('UPDATE products SET category = ? WHERE category = ?').run(to, from)
     }
   }

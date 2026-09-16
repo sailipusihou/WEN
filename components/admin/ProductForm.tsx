@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Save, ArrowLeft, Upload, X, ImagePlus, Link as LinkIcon, Factory, RefreshCw, Plus, Video } from "lucide-react"
 import type { Product } from "@/lib/db"
+import { categoryCodePrefix } from "@/lib/product-code"
 
 interface SupplierOption { id: string; name: string; region?: string }
 
@@ -58,7 +59,8 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
   const router = useRouter()
   const isEdit = !!initial
   const [saving, setSaving] = useState(false)
-  const [catOptions, setCatOptions] = useState([])
+  // 显式标注元素类型 —— useState([]) 会被推断成 never[]，下面取 .slug 就过不了类型检查
+  const [catOptions, setCatOptions] = useState<Array<{ slug: string; name?: string; nameEn?: string }>>([])
   const [supplierOptions, setSupplierOptions] = useState<SupplierOption[]>([])
   const [error, setError] = useState("")
   const [uploading, setUploading] = useState(false)
@@ -186,6 +188,18 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     })
   }, [])
 
+  // 分类兜底：新建时取后台的第一个真实分类。
+  // 此前默认写死 'cultural-gifts' —— 那个分类早已不存在，下拉里也没有这个选项，
+  // 结果是新建商品会带着一个查不到的分类保存。顺带也修掉历史遗留的无效分类。
+  useEffect(() => {
+    if (!catOptions.length) return
+    const slugs = catOptions.map((c: any) => c.slug)
+    setForm(f => {
+      if (f.category && slugs.includes(f.category)) return f
+      return { ...f, category: catOptions[0].slug }
+    })
+  }, [catOptions])
+
   const [form, setForm] = useState({
     code: initial?.code || "",
     name: initial?.name || "",
@@ -201,7 +215,7 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     costPrice: initial?.costPrice?.toString() || "",
     stock: initial?.stock?.toString() || "0",
     supplierId: initial?.supplierId || "",
-    category: initial?.category || "cultural-gifts",
+    category: initial?.category || "",
     tags: initial?.tags?.join(", ") || "",
     tagsEn: initial?.tagsEn?.join(", ") || "",
     image: initial?.image || "",
@@ -386,7 +400,7 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
           nameEn: name,
           subtitle: '', description: '', story: '',
           price: Number(quickForm.price) || 0,
-          category: form.category || 'cultural-gifts',
+          category: form.category || catOptions[0]?.slug || '',
           image: quickForm.image || '',
           craft: '', material: '', origin: '',
           rating: 0, reviewCount: 0,
@@ -436,12 +450,9 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
       const data = await res.json()
       const all = Array.isArray(data) ? data : (data.items || [])
       const existingCodes = new Set<string>(all.map((p: any) => p.code).filter(Boolean))
-      const prefixMap: Record<string, string> = {
-        'cultural-gifts': 'CG',
-        'home-decor': 'HD',
-        'creative-gifts': 'GI',
-      }
-      const prefix = prefixMap[form.category] || 'GEN'
+      // 前缀由分类 slug 推导（tea-ceremony → TC），与 lib/db.ts 的 generateProductCode 同一套规则，
+      // 保证「Auto」按钮和保存时服务端自动生成的编码前缀一致
+      const prefix = categoryCodePrefix(form.category)
       let maxNum = 0
       const re = new RegExp(`^${prefix}-(\\d+)$`)
       existingCodes.forEach((c: string) => {
@@ -684,12 +695,12 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Product Code">
               <div className="flex gap-2">
-                <input type="text" value={form.code} onChange={e => update("code", e.target.value.toUpperCase())} placeholder="CG-0001" className="flex-1 px-4 py-2.5 rounded-lg text-sm font-mono" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
+                <input type="text" value={form.code} onChange={e => update("code", e.target.value.toUpperCase())} placeholder={`${categoryCodePrefix(form.category)}-0001`} className="flex-1 px-4 py-2.5 rounded-lg text-sm font-mono" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} />
                 <button type="button" onClick={handleGenerateCode} className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap" style={{ backgroundColor: "var(--adm-accent-bg)", color: "var(--adm-accent)", border: "1px solid var(--adm-input-border)" }} title="Auto generate next code">
                   <RefreshCw size={13} /> Auto
                 </button>
               </div>
-              <p className="text-[11px] mt-1" style={{ color: "var(--adm-text-secondary)" }}>Unique code by category: CG (Cultural Gifts), HD (Home Decor), GI (Gift Ideas) + 4-digit number. Leave empty to auto-generate on save.</p>
+              <p className="text-[11px] mt-1" style={{ color: "var(--adm-text-secondary)" }}>Unique code by category — derived from the category slug (tea-ceremony → TC, lighting-decor → LD) + 4-digit number. Leave empty to auto-generate on save.</p>
             </Field>
             <Field label="Product Name *">
               <input type="text" value={form.name} onChange={e => update("name", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} required />

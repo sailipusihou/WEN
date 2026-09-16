@@ -13,6 +13,7 @@ import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag, promoPriceClass } from '@/components/product/PromoBadge'
 import { useCategories } from '@/lib/use-categories'
+import { useWishlist } from '@/context/WishlistContext'
 import QuickViewModal from '@/components/product/QuickViewModal'
 
 interface ProductCardProps { product: Product; index?: number }
@@ -23,6 +24,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addToast } = useToast()
   const eff = useProductPrice(product)
   const { labelFor } = useCategories()
+  const { toggle: toggleWishlist, has: isWishlisted } = useWishlist()
   const videoRef = useRef<HTMLVideoElement>(null)
   // Quick view 弹窗开关（点卡片上的「Quick view」打开，不跳转页面）
   const [quickView, setQuickView] = useState(false)
@@ -35,24 +37,18 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     if (v) { v.pause(); v.currentTime = 0 }
   }
 
+  // 收藏走共享 context，不再自己裸调接口 —— 否则页头角标和详情页的心形
+  // 都不会跟着这张卡片变（此前就是各发各的请求，状态互不相通）。
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    try {
-      const res = await fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id }),
-      })
-      if (res.ok) {
-        addToast('Saved to wishlist', 'success')
-      } else if (res.status === 401) {
-        addToast('Please sign in to save items', 'error')
-      } else {
-        addToast('Could not save to wishlist', 'error')
-      }
-    } catch {
-      addToast('Connection error', 'error')
+    const r = await toggleWishlist(product.id)
+    if (r.ok) {
+      addToast(r.added ? 'Saved to wishlist' : 'Removed from wishlist', 'success')
+    } else if (r.reason === 'not-logged-in') {
+      addToast('Please sign in to save items', 'error')
+    } else {
+      addToast('Could not update wishlist', 'error')
     }
   }
 
@@ -118,14 +114,19 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               {labelFor(product.category)}
             </span>
           </div>
-          {/* Wishlist */}
+          {/* Wishlist —— 已收藏时实心 + 陶土色，未收藏是描边 */}
           <button
             onClick={handleToggleWishlist}
             type="button"
             className="absolute top-3 right-3 w-9 h-9 bg-[#FFFFFF]/85 hover:bg-[#FFFFFF] text-[#2A2118] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
-            aria-label="Add to wishlist"
+            aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-pressed={isWishlisted(product.id)}
           >
-            <Heart size={15} strokeWidth={1.5} />
+            <Heart
+              size={15}
+              strokeWidth={1.5}
+              style={isWishlisted(product.id) ? { fill: '#A8472E', color: '#A8472E' } : undefined}
+            />
           </button>
           {/* 促销角标: 商品图左下角显示促销价格字样 */}
           <PromoImageBadge eff={eff} currency={currency} />
