@@ -145,12 +145,14 @@ export default function Header() {
             {/* Logo - refined symbol */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
               {/*
-                徽标尺寸说明：之前是 h-9/w-9（36px）配 h-[72%] 的 logo ——
-                竖版 logo 在里面只占 23×32px，细节完全看不清，换成新 logo 后
-                肉眼几乎察觉不到变化。这里放大到 44/52px，并把 logo 占比提到 86%，
-                让 logo 里的茶碗/蒸汽/花瓶细节能真正被看到。
+                徽标底色改深色（原为米色 #EDE3D2）。
+                原因：logo 的原色是 #F2F1EE（白色线条），放在米色圆里完全看不见 ——
+                必须给深色底才能显出品牌原本的样子。
+                尺寸也从 36/44px 放大到 44/52px，logo 占比 72%→86%，
+                否则竖版 logo 在圆里只有 23×32px，细节看不清。
               */}
-              <div className="h-11 w-11 md:h-[52px] md:w-[52px] rounded-full bg-[#EDE3D2]/95 shadow-soft overflow-hidden flex items-center justify-center shrink-0">
+              <div className="h-11 w-11 md:h-[52px] md:w-[52px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-soft"
+                style={{ backgroundColor: '#2A2118' }}>
                 <img
                   src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                   alt="Low Flame"

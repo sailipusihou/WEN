@@ -92,10 +92,16 @@ export default function Footer() {
           {/* 品牌列 */}
           <div className="lg:col-span-5">
             <Link href="/" className="inline-flex items-center gap-3 group mb-5">
-              {/* 同页头：放大徽标 + 提高 logo 占比，否则竖版 logo 在圆里只有一小块，看不清细节 */}
-              <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: '#EDE3D2' }}>
-                <img src="/images/low-flame-logo.png" alt="Low Flame" className="h-[86%] w-auto object-contain" />
-              </div>
+              {/*
+                页脚本来就是深色背景 —— 所以这里**不要圆形徽标**，
+                直接把白色 logo 放上去，正好还原你文件里「白线 + 深底」的原始观感。
+                （页头是浅色背景，那里必须加深色圆底才看得见白色 logo。）
+              */}
+              <img
+                src="/images/low-flame-logo.png"
+                alt="Low Flame"
+                className="h-11 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+              />
               <span className="font-en text-[22px] tracking-[0.02em] font-medium transition-colors" style={{ color: ON_DARK }}>Low Flame</span>
             </Link>
             <p className="font-sans text-[14px] leading-[1.8] max-w-sm" style={{ color: ON_DARK_SOFT }}>{brandDesc}</p>
