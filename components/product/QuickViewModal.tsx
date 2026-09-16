@@ -24,9 +24,24 @@ import { PromoSaleTag } from '@/components/product/PromoBadge'
 export default function QuickViewModal({
   product,
   onClose,
+  selectMode = false,
+  onSelect,
+  selectLabel = 'Select',
+  initialVariantId = null,
 }: {
   product: Product | null
   onClose: () => void
+  /**
+   * 「选择模式」：用于搭配区 —— 点缩略图弹出本弹窗，选好款式后按 SELECT
+   * 把款式回填给搭配项，而不是加入购物车。（对齐竞品：它的搭配缩略图点开
+   * 就是这个形态 —— 左图库、右信息、STYLE 选择器 + SELECT 按钮）
+   */
+  selectMode?: boolean
+  /** 选择模式下按下 SELECT 时回调；null = 未选款式（用商品默认） */
+  onSelect?: (variantId: string | null) => void
+  selectLabel?: string
+  /** 打开时预先选中的款式（传当前已选的那个，避免弹窗里显示成另一个） */
+  initialVariantId?: string | null
 }) {
   const { addItem, addGiftItem } = useCart()
   const { currency } = useCurrency()
@@ -34,7 +49,7 @@ export default function QuickViewModal({
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const [imgIdx, setImgIdx] = useState(0)
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(initialVariantId)
 
   // 款式（只取启用的）
   const variants = useMemo(() => {
@@ -249,46 +264,62 @@ export default function QuickViewModal({
               </div>
             )}
 
-            {/* 数量 */}
-            <div className="flex items-stretch gap-3 mb-3">
-              <div className="flex items-center" style={{ border: '1px solid rgba(74,58,36,0.28)', borderRadius: 4 }}>
-                <button type="button" onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Decrease">
-                  <Minus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
-                </button>
-                <span className="px-1 font-sans text-[15px] min-w-[2rem] text-center" style={{ color: '#2A2118' }}>{qty}</span>
-                <button type="button" onClick={() => setQty(qty + 1)}
-                  className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Increase">
-                  <Plus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
-                </button>
-              </div>
-
+            {selectMode ? (
+              /* 选择模式：只要一颗 SELECT —— 把当前选中的款式回填给搭配项。
+                 这里不显示数量与购买按钮：语义是"挑款式"，不是下单。 */
               <button
                 type="button"
-                onClick={handleAdd}
-                data-qv-add="1"
-                className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300"
-                style={{
-                  backgroundColor: added ? '#8A6A2E' : '#FFFFFF',
-                  color: added ? '#FFFFFF' : '#2A2118',
-                  border: `1px solid ${added ? '#8A6A2E' : '#2A2118'}`,
-                  borderRadius: 4,
-                }}
+                data-qv-select="1"
+                onClick={() => { onSelect?.(selectedVariantId); onClose() }}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
+                style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
               >
-                {added ? <><Check size={14} strokeWidth={2.2} /> 已加入</> : <><ShoppingBag size={14} strokeWidth={2} /> Add to cart</>}
+                {selectLabel}
               </button>
-            </div>
+            ) : (
+              <>
+                {/* 数量 */}
+                <div className="flex items-stretch gap-3 mb-3">
+                  <div className="flex items-center" style={{ border: '1px solid rgba(74,58,36,0.28)', borderRadius: 4 }}>
+                    <button type="button" onClick={() => setQty(Math.max(1, qty - 1))}
+                      className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Decrease">
+                      <Minus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
+                    </button>
+                    <span className="px-1 font-sans text-[15px] min-w-[2rem] text-center" style={{ color: '#2A2118' }}>{qty}</span>
+                    <button type="button" onClick={() => setQty(qty + 1)}
+                      className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Increase">
+                      <Plus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
+                    </button>
+                  </div>
 
-            {/* 立即购买 */}
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              data-qv-buynow="1"
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
-              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
-            >
-              <Zap size={14} strokeWidth={2.2} /> Buy now
-            </button>
+                  <button
+                    type="button"
+                    onClick={handleAdd}
+                    data-qv-add="1"
+                    className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300"
+                    style={{
+                      backgroundColor: added ? '#8A6A2E' : '#FFFFFF',
+                      color: added ? '#FFFFFF' : '#2A2118',
+                      border: `1px solid ${added ? '#8A6A2E' : '#2A2118'}`,
+                      borderRadius: 4,
+                    }}
+                  >
+                    {added ? <><Check size={14} strokeWidth={2.2} /> Added</> : <><ShoppingBag size={14} strokeWidth={2} /> Add to cart</>}
+                  </button>
+                </div>
+
+                {/* 立即购买 */}
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  data-qv-buynow="1"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
+                  style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
+                >
+                  <Zap size={14} strokeWidth={2.2} /> Buy now
+                </button>
+              </>
+            )}
 
             <Link
               href={`/products/${product.id}`}
@@ -296,7 +327,7 @@ export default function QuickViewModal({
               className="font-sans text-[11px] underline underline-offset-4 transition-opacity hover:opacity-70 mb-4"
               style={{ color: 'rgba(74,58,36,0.65)' }}
             >
-              查看完整商品详情 →
+              View full details →
             </Link>
 
             {/* 简短卖点 */}

@@ -19,6 +19,7 @@ import ProductCard from '@/components/product/ProductCard'
 import StickyBuyBar from '@/components/product/StickyBuyBar'
 import VariantOptionPicker from '@/components/product/VariantOptionPicker'
 import ShareRow from '@/components/product/ShareRow'
+import QuickViewModal from '@/components/product/QuickViewModal'
 import { useProductPrice, useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
@@ -141,8 +142,18 @@ export default function ProductDetailClient({
   }, [product])
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  /**
+   * 「取消选中」用的哨兵值。
+   *
+   * 需要与「从未主动选过」（null）区分开：null 时默认套用第一个款式（兼容旧行为），
+   * 而客户**主动点掉**已选中的款式时，应当真的不套用任何款式 ——
+   * 价格与图片都回到商品本身的，加购也不带款式名。
+   * 这是竞品的行为：点第二次已选中的款式会取消（实测 [true,false] → [false,false]）。
+   */
+  const VARIANT_NONE = '__none__'
   const activeVariant = useMemo(() => {
     if (!variants.length) return null
+    if (selectedVariantId === VARIANT_NONE) return null
     return variants.find((v: any) => v.id === selectedVariantId) || variants[0]
   }, [variants, selectedVariantId])
 
@@ -168,6 +179,20 @@ export default function ProductDetailClient({
    * 商品数据变化时旧 key 会自然失效（bundleList 里已经没有它了），不影响渲染。
    */
   const [bundleVariantSel, setBundleVariantSel] = useState<Record<string, string>>({})
+
+  /**
+   * 搭配区缩略图点开的快捷查看弹窗。
+   * bundleProductId === null 表示点的是「主商品」那一张。
+   */
+  const [qvBundle, setQvBundle] = useState<{ product: any; bundleProductId: string | null } | null>(null)
+
+  /** 打开搭配区某个商品的快捷查看（主商品或搭配商品都走这里） */
+  const openBundleQuickView = (key: string) => {
+    if (!product) return
+    if (key === product.id) { setQvBundle({ product, bundleProductId: null }); return }
+    const b = bundleList.find((x: any) => x.bundleProductId === key)
+    if (b?.product) setQvBundle({ product: b.product, bundleProductId: key })
+  }
 
   /**
    * 搭配商品的规格与「该用哪个价」。
@@ -198,12 +223,6 @@ export default function ProductDetailClient({
       }
     })
   }, [bundleList, bundleVariantSel])
-  /**
-   * 搭配商品的详情预览：点击列表里任意一项，在下方展示该商品的
-   * 缩略图 + 名称 + 价格 + 说明，客户不用跳走就能看清要买的是什么。
-   * null = 没选中任何项（不显示预览）。
-   */
-  const [bundlePreview, setBundlePreview] = useState<string | null>(null)
 
   /**
    * 价格展示：有选中款式且该款式设了独立价格时，**用款式的价格参与促销计算**。
@@ -216,12 +235,14 @@ export default function ProductDetailClient({
    */
   const priceSource = useMemo(() => {
     if (!product) return product
-    const v = variants.find((x: any) => x.id === selectedVariantId) || variants[0]
+    // 用 activeVariant（而不是自己再 find 一次）—— 它已经把「取消选中」处理掉了，
+    // 否则取消后这里还会退回 variants[0]，出现"明明没选款式却按款式价算"。
+    const v = activeVariant
     if (v && v.price !== undefined && v.price !== null && Number(v.price) !== product.price) {
       return { ...product, price: Number(v.price) }
     }
     return product
-  }, [product, variants, selectedVariantId])
+  }, [product, activeVariant])
   const eff = useProductPrice(priceSource)
   const { labelFor } = useCategories()
   const searchParams = useSearchParams()
@@ -882,11 +903,13 @@ export default function ProductDetailClient({
                     price: v.price !== undefined && v.price !== null ? Number(v.price) : product.price,
                   }))}
                   value={activeVariant?.id}
-                  onChange={setSelectedVariantId}
+                  // onChange 收到 null = 客户点了已选中的款式要取消 → 落成哨兵值
+                  onChange={id => setSelectedVariantId(id ?? VARIANT_NONE)}
                   optionName={(product as any).optionName || 'Style'}
                   currency={currency}
                   basePrice={product.price}
                   dataAttr="variant-option"
+                  allowDeselect
                 />
               </div>
             )}
@@ -994,19 +1017,33 @@ export default function ProductDetailClient({
                   {(product as any).bundleTitle || 'Frequently bought together'}
                 </p>
 
-                {/* 缩略图排：主商品 + 各搭配商品，用 + 连接 */}
+                {/* 缩略图排：主商品 + 各搭配商品，用 + 连接。
+                    每张图都可点 → 弹出该商品的快捷查看（左图库 + 右信息 + 款式选择 + SELECT）。
+                    与竞品一致：它的搭配缩略图点开就是这个弹窗（实测 URL 不变、页面变暗）。 */}
                 <div className="flex items-center gap-3 flex-wrap mb-4">
                   {[{
+                    key: product.id,
                     img: effectiveImage,
                     name: cartName,
-                  }, ...bundleCalc.items.map((b: any) => ({ img: b.img, name: b.name }))].map((it, i) => (
-                    <div key={i} className="flex items-center gap-3">
+                  }, ...bundleCalc.items.map((b: any) => ({
+                    key: b.bundleProductId,
+                    img: b.img,
+                    name: b.name,
+                  }))].map((it, i) => (
+                    <div key={it.key} className="flex items-center gap-3">
                       {i > 0 && <span className="font-sans text-[16px]" style={{ color: 'rgba(74,58,36,0.4)' }}>+</span>}
-                      <div className="overflow-hidden"
-                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2' }}>
+                      <button
+                        type="button"
+                        data-bundle-thumb={it.key}
+                        onClick={() => openBundleQuickView(it.key)}
+                        className="overflow-hidden transition-opacity duration-200 hover:opacity-80"
+                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2', cursor: 'zoom-in' }}
+                        aria-label={`View ${it.name}`}
+                        title={`View ${it.name}`}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={it.img} alt="" className="w-full h-full object-cover" />
-                      </div>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1057,11 +1094,11 @@ export default function ProductDetailClient({
                           {on && <Check size={11} strokeWidth={3} color="#fff" />}
                         </button>
                         <div className="flex-1 min-w-0">
-                          {/* 点商品名 → 展开详情预览（缩略图 + 说明 + 价格） */}
+                          {/* 点商品名 → 弹出该商品的快捷查看（与点缩略图同一个弹窗） */}
                           <button
                             type="button"
                             data-bundle-info={b.bundleProductId}
-                            onClick={() => setBundlePreview(prev => prev === b.bundleProductId ? null : b.bundleProductId)}
+                            onClick={() => openBundleQuickView(b.bundleProductId)}
                             className="text-left font-sans text-[12px] underline-offset-2 hover:underline"
                             style={{ color: on ? INK : 'rgba(74,58,36,0.5)' }}
                           >
@@ -1115,67 +1152,9 @@ export default function ProductDetailClient({
                   })}
                 </div>
 
-                {/* ===== 搭配商品详情预览 =====
-                    点搭配项的商品名展开：缩略图 + 名称 + 价格 + 说明 + 跳转链接。
-                    这样客户在勾选前就能确认要买的是什么，不用离开当前页。 */}
-                {bundlePreview && (() => {
-                  const b = bundleList.find((x: any) => x.bundleProductId === bundlePreview)
-                  if (!b) return null
-                  const bp = b.product || {}
-                  // 预览的价格/图片也走 bundleOptions —— 客户在预览里看到的
-                  // 必须和选中款式后的实际单价一致
-                  const o = bundleOptions.find(x => x.bundleProductId === b.bundleProductId)
-                  const unit = o ? o.unitPrice
-                    : (b.price !== undefined && b.price !== null ? Number(b.price) : Number(bp.price) || 0)
-                  const img = o?.image || b.image || bp.image || ''
-                  return (
-                    <div className="mt-3 p-3 flex gap-3"
-                      data-bundle-preview={b.bundleProductId}
-                      style={{ backgroundColor: '#F8F2E2', border: `1px solid ${LINE}`, borderRadius: 3 }}>
-                      {img && (
-                        <div className="shrink-0 overflow-hidden" style={{ width: 64, height: 80, borderRadius: 3, backgroundColor: '#FFFFFF' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-sans text-[12px] font-medium" style={{ color: INK }}>
-                          {b.title ? `${b.title} — ` : ''}{bp.nameEn || bp.name || b.bundleProductId}
-                        </p>
-                        {(bp.subtitleEn || bp.subtitle) && (
-                          <p className="font-sans text-[10px] mt-0.5" style={{ color: 'rgba(74,58,36,0.6)' }}>
-                            {bp.subtitleEn || bp.subtitle}
-                          </p>
-                        )}
-                        {b.description && (
-                          <p className="font-sans text-[10px] mt-1 leading-relaxed" style={{ color: 'rgba(74,58,36,0.7)' }}>
-                            {b.description}
-                          </p>
-                        )}
-                        <p className="font-sans text-[12px] mt-1.5" style={{ color: INK }}>
-                          {formatPrice(convertPrice(unit, currency), currency)}
-                          {Number(b.discount) > 0 && (
-                            <span className="ml-2" style={{ color: '#4A665D' }}>
-                              save {formatPrice(convertPrice(Number(b.discount), currency), currency)}
-                            </span>
-                          )}
-                        </p>
-                        {bp.id && (
-                          <Link href={`/products/${bp.id}`}
-                            className="font-sans text-[10px] mt-1 inline-block underline underline-offset-2"
-                            style={{ color: GOLD }}>
-                            View full details →
-                          </Link>
-                        )}
-                      </div>
-                      <button type="button" onClick={() => setBundlePreview(null)}
-                        className="shrink-0 self-start px-1.5 py-0.5 font-sans text-[10px]"
-                        style={{ color: 'rgba(74,58,36,0.5)' }} aria-label="Close preview">
-                        ✕
-                      </button>
-                    </div>
-                  )
-                })()}
+                {/* 详情预览改为独立弹窗（QuickViewModal 的选择模式）——
+                    原来这里是页内展开的一块面板，现在点缩略图或商品名都会弹出弹窗，
+                    与竞品一致，而且弹窗里能直接选款式。 */}
 
                 {/* 金额明细：单品合计 / 优惠 / 总价 */}
                 <div className="mt-4 pt-3 space-y-1.5" style={{ borderTop: `1px solid ${LINE}` }}>
@@ -1540,6 +1519,31 @@ export default function ProductDetailClient({
             </div>
           )}
         </div>
+      )}
+
+      {/* 搭配区缩略图 / 商品名点开的快捷查看弹窗。
+          选择模式：弹窗里只有一颗 SELECT，按下把选中的款式回填给对应的搭配项
+          （或主商品），而不是加入购物车。 */}
+      {qvBundle && (
+        <QuickViewModal
+          product={qvBundle.product}
+          onClose={() => setQvBundle(null)}
+          selectMode
+          initialVariantId={
+            qvBundle.bundleProductId
+              ? (bundleOptions.find(o => o.bundleProductId === qvBundle.bundleProductId)?.selected?.id ?? null)
+              : (activeVariant?.id ?? null)
+          }
+          onSelect={vid => {
+            if (qvBundle.bundleProductId) {
+              // 搭配项：存进 bundleVariantSel（空串 = 用该商品第一个款式）
+              setBundleVariantSel(prev => ({ ...prev, [qvBundle.bundleProductId as string]: vid || '' }))
+            } else {
+              // 主商品：与页面上的款式选择器同一份状态
+              setSelectedVariantId(vid ?? VARIANT_NONE)
+            }
+          }}
+        />
       )}
     </div>
   )

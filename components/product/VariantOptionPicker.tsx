@@ -77,10 +77,13 @@ export default function VariantOptionPicker({
   dataAttr,
   label,
   mode = 'swatch',
+  /** 是否允许"取消选中"（再点一次已选中的项 = 取消）。竞品就是这种行为。 */
+  allowDeselect = false,
 }: {
   options: VariantOption[]
   value?: string | null
-  onChange: (id: string) => void
+  /** 传 null 表示取消选中（仅在 allowDeselect 时会发生） */
+  onChange: (id: string | null) => void
   optionName?: string
   currency: Currency
   basePrice?: number
@@ -89,13 +92,21 @@ export default function VariantOptionPicker({
   label?: string
   /** 'swatch' = 图片色块（主商品）；'dropdown' = 紧凑下拉（搭配项） */
   mode?: 'swatch' | 'dropdown'
+  allowDeselect?: boolean
 }) {
   if (!options.length) return null
 
-  const current = options.find(o => o.id === value) || options[0]
+  // 未选中时（value 不匹配任何选项）current 为 undefined —— 标题行就不显示名称
+  const current = options.find(o => o.id === value)
   const hasPrice = (o: VariantOption) =>
     o.price !== undefined && o.price !== null &&
     basePrice !== undefined && Number(o.price) !== Number(basePrice)
+
+  /** 点选项：已选中且允许取消 → 取消；否则选中 */
+  const pick = (id: string) => {
+    if (allowDeselect && id === value) onChange(null)
+    else onChange(id)
+  }
 
   // ---------- 紧凑下拉（搭配项）----------
   // 不渲染标题行 —— select 自己就显示当前值，竞品的搭配行也是这样
@@ -103,7 +114,7 @@ export default function VariantOptionPicker({
     return (
       <select
         {...(dataAttr ? { [`data-${dataAttr}`]: '1' } : {})}
-        value={current.id}
+        value={current?.id || options[0].id}
         onChange={e => onChange(e.target.value)}
         aria-label={label || optionName || 'Style'}
         className="font-sans text-[12px] px-2 py-1 cursor-pointer max-w-[170px]"
@@ -130,13 +141,14 @@ export default function VariantOptionPicker({
           <span className="font-sans text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: SOFT }}>
             {label || optionName}
           </span>
-          <span className="font-sans text-[12px]" style={{ color: INK }}>{current.label}</span>
+          {/* 未选中任何款式时这里不显示名称（只有左侧的 STYLE 标签） */}
+          <span className="font-sans text-[12px]" style={{ color: INK }}>{current?.label || ''}</span>
         </div>
       )}
 
       <div className="flex flex-wrap gap-2.5">
         {options.map(o => {
-          const on = o.id === current.id
+          const on = o.id === value
 
           if (hasAnyImage && o.image) {
             return (
@@ -144,7 +156,7 @@ export default function VariantOptionPicker({
                 key={o.id}
                 type="button"
                 {...(dataAttr ? { [`data-${dataAttr}`]: o.id } : {})}
-                onClick={() => onChange(o.id)}
+                onClick={() => pick(o.id)}
                 title={hasPrice(o) ? `${o.label} — ${formatPrice(convertPrice(Number(o.price), currency), currency)}` : o.label}
                 className="transition-all duration-200"
                 aria-pressed={on}
