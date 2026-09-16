@@ -41,7 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/images/low-flame-logo.png" />
+        {/* favicon 用方形应用图标（米色圆角底 + 金色 logo），不要用竖版 logo ——
+            176×239 的竖版图在 16×16 的标签页里细线条会糊成一团 */}
+        <link rel="icon" type="image/png" sizes="512x512" href="/images/low-flame-icon.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/images/low-flame-icon.png" />
         <script dangerouslySetInnerHTML={{
           __html: `(function(){try{var t=localStorage.getItem("admin_theme");if(t==="light")document.documentElement.setAttribute("data-admin-theme","light");else if(t==="dark")document.documentElement.setAttribute("data-admin-theme","dark");}catch(e){}})()`
         }} />
