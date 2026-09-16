@@ -30,6 +30,8 @@ const { spawnSync } = require('child_process')
 const ROOT = path.join(__dirname, '..', '..')
 const RUNNER = path.join(__dirname, 'ssh-run.cjs')
 const TARBALL = path.join(ROOT, 'next-build.tar.gz')
+/** 静态资源包（public/，排除 uploads）—— 见下方第 2 步的说明 */
+const PUBLIC_TARBALL = path.join(ROOT, 'public-assets.tar.gz')
 const DO_BUILD = process.argv.includes('--build')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
@@ -88,11 +90,40 @@ function http(url) {
   const mb = fs.statSync(TARBALL).size / 1024 / 1024
   console.log(`  ✓ 产物包: ${mb.toFixed(1)} MB`)
 
+  /*
+   * 静态资源单独打包。
+   *
+   * 为什么必须单独做：原来的部署只 tar .next，**public/ 从来没被同步过** ——
+   * 所以换 logo、改图片这类只动静态资源的改动根本不会上线
+   * （实测：新 logo 已 commit 但线上仍是旧图 249×245）。
+   *
+   * ⚠️ 必须排除 public/uploads —— 那是服务器上的用户上传文件（本地那份是 117MB 的旧副本），
+   *    同步过去会覆盖掉线上较新的商品图。
+   * ⚠️ 服务器端只解压覆盖、**不删除** public 目录，避免误删 uploads。
+   */
+  let publicMb = 0
+  if (fs.existsSync(PUBLIC_TARBALL)) fs.unlinkSync(PUBLIC_TARBALL)
+  const pubDir = path.join(ROOT, 'public')
+  if (fs.existsSync(pubDir)) {
+    const pt = sh('tar', ['-czf', PUBLIC_TARBALL, '--exclude=public/uploads', 'public'], { timeout: 300000 })
+    if (fs.existsSync(PUBLIC_TARBALL)) {
+      publicMb = fs.statSync(PUBLIC_TARBALL).size / 1024 / 1024
+      console.log(`  ✓ 静态资源包: ${publicMb.toFixed(1)} MB（已排除 public/uploads 用户上传目录）`)
+    } else {
+      console.log('  ⚠ 静态资源打包失败，跳过（不影响 .next 部署）\n' + pt.out.slice(-300))
+    }
+  }
+
   // ---------- 3. 上传 ----------
   console.log('\n=== 3. 上传到服务器 ===')
   const up = upload(TARBALL, '/root/next-build.tar.gz')
   console.log('  ' + up.out.trim().split('\n').slice(-2).join('\n  '))
   if (up.code !== 0) process.exit(1)
+  if (publicMb > 0) {
+    const up2 = upload(PUBLIC_TARBALL, '/root/public-assets.tar.gz')
+    console.log('  ' + up2.out.trim().split('\n').slice(-2).join('\n  '))
+    if (up2.code !== 0) console.log('  ⚠ 静态资源上传失败，本次只更新 .next')
+  }
 
   // ---------- 4. 解压 + 重启 ----------
   console.log('\n=== 4. 服务器解压并重启（不跑构建）===')
@@ -101,6 +132,11 @@ function http(url) {
     'rm -rf .next.tmp; mkdir -p .next.tmp; ' +
     'tar -xzf /root/next-build.tar.gz -C .next.tmp; ' +
     'rm -rf .next; mv .next.tmp/.next .next; rmdir .next.tmp; ' +
+    // 静态资源：覆盖式解压，**不删除** public 目录（保住 uploads 里的用户上传文件）
+    'if [ -f /root/public-assets.tar.gz ]; then ' +
+    '  tar -xzf /root/public-assets.tar.gz -C /var/www/lowflame; ' +
+    '  echo "静态资源已同步: $(ls public/images | wc -l) 个 images 文件"; ' +
+    'fi; ' +
     'echo "解压完成 BUILD_ID=$(cat .next/BUILD_ID)"; ' +
     'pm2 restart lowflame >/dev/null 2>&1; sleep 8; ' +
     'curl -s -o /dev/null -w "local=%{http_code}\\n" -m 25 http://localhost:3000/',

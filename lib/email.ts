@@ -103,7 +103,76 @@ export function buildOrderConfirmationEmail(name: string, orderId: string, total
   }
 }
 
-// ========== 发货通知 (后台手动点击发送) ==========
+// ========== 待付款催付 (后台「待付款」专区手动/批量发送) ==========
+
+export interface PaymentReminderData {
+  /** 客户称呼 */
+  customerName?: string
+  orderNo: string
+  /** 订单金额（美元） */
+  total: number
+  currency?: string
+  /** 商品明细，让客户想起自己买了什么 */
+  items?: { name: string; quantity?: number }[]
+  /** 下单时间（ISO），用于显示"几天前" */
+  createdAt?: string
+  siteUrl?: string
+}
+
+/**
+ * 待付款提醒邮件。
+ *
+ * 用途：客户点了付款但没完成（购物车页/结算页的快捷支付会在点下按钮时就建单），
+ *      订单会留在"待付款"。这类订单里若有邮箱，可以一键催付。
+ * 注意：订单可能没有邮箱（钱包支付放弃时拿不到），那种只能人工跟进，不发信。
+ */
+export function buildPaymentReminderEmail(data: PaymentReminderData): { subject: string; html: string } {
+  const site = data.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://lowflame.store'
+  const name = data.customerName || 'there'
+  const cur = data.currency === 'USD' || !data.currency ? '$' : data.currency + ' '
+  const itemsHtml = (data.items || []).slice(0, 8).map(i =>
+    `<li style="margin:0 0 6px;color:#555;font-size:14px">${escapeHtml(i.name)}${i.quantity && i.quantity > 1 ? ` &times; ${i.quantity}` : ''}</li>`
+  ).join('')
+
+  return {
+    subject: `Your order #${data.orderNo} is waiting — complete your purchase`,
+    html: `
+      <div style="font-family:Georgia,'Times New Roman',serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#FBFAF7">
+        <div style="text-align:center;margin-bottom:28px">
+          <h1 style="font-size:26px;color:#2A2118;margin:0 0 8px;font-weight:500">Your order is still waiting</h1>
+          <p style="color:#5A4A36;font-size:14px;margin:0;font-family:Arial,sans-serif">
+            Hello ${escapeHtml(name)}, we saved your selection — but the payment didn&rsquo;t go through.
+          </p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #EFE7D4;border-radius:6px;padding:24px;margin-bottom:24px">
+          <p style="margin:0 0 4px;color:#2A2118;font-size:15px;font-family:Arial,sans-serif">
+            Order reference: <strong style="font-family:monospace">${escapeHtml(data.orderNo)}</strong>
+          </p>
+          <p style="margin:0 0 16px;color:#5A4A36;font-size:14px;font-family:Arial,sans-serif">
+            Total: <strong style="color:#2A2118">${cur}${Number(data.total || 0).toFixed(2)}</strong>
+          </p>
+          ${itemsHtml ? `<ul style="margin:0 0 20px;padding-left:20px;font-family:Arial,sans-serif">${itemsHtml}</ul>` : ''}
+          <div style="text-align:center;margin:24px 0 8px">
+            <a href="${site}/checkout"
+               style="display:inline-block;padding:14px 36px;background:#4C5546;color:#FFFFFF;text-decoration:none;border-radius:4px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:bold">
+              Complete my order
+            </a>
+          </div>
+          <p style="text-align:center;color:#8A7A62;font-size:12px;margin:14px 0 0;font-family:Arial,sans-serif">
+            Or reply to this email if you need help with payment.
+          </p>
+        </div>
+
+        <p style="color:#9A8C74;font-size:11px;text-align:center;font-family:Arial,sans-serif;line-height:1.7;margin:0">
+          If you already completed this order, please ignore this message.<br />
+          Low Flame &middot; Contemporary craftsmanship
+        </p>
+      </div>
+    `.trim(),
+  }
+}
+
 
 export interface ShipmentNotificationData {
   /** 客户称呼 (姓名) */

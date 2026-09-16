@@ -45,6 +45,20 @@ export default function AdminOrdersPage() {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' })
   const [assignedFilter, setAssignedFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
+  /**
+   * 「待付款」专区开关。
+   *
+   * 为什么用独立 state 而不是复用 filter：
+   *   原来的 tab 是从 filter 推导的（returns 类状态 → returns tab，其余 → all tab）。
+   *   待付款不是一个订单状态，而是一个「付款状态」维度，塞进 filter 会污染那套推导，
+   *   所以单独一个布尔量，由 setActiveTab 一起维护。
+   */
+  const [unpaidMode, setUnpaidMode] = useState(false)
+  // 「待付款」专区的子筛选：'' | 'unpaid-email' | 'unpaid-noemail'
+  const [unpaidFilter, setUnpaidFilter] = useState('')
+  // 催付发送中 / 结果提示
+  const [reminding, setReminding] = useState(false)
+  const [remindMsg, setRemindMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [customerFilter, setCustomerFilter] = useState('')
   const [customerList, setCustomerList] = useState<any[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
@@ -78,6 +92,31 @@ export default function AdminOrdersPage() {
   })
   const [creating, setCreating] = useState(false)
 
+  const normalStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]
+  const returnStatuses: OrderStatus[] = ["return_requested", "return_approved", "return_shipped", "return_delivered", "refunded"]
+
+  /**
+   * 当前处于哪个分区。
+   * 必须声明在 fetchOrders 之前 —— fetchOrders 的依赖数组和 query 构造都要用 activeTab，
+   * 放到后面会触发 TS2448「used before declaration」。
+   */
+  const activeTab: "all" | "returns" | "unpaid" =
+    unpaidMode ? "unpaid" : (returnStatuses.includes(filter as OrderStatus) ? "returns" : "all")
+
+  const setActiveTab = (tab: "all" | "returns" | "unpaid") => {
+    if (tab === "unpaid") {
+      setUnpaidMode(true)
+      setFilter("all")          // 待付款看的是付款状态，不受订单状态筛选影响
+      return
+    }
+    setUnpaidMode(false)
+    if (tab === "returns" && !returnStatuses.includes(filter as OrderStatus)) {
+      setFilter("return_requested")
+    } else if (tab === "all" && returnStatuses.includes(filter as OrderStatus)) {
+      setFilter("all")
+    }
+  }
+
   const fetchOrders = useCallback(async () => {
     try {
       const statsPromise = fetch("/api/orders?stats=true")
@@ -89,6 +128,8 @@ export default function AdminOrdersPage() {
       if (assignedFilter !== 'all') params.set('assignedTo', assignedFilter)
       if (paymentFilter !== 'all') params.set('paymentMethod', paymentFilter)
       if (customerFilter.trim()) params.set('customerEmail', customerFilter.trim())
+      // 待付款专区：把子筛选传给接口（unpaid / unpaid-email / unpaid-noemail）
+      if (activeTab === 'unpaid') params.set('paymentStatus', unpaidFilter || 'unpaid')
       if (trackingSearch.trim()) params.set('trackingNumber', trackingSearch.trim())
       if (shipmentNoSearch.trim()) params.set('shipmentNo', shipmentNoSearch.trim())
       const ordersPromise = fetch(`/api/orders?${params}`)
@@ -107,7 +148,44 @@ export default function AdminOrdersPage() {
       }
       if (s.ok) setStats(await s.json())
     } finally { setLoading(false) }
-  }, [page, filter, search, dateRange.startDate, dateRange.endDate, assignedFilter, paymentFilter, customerFilter, trackingSearch, shipmentNoSearch])
+  }, [page, filter, search, dateRange.startDate, dateRange.endDate, assignedFilter, paymentFilter, customerFilter, trackingSearch, shipmentNoSearch, activeTab, unpaidFilter])
+
+  /**
+   * 发送催付邮件。
+   *   sendReminders({ all: true })       → 批量（接口内部仍会跳过已付款/没邮箱/24h 内催过的）
+   *   sendReminders({ orderIds: [id] })  → 单张
+   */
+  const sendReminders = async (payload: { all?: boolean; orderIds?: string[] }) => {
+    setReminding(true)
+    setRemindMsg(null)
+    try {
+      const res = await fetch('/api/orders/remind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setRemindMsg({ ok: false, text: d.error || 'Failed to send reminders' })
+        return
+      }
+      const parts = [`Sent ${d.sent}`]
+      if (d.skipped) parts.push(`skipped ${d.skipped}`)
+      if (d.failed) parts.push(`failed ${d.failed}`)
+      // 把跳过原因也说清楚，否则后台只会看到"跳过 N 条"不知道为什么
+      const reasons = (d.results || []).filter((r: any) => r.status === 'skipped').slice(0, 3)
+        .map((r: any) => `${r.orderNo}: ${r.reason}`).join('; ')
+      setRemindMsg({
+        ok: d.failed === 0 && d.sent > 0,
+        text: parts.join(' · ') + (reasons ? ` — ${reasons}` : ''),
+      })
+      fetchOrders()
+    } catch (e: any) {
+      setRemindMsg({ ok: false, text: e?.message || 'Connection error' })
+    } finally {
+      setReminding(false)
+    }
+  }
 
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [staffMembers, setStaffMembers] = useState<any[]>([])
@@ -576,18 +654,6 @@ export default function AdminOrdersPage() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
 
-  const normalStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]
-  const returnStatuses: OrderStatus[] = ["return_requested", "return_approved", "return_shipped", "return_delivered", "refunded"]
-
-  const activeTab = returnStatuses.includes(filter as OrderStatus) ? "returns" : "all"
-  const setActiveTab = (tab: "all" | "returns") => {
-    if (tab === "returns" && !returnStatuses.includes(filter as OrderStatus)) {
-      setFilter("return_requested")
-    } else if (tab === "all" && returnStatuses.includes(filter as OrderStatus)) {
-      setFilter("all")
-    }
-  }
-
   return (
     <div>
       {/* Header */}
@@ -657,6 +723,25 @@ export default function AdminOrdersPage() {
             >
               Returns & Refunds
             </button>
+            {/* 待付款专区 —— 对齐国内电商的"待付款"分区：
+                客户点快捷支付但没完成时会留下 unpaid 订单，不该混在正常订单里 */}
+            <button
+              onClick={() => setActiveTab("unpaid")}
+              data-tab="unpaid"
+              className="flex-1 px-4 py-2.5 text-sm font-medium transition-colors text-center relative"
+              style={{
+                color: activeTab === "unpaid" ? "var(--adm-accent)" : "var(--adm-text-secondary)",
+                borderBottom: activeTab === "unpaid" ? "2px solid var(--adm-accent)" : "2px solid transparent",
+              }}
+            >
+              Unpaid
+              {Number((stats as any)?.unpaid || 0) > 0 && (
+                <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold align-middle"
+                  style={{ backgroundColor: "rgba(220,38,38,0.18)", color: "#f87171" }}>
+                  {(stats as any).unpaid}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="p-4">
@@ -687,7 +772,7 @@ export default function AdminOrdersPage() {
                   )
                 })}
               </div>
-            ) : (
+            ) : activeTab === "returns" ? (
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                 {returnStatuses.map(s => {
                   const count = (stats as any)[s] || 0
@@ -713,6 +798,72 @@ export default function AdminOrdersPage() {
                     </button>
                   )
                 })}
+              </div>
+            ) : (
+              /* ===== 待付款专区（最后一个分支，作为 else）===== */
+              <div data-unpaid-panel="1">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  {[
+                    { key: 'unpaid', label: 'Unpaid orders', value: (stats as any).unpaid || 0, hint: 'Awaiting payment' },
+                    { key: 'unpaidAmount', label: 'Pending amount', value: '$' + Number((stats as any).unpaidAmount || 0).toFixed(2), hint: 'Not yet collected' },
+                    { key: 'unpaidWithEmail', label: 'Can auto-remind', value: (stats as any).unpaidWithEmail || 0, hint: 'Customer left an email' },
+                    { key: 'unpaidNoEmail', label: 'Needs manual follow-up', value: (stats as any).unpaidNoEmail || 0, hint: 'No email on the order' },
+                  ].map(c => (
+                    <div key={c.key} className="rounded-lg p-3 border"
+                      style={{ backgroundColor: "var(--adm-input)", borderColor: "var(--adm-border)" }}>
+                      <p className="text-[11px] mb-1" style={{ color: "var(--adm-text-secondary)" }}>{c.label}</p>
+                      <p className="text-xl font-bold" style={{ color: "var(--adm-text)" }}>{c.value}</p>
+                      <p className="text-[10px] mt-0.5 opacity-50" style={{ color: "var(--adm-text)" }}>{c.hint}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  {[
+                    { k: '', label: 'All unpaid' },
+                    { k: 'unpaid-email', label: 'With email' },
+                    { k: 'unpaid-noemail', label: 'No email' },
+                  ].map(f => (
+                    <button key={f.k || 'all'}
+                      onClick={() => setUnpaidFilter(f.k)}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                      style={{
+                        backgroundColor: unpaidFilter === f.k ? "var(--adm-accent)" : "var(--adm-input)",
+                        color: unpaidFilter === f.k ? "var(--adm-accent-text)" : "var(--adm-text-secondary)",
+                        border: "1px solid var(--adm-border)",
+                      }}>
+                      {f.label}
+                    </button>
+                  ))}
+
+                  <div className="flex-1" />
+
+                  {/* 批量催付：只发给「有邮箱 + 未付款 + 24 小时内没催过」的订单 */}
+                  <button
+                    onClick={() => sendReminders({ all: true })}
+                    disabled={reminding || !(stats as any).unpaidWithEmail}
+                    data-remind-all="1"
+                    className="px-4 py-2 rounded-md text-xs font-bold disabled:opacity-40 transition-colors"
+                    style={{ backgroundColor: "var(--adm-accent)", color: "var(--adm-accent-text)" }}>
+                    {reminding ? 'Sending…' : `Send reminders (${(stats as any).unpaidWithEmail || 0})`}
+                  </button>
+                </div>
+
+                {remindMsg && (
+                  <p className="text-xs mb-3 px-3 py-2 rounded-md" data-remind-msg="1"
+                    style={{
+                      backgroundColor: remindMsg.ok ? "rgba(5,150,105,0.12)" : "rgba(220,38,38,0.12)",
+                      color: remindMsg.ok ? "#34d399" : "#f87171",
+                    }}>
+                    {remindMsg.text}
+                  </p>
+                )}
+
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--adm-text-secondary)" }}>
+                  Unpaid orders are created the moment a customer clicks a wallet / PayPal button,
+                  even if they abandon the payment window. Orders with an email can be reminded automatically
+                  (max once every 24 hours); the others need manual follow-up.
+                </p>
               </div>
             )}
           </div>

@@ -521,6 +521,10 @@ export function initDatabase() {
   addOrderCol('trackingUrl', 'TEXT')
   addOrderCol('estimatedDelivery', 'TEXT')
   addOrderCol('assignedToAvatar', 'TEXT')
+  // 待付款催付记录：后台「待付款」专区发催付邮件后写入，
+  // 用于冷却期判断（默认 24 小时内不重复催同一张单，避免轰炸客户）
+  addOrderCol('lastReminderAt', 'TEXT')
+  addOrderCol('reminderCount', 'INTEGER DEFAULT 0')
   addOrderCol('referralCode', 'TEXT')
   addOrderCol('referralId', 'TEXT')
   addOrderCol('referralVisitorId', 'TEXT')

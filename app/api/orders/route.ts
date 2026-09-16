@@ -170,6 +170,28 @@ function getOrderStatsFromRepo() {
       .reduce((s, o) => s + (o.paypalTransaction?.amount || o.total || 0), 0),
     paypalFees: all.filter(o => o.paymentMethod === "paypal" || o.paypalTransaction)
       .reduce((s, o) => s + (o.paypalTransaction?.fee || 0), 0),
+
+    /*
+     * 「待付款」专区统计。
+     *
+     * 为什么单独统计：客户在购物车页/结算页点快捷支付时，站内会立刻建一张 unpaid 订单；
+     * 若在钱包弹窗里放弃付款，订单就留在待付款。这类单子既不能发货也不该混在
+     * 正常订单里 —— 后台需要一个独立分区来看（对齐国内电商的"待付款"）。
+     *
+     * 同时区分「有邮箱/无邮箱」：钱包支付放弃时往往拿不到邮箱，
+     * 那种只能人工跟进，无法自动催付。
+     */
+    unpaid: all.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled').length,
+    unpaidAmount: all.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled')
+      .reduce((s, o) => s + Number(o.total || 0), 0),
+    unpaidWithEmail: all.filter(o =>
+      o.paymentStatus === 'unpaid' && o.status !== 'cancelled' &&
+      String(o.customerEmail || o.userEmail || '').trim().length > 0
+    ).length,
+    unpaidNoEmail: all.filter(o =>
+      o.paymentStatus === 'unpaid' && o.status !== 'cancelled' &&
+      !String(o.customerEmail || o.userEmail || '').trim()
+    ).length,
   }
 }
 
@@ -281,6 +303,27 @@ export async function GET(req: NextRequest) {
         orders = orders.filter(o => o.paymentMethod === 'paypal' || o.paypalTransaction)
       } else if (paymentMethod === 'other') {
         orders = orders.filter(o => o.paymentMethod !== 'paypal' && !o.paypalTransaction)
+      }
+    }
+
+    /*
+     * 按付款状态筛选 —— 「待付款」专区用。
+     *   ?paymentStatus=unpaid        → 所有未付款
+     *   ?paymentStatus=unpaid-email  → 未付款且留了邮箱（可自动催付）
+     *   ?paymentStatus=unpaid-noemail→ 未付款且没邮箱（只能人工跟进）
+     *   ?paymentStatus=paid          → 已付款
+     */
+    const paymentStatus = searchParams.get("paymentStatus")
+    if (paymentStatus) {
+      const hasEmail = (o: any) => String(o.customerEmail || o.userEmail || '').trim().length > 0
+      if (paymentStatus === 'unpaid') {
+        orders = orders.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled')
+      } else if (paymentStatus === 'unpaid-email') {
+        orders = orders.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled' && hasEmail(o))
+      } else if (paymentStatus === 'unpaid-noemail') {
+        orders = orders.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled' && !hasEmail(o))
+      } else if (paymentStatus === 'paid') {
+        orders = orders.filter(o => o.paymentStatus === 'paid')
       }
     }
 
