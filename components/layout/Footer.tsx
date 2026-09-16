@@ -92,8 +92,9 @@ export default function Footer() {
           {/* 品牌列 */}
           <div className="lg:col-span-5">
             <Link href="/" className="inline-flex items-center gap-3 group mb-5">
-              <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: '#EDE3D2' }}>
-                <img src="/images/low-flame-logo.png" alt="Low Flame" className="h-[70%] w-auto object-contain" />
+              {/* 同页头：放大徽标 + 提高 logo 占比，否则竖版 logo 在圆里只有一小块，看不清细节 */}
+              <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-105" style={{ backgroundColor: '#EDE3D2' }}>
+                <img src="/images/low-flame-logo.png" alt="Low Flame" className="h-[86%] w-auto object-contain" />
               </div>
               <span className="font-en text-[22px] tracking-[0.02em] font-medium transition-colors" style={{ color: ON_DARK }}>Low Flame</span>
             </Link>

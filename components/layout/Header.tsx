@@ -144,11 +144,17 @@ export default function Header() {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo - refined symbol */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="h-9 md:h-11 w-9 md:w-11 rounded-full bg-[#EDE3D2]/95 shadow-soft overflow-hidden flex items-center justify-center shrink-0">
+              {/*
+                徽标尺寸说明：之前是 h-9/w-9（36px）配 h-[72%] 的 logo ——
+                竖版 logo 在里面只占 23×32px，细节完全看不清，换成新 logo 后
+                肉眼几乎察觉不到变化。这里放大到 44/52px，并把 logo 占比提到 86%，
+                让 logo 里的茶碗/蒸汽/花瓶细节能真正被看到。
+              */}
+              <div className="h-11 w-11 md:h-[52px] md:w-[52px] rounded-full bg-[#EDE3D2]/95 shadow-soft overflow-hidden flex items-center justify-center shrink-0">
                 <img
                   src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                   alt="Low Flame"
-                  className="h-[72%] w-auto object-contain"
+                  className="h-[86%] w-auto object-contain"
                 />
               </div>
               <div className={`flex flex-col leading-tight border-l pl-2.5 ${overlayTop ? 'border-white/30' : 'border-[#F2EBD8]'}`}>
