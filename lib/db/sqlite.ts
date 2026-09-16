@@ -183,6 +183,17 @@ export function initDatabase() {
       FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
     );
 
+    -- ⚠️ 这几个索引不是可选项：
+    --    better-sqlite3 是**同步**驱动，每条查询都会阻塞 Node 事件循环。
+    --    读商品时会跑 attachGiftsToProducts / attachVariantsToProducts /
+    --    attachBundlesToProducts 三次 SELECT ... WHERE productId = ?，
+    --    没有索引就是三次全表扫描。一旦这两张表长大，
+    --    每次商品读取都会拖慢整个服务，极端情况下把事件循环卡死、
+    --    表现为"进程活着但站点完全无响应"。
+    --    （product_variants 的索引在上面已有，这里补齐另外两张表。）
+    CREATE INDEX IF NOT EXISTS idx_product_gifts_product ON product_gifts(productId);
+    CREATE INDEX IF NOT EXISTS idx_product_bundles_product ON product_bundles(productId);
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
