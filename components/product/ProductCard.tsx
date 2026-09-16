@@ -88,23 +88,16 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       transition={{ duration: 0.5, delay: index * 0.05 }}
     >
       <Link href={`/products/${product.id}`} className="block group" onMouseEnter={handleVideoEnter} onMouseLeave={handleVideoLeave}>
-        {/* 4:5 Image with hover reveal —— 暖色底衬托商品图 */}
+        {/* 4:5 Image —— 只渲染主图。
+            ⚠️ 已移除「悬停切换第二张图」动效：它和新增的两个操作按钮抢同一块视觉焦点，
+            一起出现画面很乱，而且切图会让客户以为商品变了。 */}
         <div className="relative aspect-[4/5] overflow-hidden bg-[#F8F2E2]">
           <OptimizedImage
             src={product.image}
             alt={product.nameEn || product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-0"
-            objectFit="cover"
-            placeholder="blur"
-          />
-          <OptimizedImage
-            src={hoverImage}
-            alt={product.nameEn || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-100"
+            className="absolute inset-0"
             objectFit="cover"
             placeholder="blur"
           />

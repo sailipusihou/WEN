@@ -1,8 +1,8 @@
-﻿'use client'
+'use client'
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { Heart, Plus } from 'lucide-react'
+import { Heart, ShoppingBag } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
@@ -12,7 +12,19 @@ import type { Product } from '@/lib/products'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { useProductPrice } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
+import QuickViewModal from '@/components/product/QuickViewModal'
 
+/**
+ * 首页「精选商品」卡片。
+ *
+ * 与列表页 ProductCard 的区别（有意保留）：
+ *   · 首页卡片带玻璃信息条（名称/价格压在图片底部），列表页信息在图片下方
+ *   · 首页卡片有光标辉光（跟随鼠标的暖色高光），作为「精选」区的氛围
+ *
+ * 已移除的两个悬停动效（见下方注释）：
+ *   · 悬停切换第二张商品图 —— 与新增的两个操作按钮抢同一块视觉，去掉
+ *   · 3D 倾斜（rotateX/rotateY）—— 按钮会跟着鼠标晃动，导致点不准
+ */
 export default function ShowroomCard({ product, index = 0 }: { product: Product; index?: number }) {
   const tiltRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -21,28 +33,27 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
   const { currency } = useCurrency()
   const { addToast } = useToast()
   const eff = useProductPrice(product)
+  // Quick view 弹窗
+  const [quickView, setQuickView] = useState(false)
 
+  /**
+   * 只保留「光标辉光」的坐标更新，不再做 3D 倾斜。
+   * 原因：卡片里新增了两个可点按钮，若整卡跟随鼠标倾斜，按钮位置一直在动，
+   *      用户很难点准（实测 hover 后按钮 box 会随 rotate 变化）。
+   */
   const handleMove = (e: React.MouseEvent) => {
     const el = tiltRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
     const px = (e.clientX - r.left) / r.width
     const py = (e.clientY - r.top) / r.height
-    const rx = (0.5 - py) * 10
-    const ry = (px - 0.5) * 12
     setTilt({
-      transform: `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-4px)`,
-      transition: 'transform 0.12s ease-out',
       '--mx': `${(px * 100).toFixed(1)}%`,
       '--my': `${(py * 100).toFixed(1)}%`,
     })
   }
 
   const handleLeave = () => {
-    setTilt({
-      transform: 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)',
-      transition: 'transform 0.5s ease',
-    })
     const v = videoRef.current
     if (v) { v.pause(); v.currentTime = 0 }
   }
@@ -77,9 +88,15 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
       image: product.image, price: product.price,
       category: product.category,
     })
+    addToast(`${product.nameEn || product.name} added to cart`, 'success')
   }
 
-  const hoverImage = product.detailImages?.[0] || product.image
+  /** 打开快速查看弹窗（不跳转页面） */
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setQuickView(true)
+  }
 
   return (
     <motion.div
@@ -106,22 +123,19 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             }}
           />
 
-          {/* Base image + hover second image */}
+          {/*
+            ⚠️ 已移除「悬停切换第二张图」这个动效。
+            原来这里渲染两张图，hover 时第一张淡出、第二张淡入。
+            去掉的原因：这个动效和新增的两个操作按钮占同一块视觉焦点，
+            一起出现画面很乱；而且切换图片会让客户以为商品变了。
+            现在只渲染一张主图。
+          */}
           <OptimizedImage
             src={product.image}
             alt={product.nameEn || product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-0 object-cover"
-            objectFit="cover"
-            placeholder="blur"
-          />
-          <OptimizedImage
-            src={hoverImage}
-            alt={product.nameEn || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 object-cover"
+            className="absolute inset-0 object-cover"
             objectFit="cover"
             placeholder="blur"
           />
@@ -155,15 +169,42 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
             <Heart size={14} strokeWidth={1.5} />
           </button>
 
-          {/* Quick add */}
-          <button
-            onClick={handleAddToCart}
-            type="button"
-            aria-label="Add to cart"
-            className="absolute bottom-16 right-2.5 z-10 w-9 h-9 rounded-full bg-[#FFFFFF]/85 backdrop-blur-md border border-white/60 text-ink flex items-center justify-center opacity-100 translate-y-0 pointer-events-auto md:opacity-0 md:translate-y-1 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto transition-all duration-300 hover:bg-[#FFFFFF] shadow-soft"
+          {/*
+            悬停浮出的两个操作按钮（与列表页 ProductCard 一致的效果）。
+
+            ⚠️ 位置说明：本卡片的玻璃信息条压在图片底部（absolute bottom-0），
+            所以按钮要放在信息条**上方**（bottom-16 起），否则会和信息条重叠。
+            列表页的 ProductCard 信息在图片外，按钮可以贴底。
+
+            整卡外面套着 <Link>，两个按钮都要 preventDefault + stopPropagation。
+          */}
+          <div
+            data-card-actions="1"
+            className="absolute left-3 right-3 z-10 flex flex-col gap-2 transition-all duration-300
+                       opacity-100 translate-y-0
+                       md:opacity-0 md:translate-y-2 md:pointer-events-none
+                       md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-hover:pointer-events-auto"
+            style={{ bottom: '4.75rem' }}
           >
-            <Plus size={15} strokeWidth={1.5} />
-          </button>
+            <button
+              onClick={handleQuickView}
+              type="button"
+              data-quick-view={product.id}
+              className="w-full py-2.5 font-sans text-[10px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px shadow-soft"
+              style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
+            >
+              Quick view
+            </button>
+            <button
+              onClick={handleAddToCart}
+              type="button"
+              data-card-add={product.id}
+              className="w-full py-2.5 font-sans text-[10px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2 shadow-soft"
+              style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
+            >
+              <ShoppingBag size={12} strokeWidth={2} /> Add to cart
+            </button>
+          </div>
 
           {/* Glass info bar */}
           <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-[#FFFFFF]/85 backdrop-blur-md border-t border-[#F2EBD8]">
@@ -190,6 +231,11 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           </div>
         </div>
       </Link>
+
+      {/* Quick view 弹窗：只在打开时挂载 */}
+      {quickView && (
+        <QuickViewModal product={product} onClose={() => setQuickView(false)} />
+      )}
     </motion.div>
   )
 }

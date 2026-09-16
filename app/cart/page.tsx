@@ -14,8 +14,11 @@ import { useActivePromotions } from '@/lib/promotion-client'
 import { computePromotionForProduct } from '@/lib/promotion-shared'
 import OrderSummaryLines from '@/components/cart/OrderSummaryLines'
 import ShopWithConfidence from '@/components/cart/ShopWithConfidence'
+import CartExpressCheckout from '@/components/cart/CartExpressCheckout'
 
 export default function CartPage() {
+  // 快捷支付成功后记下订单号：购物车会被清空，但这时要显示「下单成功」而不是「购物车是空的」
+  const [expressOrderId, setExpressOrderId] = useState<string | null>(null)
   const { items, removeItem, updateQuantity, clearCart } = useCart()
   const { currency } = useCurrency()
   // 信任区用的真实评价数据（服务端聚合，不编造）
@@ -83,6 +86,44 @@ export default function CartPage() {
   }, [items])
 
   if (items.length === 0) {
+    /*
+      两种「购物车为空」要区分开：
+        · 快捷支付刚成功 → 显示下单成功面板（不能显示"购物车是空的"，客户会以为没付成功）
+        · 其它情况（真的没加过东西） → 显示空购物车引导
+    */
+    if (expressOrderId) {
+      return (
+        <div className="min-h-[70vh] flex items-center justify-center bg-[#FBFAF7]" data-express-success="1">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(76,85,70,0.12)' }}>
+              <Check size={34} strokeWidth={1.6} style={{ color: '#4C5546' }} />
+            </div>
+            <h1 className="font-en text-2xl md:text-3xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">
+              Order Confirmed
+            </h1>
+            <p className="font-sans text-sm text-[#5A4A36]/70 mb-1">
+              Thank you — your payment went through and your order is in our system.
+            </p>
+            <p className="font-sans text-[12px] text-[#5A4A36]/55 mb-8">
+              Order reference: <span className="font-mono" style={{ color: '#2A2118' }}>{expressOrderId}</span>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href={'/order-tracking'}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+                style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
+                Track my order
+              </Link>
+              <Link href="/"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+                style={{ border: '1px solid rgba(74,58,36,0.3)', color: '#2A2118', borderRadius: 4 }}>
+                <ArrowLeft size={14} strokeWidth={1.8} /> Continue shopping
+              </Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="min-h-[70vh] flex items-center justify-center bg-[#FBFAF7]">
         <div className="text-center max-w-md mx-auto px-6">
@@ -218,13 +259,15 @@ export default function CartPage() {
               </div>
               {/*
                 参考站右栏是「钱包快捷支付」+「Checkout」两个按钮。
-                钱包按钮（Buy with PayPal / Apple Pay / G Pay）需要买家联系信息才能建单，
-                购物车页拿不到（要等结算页填完表单），所以这里只保留 Checkout 一个按钮，
-                按参考站样式改成深墨绿实心；钱包快捷支付仍在结算页右栏。
+                这里把快捷支付（PayPal / Apple Pay / G Pay）放在 Checkout 上方，
+                让客户不跳结算页也能直接付款。
+                ⚠️ 购物车为空时该组件自己不渲染，避免建出空单。
               */}
+              <CartExpressCheckout onSuccess={setExpressOrderId} />
+
               <Link href="/checkout"
                 data-cart-checkout="1"
-                className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-4 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
                 style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
                 Checkout <ArrowRight size={14} strokeWidth={2.2} />
               </Link>
