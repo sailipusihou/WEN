@@ -11,6 +11,7 @@ import { convertPrice, formatPrice } from '@/lib/cart-types'
 import { useProductPrice } from '@/lib/promotion-client'
 import OptimizedImage from '@/components/ui/OptimizedImage'
 import { PromoSaleTag } from '@/components/product/PromoBadge'
+import VariantOptionPicker from '@/components/product/VariantOptionPicker'
 
 /**
  * 商品卡「Quick view」快速查看弹窗。
@@ -226,41 +227,25 @@ export default function QuickViewModal({
               )}
             </div>
 
-            {/* 规格选择 */}
+            {/* 规格选择 —— 与商品详情页用同一个组件：
+                款式配了图就渲染成缩略图色块，没配图退回文字按钮。
+                这样弹窗里看到的款式样貌与详情页一致。 */}
             {variants.length > 0 && (
               <div className="mb-4" data-qv-variants="1">
-                <p className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'rgba(74,58,36,0.6)' }}>
-                  {(product as any).optionName || 'Style'}
-                  <span className="ml-2 normal-case tracking-normal font-normal" style={{ color: '#2A2118' }}>
-                    {activeVariant?.label}
-                  </span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {variants.map((v: any) => {
-                    const on = activeVariant && v.id === activeVariant.id
-                    const vp = v.price !== undefined && v.price !== null ? Number(v.price) : product.price
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        data-qv-option={v.id}
-                        onClick={() => setSelectedVariantId(v.id)}
-                        className="px-3 py-2 font-sans text-[12px] transition-all duration-200"
-                        style={{
-                          border: `1px solid ${on ? '#2A2118' : 'rgba(74,58,36,0.28)'}`,
-                          backgroundColor: on ? '#2A2118' : 'transparent',
-                          color: on ? '#FFFFFF' : '#5A4A36',
-                          borderRadius: 3,
-                        }}
-                      >
-                        {v.label}
-                        {v.price !== undefined && v.price !== null && Number(v.price) !== product.price && (
-                          <span className="ml-2 opacity-70">{formatPrice(convertPrice(vp, currency), currency)}</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                <VariantOptionPicker
+                  options={variants.map((v: any) => ({
+                    id: v.id,
+                    label: v.label,
+                    image: v.image,
+                    price: v.price !== undefined && v.price !== null ? Number(v.price) : product.price,
+                  }))}
+                  value={activeVariant?.id}
+                  onChange={setSelectedVariantId}
+                  optionName={(product as any).optionName || 'Style'}
+                  currency={currency}
+                  basePrice={product.price}
+                  dataAttr="qv-option"
+                />
               </div>
             )}
 

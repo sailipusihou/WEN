@@ -4,6 +4,7 @@ import { type Product, generateProductCode, isValidProductCode } from '@/lib/db'
 import { getRepository } from '@/lib/repository'
 import { requirePermission } from '@/lib/auth'
 import { validatePrice, validateString, sanitizeString } from '@/lib/validation'
+import { cleanLines, cleanSpecs, cleanFaqs } from '@/lib/pdp-content'
 
 export async function GET(req: NextRequest) {
   const repo = getRepository()
@@ -209,6 +210,23 @@ export async function POST(req: NextRequest) {
       // 是否在商店列表露出。默认 true；设为 false 的商品只在主商品编辑页里
       // 当赠品/搭配用，不出现在商店、搜索、分类页，但依然可售。
       listingVisible: body.listingVisible !== undefined ? Boolean(body.listingVisible) : true,
+      // 详情页可编辑内容（卖点/规格/问答/配送说明/分享）；逐项清洗后存
+      pdpContent: (() => {
+        const pc = body.pdpContent && typeof body.pdpContent === 'object' ? body.pdpContent : null
+        if (!pc) return undefined
+        return {
+          highlights: cleanLines(pc.highlights).slice(0, 12),
+          specs: cleanSpecs(pc.specs).slice(0, 20),
+          faqs: cleanFaqs(pc.faqs).slice(0, 20),
+          shippingNotes: cleanLines(pc.shippingNotes).slice(0, 12),
+          share: pc.share && typeof pc.share === 'object'
+            ? {
+                enabled: pc.share.enabled !== false,
+                caption: pc.share.caption ? sanitizeString(String(pc.share.caption).slice(0, 200)) : undefined,
+              }
+            : undefined,
+        }
+      })(),
     }
 
     const created = repo.products.add(product)

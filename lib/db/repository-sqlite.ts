@@ -10,6 +10,7 @@ import type { SiteSettings, StaffMember } from '@/lib/settings'
 import { DEFAULTS, getSettings, normalizeSavedSettings } from '@/lib/settings'
 import type { WorkLogEntry } from '@/lib/work-log'
 import type { Message, NewsletterSubscriber } from '@/lib/repository'
+import { parsePdpContent } from '@/lib/pdp-content'
 
 // ========== 工具函数 ==========
 
@@ -42,6 +43,8 @@ function rowToProduct(row: any): Product {
     reviewCount: row.reviewCount || 0,
     featured: !!row.featured,
     active: row.active !== 0,
+    // 详情页可编辑内容（JSON 列）。解析失败返回 {}，详情页会走默认文案。
+    pdpContent: parsePdpContent(row.pdpContent),
     // 旧数据没有这一列时 row.listingVisible 为 undefined → 视为展示（true）
     listingVisible: row.listingVisible === undefined || row.listingVisible === null
       ? true
@@ -674,9 +677,9 @@ export const productRepo = {
     const db = getDb()
     const stmt = db.prepare(`
       INSERT INTO products (id, code, name, nameEn, subtitle, subtitleEn, description, descriptionEn, story, storyEn,
-        price, originalPrice, costPrice, stock, supplierId, category, image, video, videoEnabled, craft, craftEn, material, origin, rating, reviewCount, featured, active, listingVisible, sortOrder)
+        price, originalPrice, costPrice, stock, supplierId, category, image, video, videoEnabled, craft, craftEn, material, origin, rating, reviewCount, featured, active, listingVisible, sortOrder, pdpContent)
       VALUES (@id, @code, @name, @nameEn, @subtitle, @subtitleEn, @description, @descriptionEn, @story, @storyEn,
-        @price, @originalPrice, @costPrice, @stock, @supplierId, @category, @image, @video, @videoEnabled, @craft, @craftEn, @material, @origin, @rating, @reviewCount, @featured, @active, @listingVisible, @sortOrder)
+        @price, @originalPrice, @costPrice, @stock, @supplierId, @category, @image, @video, @videoEnabled, @craft, @craftEn, @material, @origin, @rating, @reviewCount, @featured, @active, @listingVisible, @sortOrder, @pdpContent)
     `)
     stmt.run({
       id: product.id,
@@ -708,6 +711,8 @@ export const productRepo = {
       active: product.active !== false ? 1 : 0,
       listingVisible: (product as any).listingVisible === false ? 0 : 1,
       sortOrder: 0,
+      // 详情页可编辑内容：对象存成 JSON 字符串；没传就存 null（详情页会用默认文案）
+      pdpContent: product.pdpContent ? JSON.stringify(product.pdpContent) : null,
     })
     if (product.tags?.length) {
       const tagStmt = db.prepare('INSERT OR REPLACE INTO product_tags (productId, tag, lang, sortOrder) VALUES (?, ?, \'zh\', ?)')
@@ -740,6 +745,7 @@ export const productRepo = {
         craft = @craft, craftEn = @craftEn, material = @material, origin = @origin,
         rating = @rating, reviewCount = @reviewCount, featured = @featured, active = @active,
         listingVisible = @listingVisible,
+        pdpContent = @pdpContent,
         updatedAt = datetime('now')
       WHERE id = @id
     `)
@@ -772,6 +778,7 @@ export const productRepo = {
       featured: merged.featured ? 1 : 0,
       active: merged.active !== false ? 1 : 0,
       listingVisible: (merged as any).listingVisible === false ? 0 : 1,
+      pdpContent: (merged as any).pdpContent ? JSON.stringify((merged as any).pdpContent) : null,
     })
     // 閺囧瓨鏌?tags 閸?detailImages
     if (updates.tags) {

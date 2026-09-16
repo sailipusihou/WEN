@@ -4,6 +4,7 @@ import { type Product, isValidProductCode } from '@/lib/db'
 import { getRepository } from '@/lib/repository'
 import { requirePermission } from '@/lib/auth'
 import { validateId, validateString, sanitizeString, validatePrice } from '@/lib/validation'
+import { cleanLines, cleanSpecs, cleanFaqs } from '@/lib/pdp-content'
 
 export async function GET(
   _req: NextRequest,
@@ -79,6 +80,24 @@ export async function PUT(
     if (body.detailImages !== undefined) {
       if (!Array.isArray(body.detailImages)) return NextResponse.json({ error: 'detailImages must be array' }, { status: 400 })
       updates.detailImages = body.detailImages.slice(0, 20).filter((u: any) => typeof u === 'string' && u.length < 1000)
+    }
+
+    // 详情页可编辑内容（卖点 / 自由规格 / 常见问题 / 配送退货 / 分享）。
+    // 逐项清洗后再存，不把客户端传来的任意结构直接落库。
+    if (body.pdpContent !== undefined) {
+      const pc = body.pdpContent && typeof body.pdpContent === 'object' ? body.pdpContent : {}
+      updates.pdpContent = {
+        highlights: cleanLines(pc.highlights).slice(0, 12),
+        specs: cleanSpecs(pc.specs).slice(0, 20),
+        faqs: cleanFaqs(pc.faqs).slice(0, 20),
+        shippingNotes: cleanLines(pc.shippingNotes).slice(0, 12),
+        share: pc.share && typeof pc.share === 'object'
+          ? {
+              enabled: pc.share.enabled !== false,
+              caption: pc.share.caption ? sanitizeString(String(pc.share.caption).slice(0, 200)) : undefined,
+            }
+          : undefined,
+      }
     }
 
     // 数值字段

@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { Save, ArrowLeft, Upload, X, ImagePlus, Link as LinkIcon, Factory, RefreshCw, Plus, Video } from "lucide-react"
 import type { Product } from "@/lib/db"
 import { categoryCodePrefix } from "@/lib/product-code"
+import { cleanLines, cleanSpecs, cleanFaqs } from "@/lib/pdp-content"
 
 interface SupplierOption { id: string; name: string; region?: string }
 
@@ -232,6 +233,18 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
     active: initial?.active !== false,
     // 是否在商店列表展示。关掉后不出现在商店/搜索/分类页，但仍可售、仍能当赠品。
     listingVisible: (initial as any)?.listingVisible !== false,
+    // 详情页可编辑内容（卖点要点 / 自由规格 / 常见问题 / 配送退货说明 / 分享）。
+    // 整块作为一个 JSON 列 pdpContent 提交；各项留空即表示用详情页的默认文案。
+    pdpContent: {
+      highlights: cleanLines((initial as any)?.pdpContent?.highlights),
+      specs: cleanSpecs((initial as any)?.pdpContent?.specs),
+      faqs: cleanFaqs((initial as any)?.pdpContent?.faqs),
+      shippingNotes: cleanLines((initial as any)?.pdpContent?.shippingNotes),
+      share: {
+        enabled: (initial as any)?.pdpContent?.share?.enabled !== false,
+        caption: (initial as any)?.pdpContent?.share?.caption || "",
+      },
+    } as any,
     // 赠品绑定：存 product_gifts 表，这里只放在表单状态里，保存时单独提交
     giftProductIds: initial?.giftProductIds || [] as string[],
     giftQuantity: initial?.giftQuantity?.toString() || "1",
@@ -783,6 +796,122 @@ export default function ProductForm({ initial, cnyRate = 7.2 }: ProductFormProps
             <Field label="Craft (English)"><input type="text" value={form.craftEn} onChange={e => update("craftEn", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm adm-input" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} /></Field>
             <Field label="Material"><input type="text" value={form.material} onChange={e => update("material", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm adm-input" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} /></Field>
             <Field label="Origin"><input type="text" value={form.origin} onChange={e => update("origin", e.target.value)} className="w-full px-4 py-2.5 rounded-lg text-sm adm-input" style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }} /></Field>
+          </div>
+        </Section>
+
+        {/* 详情页内容 —— 前台商品详情页里那几块可编辑内容。
+            全部留空时详情页会用默认文案，所以老商品不填也能正常显示。 */}
+        <Section title="详情页内容（PDP Content）">
+          <div className="space-y-6">
+
+            {/* 卖点要点 */}
+            <Field label="卖点要点（一行一条，显示在标题下方）">
+              <textarea
+                rows={3}
+                value={(form.pdpContent?.highlights || []).join("\n")}
+                onChange={e => update("pdpContent", { ...form.pdpContent, highlights: e.target.value.split("\n") })}
+                placeholder={"Fired at 1280°C\nFour cups and a teapot\nShips from the workshop in 1–2 days"}
+                className="w-full px-4 py-2.5 rounded-lg text-sm"
+                style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+              />
+            </Field>
+
+            {/* 规格（自由键值对） */}
+            <Field label="规格（可自由增删；留空则用 工艺/材质/产地）">
+              <div className="space-y-2">
+                {(form.pdpContent?.specs || []).map((s: any, i: number) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text" value={s.label} placeholder="Capacity"
+                      onChange={e => update("pdpContent", { ...form.pdpContent, specs: (form.pdpContent?.specs || []).map((x: any, j: number) => j === i ? { ...x, label: e.target.value } : x) })}
+                      className="w-40 px-3 py-2 rounded-lg text-sm"
+                      style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                    />
+                    <input
+                      type="text" value={s.value} placeholder="320 ml"
+                      onChange={e => update("pdpContent", { ...form.pdpContent, specs: (form.pdpContent?.specs || []).map((x: any, j: number) => j === i ? { ...x, value: e.target.value } : x) })}
+                      className="flex-1 px-3 py-2 rounded-lg text-sm"
+                      style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                    />
+                    <button type="button" onClick={() => update("pdpContent", { ...form.pdpContent, specs: (form.pdpContent?.specs || []).filter((_: any, j: number) => j !== i) })}
+                      className="px-3 rounded-lg text-xs" style={{ color: "#dc2626", border: "1px solid var(--adm-input-border)" }}>删除</button>
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => update("pdpContent", { ...form.pdpContent, specs: [...(form.pdpContent?.specs || []), { label: "", value: "" }] })}
+                  className="px-3 py-2 rounded-lg text-xs font-medium"
+                  style={{ backgroundColor: "var(--adm-accent-bg)", color: "var(--adm-accent)", border: "1px solid var(--adm-input-border)" }}>
+                  + 添加规格
+                </button>
+              </div>
+            </Field>
+
+            {/* 常见问题 */}
+            <Field label="常见问题（留空则用默认三条）">
+              <div className="space-y-2">
+                {(form.pdpContent?.faqs || []).map((f: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-1.5">
+                      <input
+                        type="text" value={f.q} placeholder="问题"
+                        onChange={e => update("pdpContent", { ...form.pdpContent, faqs: (form.pdpContent?.faqs || []).map((x: any, j: number) => j === i ? { ...x, q: e.target.value } : x) })}
+                        className="w-full px-3 py-2 rounded-lg text-sm"
+                        style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                      />
+                      <textarea
+                        rows={2} value={f.a} placeholder="答案"
+                        onChange={e => update("pdpContent", { ...form.pdpContent, faqs: (form.pdpContent?.faqs || []).map((x: any, j: number) => j === i ? { ...x, a: e.target.value } : x) })}
+                        className="w-full px-3 py-2 rounded-lg text-sm"
+                        style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                      />
+                    </div>
+                    <button type="button" onClick={() => update("pdpContent", { ...form.pdpContent, faqs: (form.pdpContent?.faqs || []).filter((_: any, j: number) => j !== i) })}
+                      className="px-3 py-2 rounded-lg text-xs" style={{ color: "#dc2626", border: "1px solid var(--adm-input-border)" }}>删除</button>
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => update("pdpContent", { ...form.pdpContent, faqs: [...(form.pdpContent?.faqs || []), { q: "", a: "" }] })}
+                  className="px-3 py-2 rounded-lg text-xs font-medium"
+                  style={{ backgroundColor: "var(--adm-accent-bg)", color: "var(--adm-accent)", border: "1px solid var(--adm-input-border)" }}>
+                  + 添加问答
+                </button>
+              </div>
+            </Field>
+
+            {/* 配送与退货说明 */}
+            <Field label="配送与退货说明（一行一条；时效与免邮门槛是自动算的，不用写在这里）">
+              <textarea
+                rows={3}
+                value={(form.pdpContent?.shippingNotes || []).join("\n")}
+                onChange={e => update("pdpContent", { ...form.pdpContent, shippingNotes: e.target.value.split("\n") })}
+                placeholder={"Every piece is packed in protective, gift-ready packaging.\n30-day money-back guarantee."}
+                className="w-full px-4 py-2.5 rounded-lg text-sm"
+                style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+              />
+            </Field>
+
+            {/* 分享 */}
+            <Field label="社交分享栏">
+              <div className="flex items-center gap-4 flex-wrap">
+                <label className="inline-flex items-center gap-2 text-sm" style={{ color: "var(--adm-text)" }}>
+                  <input
+                    type="checkbox"
+                    checked={form.pdpContent?.share?.enabled !== false}
+                    onChange={e => update("pdpContent", { ...form.pdpContent, share: { ...form.pdpContent?.share, enabled: e.target.checked } })}
+                  />
+                  显示分享栏
+                </label>
+                <input
+                  type="text"
+                  value={form.pdpContent?.share?.caption || ""}
+                  onChange={e => update("pdpContent", { ...form.pdpContent, share: { ...form.pdpContent?.share, caption: e.target.value } })}
+                  placeholder="自定义分享文案（留空用商品名）"
+                  className="flex-1 min-w-[240px] px-4 py-2.5 rounded-lg text-sm"
+                  style={{ backgroundColor: "var(--adm-input)", border: "1px solid var(--adm-input-border)", color: "var(--adm-text)" }}
+                />
+              </div>
+            </Field>
+
           </div>
         </Section>
 

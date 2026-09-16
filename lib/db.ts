@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { getCachedData, invalidateCache, CACHE_TTL } from '@/lib/cache'
 import { categoryCodePrefix } from './product-code'
+import type { PdpContent } from './pdp-content'
 
 const DATA_DIR = path.join(process.cwd(), 'data')
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
@@ -54,6 +55,8 @@ export interface Product {
   reviewCount: number
   featured: boolean
   active: boolean
+  /** 详情页可编辑内容（卖点/规格/问答/配送说明/分享配置）—— 见 lib/pdp-content.ts */
+  pdpContent?: PdpContent
   /**
    * 赠品绑定（买一送一 / 免费搭配）。
    *

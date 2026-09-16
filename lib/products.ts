@@ -1,5 +1,7 @@
 // 东方集市 · 公共类型与分类常量 — 客户端安全（无 Node.js 依赖）
 
+import type { PdpContent } from './pdp-content'
+
 export interface Supplier {
   id: string
   name: string
@@ -46,6 +48,8 @@ export interface Product {
   reviewCount: number
   featured: boolean
   active: boolean
+  /** 详情页可编辑内容（卖点/规格/问答/配送说明/分享配置）—— 见 lib/pdp-content.ts */
+  pdpContent?: PdpContent
   /**
    * 赠品绑定（买一送一 / 免费搭配）。
    *

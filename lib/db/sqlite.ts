@@ -542,6 +542,18 @@ export function initDatabase() {
   addOrderCol('payoneerTransaction', 'TEXT')
   addOrderCol('returnInfo', 'TEXT')
 
+  // 迁移: 给 products 表加「详情页可编辑内容」列
+  //
+  // 一个 JSON 列承载多类内容（卖点要点 / 自由规格 / 常见问题 / 配送退货说明 / 分享配置），
+  // 而不是拆成多个列 —— 它们都是纯展示内容，不参与查询筛选；拆开就要改多处映射，
+  // 漏一处就是「读了 undefined、写了不生效」的静默 bug（HANDOVER §4.2 记过这类事故）。
+  // 字段缺失时详情页退回通用文案，所以老商品不需要补数据。
+  const prodColumns = db.prepare("PRAGMA table_info(products)").all() as any[]
+  const prodColNames = new Set(prodColumns.map(c => c.name))
+  if (!prodColNames.has('pdpContent')) {
+    try { db.exec('ALTER TABLE products ADD COLUMN pdpContent TEXT') } catch {}
+  }
+
   // 迁移: 给 messages 表添加缺失的列 (兼容旧数据库)
   const msgColumns = db.prepare("PRAGMA table_info(messages)").all() as any[]
   const msgColNames = new Set(msgColumns.map(c => c.name))

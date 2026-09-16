@@ -20,6 +20,7 @@ import StickyBuyBar from '@/components/product/StickyBuyBar'
 import VariantOptionPicker from '@/components/product/VariantOptionPicker'
 import ShareRow from '@/components/product/ShareRow'
 import QuickViewModal from '@/components/product/QuickViewModal'
+import { parsePdpContent, cleanLines, cleanSpecs, cleanFaqs, DEFAULT_FAQS, DEFAULT_SHIPPING_NOTES } from '@/lib/pdp-content'
 import { useProductPrice, useDiscountedCartSubtotal } from '@/lib/promotion-client'
 import { PromoImageBadge, PromoSaleTag } from '@/components/product/PromoBadge'
 import { buildReferralBioLandingUrl } from '@/lib/referral-links'
@@ -494,11 +495,26 @@ export default function ProductDetailClient({
   // 只在后台明确填了正数（1–10）时才提示库存紧张。
   const stock = typeof product.stock === 'number' ? product.stock : undefined
   const lowStock = stock !== undefined && stock > 0 && stock <= 10
-  const specRows: [string, string][] = [
-    ['Craft', product.craftEn || product.craft || ''],
-    ['Material', product.material || ''],
-    ['Origin', product.origin || ''],
-  ].filter(([, v]) => v) as [string, string][]
+  /**
+   * 详情页可编辑内容（后台商品的「详情页内容」面板）。
+   * 每一项都是**可选**的：后台没填就走原来的默认文案/数据，
+   * 所以老商品不补数据也能正常显示。
+   */
+  const pdp = parsePdpContent((product as any)?.pdpContent)
+  const pdpHighlights = cleanLines(pdp.highlights)
+  const pdpSpecs = cleanSpecs(pdp.specs)
+  const pdpFaqs = cleanFaqs(pdp.faqs)
+  const pdpShippingNotes = cleanLines(pdp.shippingNotes)
+
+  const specRows: [string, string][] = pdpSpecs.length > 0
+    // 后台配了自由规格 → 用它（不同品类规格不同：茶具看容量、香炉看尺寸）
+    ? pdpSpecs.map(s => [s.label, s.value] as [string, string])
+    // 没配 → 沿用原来的 工艺 / 材质 / 产地
+    : ([
+        ['Craft', product.craftEn || product.craft || ''],
+        ['Material', product.material || ''],
+        ['Origin', product.origin || ''],
+      ].filter(([, v]) => v) as [string, string][])
 
   // 预计到达区间（用后台分区自己的 min/max 时效，展示为具体日期）
   let deliveryText = ''
@@ -808,6 +824,18 @@ export default function ProductDetailClient({
               {product.subtitleEn || product.subtitle}
             </p>
 
+            {/* 卖点要点 —— 后台按商品配的几句短钩子；没配就整块不渲染 */}
+            {pdpHighlights.length > 0 && (
+              <ul className="mt-4 space-y-1.5" data-pdp-highlights="1">
+                {pdpHighlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2.5 font-sans text-[14px] leading-[1.6]" style={{ color: SOFT }}>
+                    <Check size={15} strokeWidth={2} style={{ color: GOLD, flexShrink: 0, marginTop: 3 }} />
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             {/* 评分 —— 有真实评价才显示 */}
             {product.reviewCount > 0 && (
               <a href="#reviews" className="inline-flex items-center gap-2 mt-4 group">
@@ -1037,7 +1065,7 @@ export default function ProductDetailClient({
                         data-bundle-thumb={it.key}
                         onClick={() => openBundleQuickView(it.key)}
                         className="overflow-hidden transition-opacity duration-200 hover:opacity-80"
-                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2', cursor: 'zoom-in' }}
+                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2' }}
                         aria-label={`View ${it.name}`}
                         title={`View ${it.name}`}
                       >
@@ -1349,32 +1377,35 @@ export default function ProductDetailClient({
                       {shipping.cost > 0 && <> · flat rate {formatPrice(convertPrice(shipping.cost, currency), currency)} below that</>}.
                     </li>
                   )}
-                  <li>Every piece is packed in protective, gift-ready packaging. Damaged in transit? We replace it free.</li>
-                  <li>30-day money-back guarantee — return it unused in original packaging.</li>
+                  {/* 说明文案：后台按商品填了就用它，没填用通用三条。
+                      上面两条（时效、免邮门槛）是动态算出来的，始终保留。 */}
+                  {(pdpShippingNotes.length > 0 ? pdpShippingNotes : DEFAULT_SHIPPING_NOTES).map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
                 </ul>
               </Accordion>
 
               <Accordion title="Questions & Answers" icon={MessageCircle}>
+                {/* 后台没填问答时用通用三条（DEFAULT_FAQS），填了就用商品自己的 */}
                 <dl className="space-y-5">
-                  <div>
-                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Is this piece genuinely handmade?</dt>
-                    <dd className="mt-1.5 text-[14px] leading-[1.75]">Yes. Each piece is made by hand in the workshop named above — small variations in glaze and finish are the signature of handmade work, not defects.</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Will it arrive safely?</dt>
-                    <dd className="mt-1.5 text-[14px] leading-[1.75]">Every order ships double-boxed with padding. If anything arrives damaged, send us a photo and we will replace it at no cost.</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[14px]" style={{ color: INK }}>Can I ask before ordering?</dt>
-                    <dd className="mt-1.5 text-[14px] leading-[1.75]">
-                      Of course — use <strong style={{ color: INK, fontWeight: 600 }}>Ask about this piece</strong> above and we will reply within 24 hours.
-                    </dd>
-                  </div>
+                  {(pdpFaqs.length > 0 ? pdpFaqs : DEFAULT_FAQS).map((f, i) => (
+                    <div key={i}>
+                      <dt className="font-semibold text-[14px]" style={{ color: INK }}>{f.q}</dt>
+                      <dd className="mt-1.5 text-[14px] leading-[1.75]">{f.a}</dd>
+                    </div>
+                  ))}
                 </dl>
               </Accordion>
 
-              {/* 社交分享 —— 位置与竞品一致：紧接在四个手风琴之后 */}
-              <ShareRow title={product.nameEn || product.name} image={effectiveImage} initialUrl={productUrl} />
+              {/* 社交分享 —— 位置与竞品一致：紧接在四个手风琴之后。
+                  后台可对单个商品关闭，或改用自定义分享文案。 */}
+              {pdp.share?.enabled !== false && (
+                <ShareRow
+                  title={pdp.share?.caption || product.nameEn || product.name}
+                  image={effectiveImage}
+                  initialUrl={productUrl}
+                />
+              )}
             </div>
 
             {/* ===== 以下是右栏延长区：左主图钉住时，这里持续下滑 ===== */}
