@@ -261,8 +261,10 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
        · X/Twitter 开发者应用 —— `xApiKey` / `xApiSecret` / `xClientId` / `xClientSecret`
        · Facebook 应用 —— `fbClientId`（App Secret 一并重置）
        ⚠️ 这些都还在数据库里、也还在线上使用中，泄露状态下攻击者可直接消耗你的额度/余额
-    ☐ 阿里云账号**开 MFA**（账号安全页）＋ **查 RAM AccessKey** 有无多出来的
-      （AccessKey 是长期凭据且不受 MFA 保护，攻击者留后门首选）
+    ✅ 阿里云账号（2026-09-17 查过）：MFA **原本就已绑定**（不是这次才加的）；
+       「AccessKey 管理」页**没有任何 AccessKey** —— 主账号没有长期凭据后门
+       ☐ 仍待查：RAM **子账号**（访问控制 → 用户）—— 那是独立一处，
+         「AccessKey 管理」页只覆盖主账号；顺带看一眼 RAM 角色
     ☐ GitHub 密码（若与服务器密码相同）
     ☐ 核对 PayPal 有无异常交易
 · 🔴 next@15.1.0 有已知漏洞（CVE-2025-66478），npm 安装时明确告警，建议升级
