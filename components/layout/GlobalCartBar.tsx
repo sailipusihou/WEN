@@ -109,7 +109,7 @@ export default function GlobalCartBar() {
           {/* 右侧操作 */}
           <Link
             href="/cart"
-            className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
+            className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3 font-sans text-micro font-bold tracking-[0.28em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
             style={{ backgroundColor: INK, borderRadius: 2 }}
           >
             <ShoppingBag size={14} strokeWidth={2.2} />

@@ -256,7 +256,7 @@ export default function QuickViewModal({
                 type="button"
                 data-qv-select="1"
                 onClick={() => { onSelect?.(selectedVariantId); onClose() }}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
                 style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
               >
                 {selectLabel}
@@ -281,7 +281,7 @@ export default function QuickViewModal({
                     type="button"
                     onClick={handleAdd}
                     data-qv-add="1"
-                    className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300"
+                    className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-all duration-300"
                     style={{
                       backgroundColor: added ? '#8A6A2E' : '#FFFFFF',
                       color: added ? '#FFFFFF' : '#2A2118',
@@ -298,7 +298,7 @@ export default function QuickViewModal({
                   type="button"
                   onClick={handleBuyNow}
                   data-qv-buynow="1"
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px mb-3"
                   style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
                 >
                   <Zap size={14} strokeWidth={2.2} /> Buy now
@@ -309,7 +309,7 @@ export default function QuickViewModal({
             <Link
               href={`/products/${product.id}`}
               onClick={onClose}
-              className="font-sans text-[11px] underline underline-offset-4 transition-opacity hover:opacity-70 mb-4"
+              className="font-sans text-micro underline underline-offset-4 transition-opacity hover:opacity-70 mb-4"
               style={{ color: 'rgba(74,58,36,0.65)' }}
             >
               View full details →
@@ -322,7 +322,7 @@ export default function QuickViewModal({
                 { icon: Check, text: '30-day money back' },
                 { icon: Check, text: 'Tracked worldwide shipping' },
               ].map(x => (
-                <p key={x.text} className="flex items-center gap-2 font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                <p key={x.text} className="flex items-center gap-2 font-sans text-micro" style={{ color: 'rgba(74,58,36,0.7)' }}>
                   <x.icon size={11} strokeWidth={2.4} style={{ color: '#8A6A2E' }} /> {x.text}
                 </p>
               ))}

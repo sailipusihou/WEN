@@ -142,7 +142,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
     <div className="bg-[#FBFAF7] min-h-screen">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-8 pb-4">
-        <nav className="flex items-center gap-2 font-sans text-[10px] text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-6">
+        <nav className="flex items-center gap-2 font-sans text-micro text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-6">
           <Link href="/" className="hover:text-[#2A2118] transition-colors">Home</Link>
           <span>/</span>
           <span className="text-[#8A6A2E]">All Objects</span>
@@ -235,7 +235,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             <div className="flex flex-wrap gap-6">
               {/* Category */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Category</h4>
+                <h4 className="font-sans text-micro text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Category</h4>
                 <div className="flex flex-wrap gap-2">
                   {[{ slug: '', label: 'All' }, ...categories.map(c => ({ slug: c.slug, label: c.nameEn || c.name }))].map(cat => (
                     <button
@@ -251,7 +251,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               </div>
               {/* Price */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Price Range</h4>
+                <h4 className="font-sans text-micro text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Price Range</h4>
                 <div className="flex flex-wrap gap-2">
                   {PRICE_RANGES.map((range, i) => (
                     <button
@@ -267,7 +267,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
               </div>
               {/* Featured */}
               <div>
-                <h4 className="font-sans text-[9px] text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Special</h4>
+                <h4 className="font-sans text-micro text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium mb-2">Special</h4>
                 <button
                   type="button"
                   onClick={() => setFeaturedOnly(!featuredOnly)}
@@ -282,7 +282,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-[10px] text-[#8A6A2E] hover:underline font-sans tracking-[0.18em] uppercase"
+                  className="text-micro text-[#8A6A2E] hover:underline font-sans tracking-[0.18em] uppercase"
                 >
                   Clear All Filters
                 </button>
@@ -338,7 +338,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
                     <Link href={"/products/" + product.id} className="font-en text-sm text-[#2A2118] hover:text-[#8A6A2E] transition-colors font-medium">
                       {product.nameEn || product.name}
                     </Link>
-                    <p className="font-sans text-[11px] text-[#5A4A36]/50 mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
+                    <p className="font-sans text-micro text-[#5A4A36]/50 mt-0.5 truncate">{product.subtitleEn || product.subtitle}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className={`font-en text-base font-medium ${promoPriceClass(eff, 'text-[#2A2118]')}`}>
@@ -363,7 +363,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             <Loader2 size={24} className="text-[#8A6A2E] animate-spin" />
           )}
           {!hasMore && products.length > 0 && !loading && (
-            <p className="font-sans text-[10px] text-[#5A4A36]/40 tracking-[0.18em] uppercase">
+            <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.18em] uppercase">
               You&apos;ve reached the end
             </p>
           )}

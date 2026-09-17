@@ -164,7 +164,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
                     <h4 className="font-en text-xs text-[#2A2118] font-medium truncate">
                       {item.name}
                     </h4>
-                    <p className="font-sans text-[10px] text-[#5A4A36]/50 truncate">
+                    <p className="font-sans text-micro text-[#5A4A36]/50 truncate">
                       {item.subtitle}
                     </p>
                   </div>
@@ -176,7 +176,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
               <Link
                 href={`/search?q=${encodeURIComponent(query)}`}
                 onClick={() => { setIsOpen(false); onClose?.() }}
-                className="block text-center py-3 text-[10px] text-[#5F7D72] hover:bg-[#FBFAF7] transition-colors tracking-[0.18em] uppercase font-sans font-medium"
+                className="block text-center py-3 text-micro text-[#5F7D72] hover:bg-[#FBFAF7] transition-colors tracking-[0.18em] uppercase font-sans font-medium"
               >
                 View all results
               </Link>

@@ -612,7 +612,7 @@ export default function WalletButtons({
   const debugPanel = debugOn ? (
     <div
       data-wallet-debug="1"
-      className="mt-4 p-3 font-mono text-[11px] leading-relaxed"
+      className="mt-4 p-3 font-mono text-micro leading-relaxed"
       style={{ backgroundColor: '#111', color: '#7ee787', borderRadius: 4, whiteSpace: 'pre-wrap' }}
     >
       {'— wallet debug —\n' + (debugLines.length ? debugLines.join('\n') : '(暂无记录)')}
@@ -645,7 +645,7 @@ export default function WalletButtons({
       {title && (
         <div className="flex items-center gap-3 mt-5">
           <span className="flex-1 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.18)' }} />
-          <span className="font-sans text-[10px] tracking-[0.24em] uppercase" style={{ color: 'rgba(74,58,36,0.45)' }}>or</span>
+          <span className="font-sans text-micro tracking-[0.24em] uppercase" style={{ color: 'rgba(74,58,36,0.45)' }}>or</span>
           <span className="flex-1 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.18)' }} />
         </div>
       )}

@@ -49,23 +49,23 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-red-500 font-sans bg-red-50 p-2.5">{error}</p>}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">First Name</label>
+              <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">First Name</label>
               <input type="text" value={form.firstName} onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))} required
                 className="input-premium" placeholder="First" />
             </div>
             <div>
-              <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Last Name</label>
+              <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Last Name</label>
               <input type="text" value={form.lastName} onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))} required
                 className="input-premium" placeholder="Last" />
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
+            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
             <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required
               className="input-premium" placeholder="you@example.com" />
           </div>
           <div>
-            <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
+            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
             <div className="relative">
               <input type={showPw ? "text" : "password"} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={6}
                 className="input-premium pr-10" placeholder="At least 6 characters" />

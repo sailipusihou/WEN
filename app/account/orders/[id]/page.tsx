@@ -189,7 +189,7 @@ export default function OrderDetailPage() {
                       <div className="flex-1 min-w-0 pt-0.5">
                         <p className="font-sans text-sm font-medium text-otb-ink">{statusLabel(event.status)}</p>
                         {event.note && <p className="font-sans text-xs text-otb-ink/50 mt-0.5">{event.note}</p>}
-                        <p className="font-sans text-[10px] text-otb-ink/30 mt-0.5">{new Date(event.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="font-sans text-micro text-otb-ink/30 mt-0.5">{new Date(event.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
                     </div>
                   ))}
@@ -238,7 +238,7 @@ export default function OrderDetailPage() {
                             <Star size={16} className={n <= rv.rating ? "fill-[#A07C34] text-[#A07C34]" : "text-[#D8CFC0]"} />
                           </button>
                         ))}
-                        <span className="font-sans text-[11px] text-otb-ink/50 ml-2">{rv.rating}/5</span>
+                        <span className="font-sans text-micro text-otb-ink/50 ml-2">{rv.rating}/5</span>
                       </div>
                       <textarea value={rv.content} onChange={e => setItemReviews(prev => ({ ...prev, [item.id]: { ...rv, content: e.target.value } }))}
                         rows={2} placeholder="How was this piece? Craft, quality, packaging..."
@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
                           {rv.submitting ? "Submitting..." : "Submit Review"}
                         </button>
                         {rv.msg && (
-                          <p className={"font-sans text-[11px] " + (rv.ok ? "text-green-600" : "text-red-500")}>{rv.msg}</p>
+                          <p className={"font-sans text-micro " + (rv.ok ? "text-green-600" : "text-red-500")}>{rv.msg}</p>
                         )}
                       </div>
                     </div>
@@ -297,7 +297,7 @@ export default function OrderDetailPage() {
                 )}
               </div>
               {findAvatarMeta(order.assignedToAvatar || '')?.name && (
-                <p className="font-sans text-[10px] text-otb-ink/40 mt-2">
+                <p className="font-sans text-micro text-otb-ink/40 mt-2">
                   Avatar: {findAvatarMeta(order.assignedToAvatar || '')?.name} · Click for details
                 </p>
               )}
@@ -324,12 +324,12 @@ export default function OrderDetailPage() {
                         </div>
                         <div className="flex gap-1.5 mt-1">
                           {meta.era && (
-                            <span className="font-sans text-[10px] px-1.5 py-0.5 rounded bg-otb-terracotta/10 text-otb-terracotta">
+                            <span className="font-sans text-micro px-1.5 py-0.5 rounded bg-otb-terracotta/10 text-otb-terracotta">
                               {meta.era}
                             </span>
                           )}
                           {meta.role && (
-                            <span className="font-sans text-[10px] px-1.5 py-0.5 rounded bg-otb-sand/20 text-otb-ink/60">
+                            <span className="font-sans text-micro px-1.5 py-0.5 rounded bg-otb-sand/20 text-otb-ink/60">
                               {meta.role}
                             </span>
                           )}
@@ -450,10 +450,10 @@ export default function OrderDetailPage() {
                         <div>
                           <p className="font-sans text-sm font-medium text-otb-ink">{shp.carrierName || shp.carrierCode}</p>
                           <p className="font-mono text-xs text-otb-ink/50 break-all">{shp.trackingNumber}</p>
-                          {shp.estimatedDelivery && <p className="font-sans text-[11px] text-otb-ink/40 mt-0.5">Est. delivery: {new Date(shp.estimatedDelivery).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>}
+                          {shp.estimatedDelivery && <p className="font-sans text-micro text-otb-ink/40 mt-0.5">Est. delivery: {new Date(shp.estimatedDelivery).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-micro font-medium" style={{ backgroundColor: sc.bg, color: sc.color }}>
                             <sc.icon size={10} /> {sc.label}
                           </span>
                           {shp.trackingUrl && (
@@ -481,14 +481,14 @@ export default function OrderDetailPage() {
                                 <div className="flex-1 min-w-0 pt-0">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className={"font-sans text-xs " + (isLatest ? "font-medium text-otb-ink" : "text-otb-ink/60")}>{evt.description}</span>
-                                    {isLatest && <span className="px-1 py-0.5 rounded-full text-[8px] font-medium" style={{ backgroundColor: ec.bg, color: ec.color }}>LATEST</span>}
+                                    {isLatest && <span className="px-1 py-0.5 rounded-full text-micro font-medium" style={{ backgroundColor: ec.bg, color: ec.color }}>LATEST</span>}
                                   </div>
                                   {evt.location && (
-                                    <p className="font-sans text-[10px] text-otb-ink/40 mt-0.5 flex items-center gap-0.5">
+                                    <p className="font-sans text-micro text-otb-ink/40 mt-0.5 flex items-center gap-0.5">
                                       <MapPin size={9} /> {evt.location}
                                     </p>
                                   )}
-                                  <p className="font-sans text-[10px] text-otb-ink/30 mt-0.5">
+                                  <p className="font-sans text-micro text-otb-ink/30 mt-0.5">
                                     {new Date(evt.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                   </p>
                                 </div>

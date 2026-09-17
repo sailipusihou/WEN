@@ -86,7 +86,7 @@ export default function AccountOrdersPage() {
               </div>
               <div className="text-right shrink-0 ml-4">
                 <p className="font-serif text-sm font-bold text-otb-ink">{fmt(order.total)}</p>
-                <span className={"inline-block text-[10px] font-sans px-2 py-0.5 rounded-full mt-1 " + statusBadge(order.status)}>
+                <span className={"inline-block text-micro font-sans px-2 py-0.5 rounded-full mt-1 " + statusBadge(order.status)}>
                   {order.status || "pending"}
                 </span>
               </div>

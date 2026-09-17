@@ -43,7 +43,7 @@ export default function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
     <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28">
       <div className="flex items-end justify-between mb-10 md:mb-14">
         <div>
-          <p className="font-sans text-[11px] tracking-[0.28em] uppercase mb-3" style={{ color: GOLD }}>
+          <p className="font-sans text-micro tracking-[0.28em] uppercase mb-3" style={{ color: GOLD }}>
             From Our Customers
           </p>
           <h2 className="font-en text-3xl md:text-4xl font-medium tracking-[0.005em]" style={{ color: INK }}>
@@ -53,7 +53,7 @@ export default function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
         {/* 开发模式专用提示 —— 生产中示例数据为空，这一行不会出现 */}
         {anySample && (
           <span
-            className="font-sans text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-sm"
+            className="font-sans text-micro tracking-[0.18em] uppercase px-2.5 py-1 rounded-sm"
             style={{ color: '#8A6522', backgroundColor: 'rgba(168,124,46,0.12)', border: '1px solid rgba(168,124,46,0.28)' }}
           >
             Sample data — dev only
@@ -75,7 +75,7 @@ export default function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
             {/* 每条示例评价都必须自带 SAMPLE 标记，不能只靠区块顶部的提示 */}
             {r.isSample && (
               <span
-                className="absolute top-3 right-3 font-sans text-[9px] tracking-[0.16em] uppercase px-1.5 py-0.5 rounded-sm"
+                className="absolute top-3 right-3 font-sans text-micro tracking-[0.16em] uppercase px-1.5 py-0.5 rounded-sm"
                 style={{ color: '#8A6522', backgroundColor: 'rgba(168,124,46,0.14)' }}
               >
                 Sample
@@ -109,7 +109,7 @@ export default function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
               </div>
               <div className="min-w-0">
                 <p className="font-sans text-[13px] font-semibold truncate" style={{ color: INK }}>{r.author}</p>
-                <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(74,58,36,0.56)' }}>
+                <p className="font-sans text-micro truncate" style={{ color: 'rgba(74,58,36,0.56)' }}>
                   {r.location} · {r.date}
                 </p>
               </div>

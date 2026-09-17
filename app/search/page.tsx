@@ -150,7 +150,7 @@ export default function SearchPage() {
     <div className="bg-[#FBFAF7] min-h-screen">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-8 pb-4">
-        <nav className="flex items-center gap-2 font-sans text-[10px] text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-6">
+        <nav className="flex items-center gap-2 font-sans text-micro text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-6">
           <Link href="/" className="hover:text-[#2A2118] transition-colors">Home</Link>
           <span>/</span>
           <span className="text-[#8A6A2E]">Search</span>
@@ -190,13 +190,13 @@ export default function SearchPage() {
             {searchHistory.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-sans text-[10px] text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium flex items-center gap-2">
+                  <h3 className="font-sans text-micro text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium flex items-center gap-2">
                     <Clock size={12} strokeWidth={1.5} /> Recent Searches
                   </h3>
                   <button
                     type="button"
                     onClick={clearHistory}
-                    className="font-sans text-[10px] text-[#5A4A36]/40 hover:text-[#8A6A2E] transition-colors"
+                    className="font-sans text-micro text-[#5A4A36]/40 hover:text-[#8A6A2E] transition-colors"
                   >
                     Clear
                   </button>
@@ -216,7 +216,7 @@ export default function SearchPage() {
               </div>
             )}
             <div>
-              <h3 className="font-sans text-[10px] text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium flex items-center gap-2 mb-3">
+              <h3 className="font-sans text-micro text-[#5A4A36]/60 tracking-[0.24em] uppercase font-medium flex items-center gap-2 mb-3">
                 <TrendingUp size={12} strokeWidth={1.5} /> Popular Searches
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -260,7 +260,7 @@ export default function SearchPage() {
                 <p className="font-sans text-xs text-[#5A4A36]/40 mb-6">Try different keywords or browse our collections</p>
                 <Link
                   href="/products"
-                  className="inline-block px-6 py-3 bg-[#2A2118] text-white text-[10px] tracking-[0.22em] uppercase font-sans hover:bg-[#8A6A2E] transition-colors"
+                  className="inline-block px-6 py-3 bg-[#2A2118] text-white text-micro tracking-[0.22em] uppercase font-sans hover:bg-[#8A6A2E] transition-colors"
                 >
                   Browse All Products
                 </Link>
@@ -271,7 +271,7 @@ export default function SearchPage() {
             <div ref={loaderRef} className="mt-12 flex justify-center">
               {loading && <Loader2 size={24} className="text-[#8A6A2E] animate-spin" />}
               {!hasMore && products.length > 0 && !loading && (
-                <p className="font-sans text-[10px] text-[#5A4A36]/40 tracking-[0.18em] uppercase">
+                <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.18em] uppercase">
                   You&apos;ve reached the end
                 </p>
               )}

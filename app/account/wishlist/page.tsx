@@ -83,7 +83,7 @@ export default function WishlistPage() {
               <div className="px-3 pb-3">
                 <button
                   onClick={() => addToCart(item)}
-                  className="w-full py-2 bg-otb-ink text-white text-[10px] tracking-[0.08em] uppercase font-sans font-medium hover:bg-otb-ink/90 transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="w-full py-2 bg-otb-ink text-white text-micro tracking-[0.08em] uppercase font-sans font-medium hover:bg-otb-ink/90 transition-colors inline-flex items-center justify-center gap-1.5"
                 >
                   <ShoppingBag size={12} /> Add to Cart
                 </button>

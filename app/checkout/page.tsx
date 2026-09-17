@@ -553,29 +553,29 @@ export default function CheckoutPage() {
           <div className="space-y-6">
             {referralInfo ? (
               <div className="rounded-[24px] border border-[#A07C34]/20 bg-[#FFFFFF]/80 p-6">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Marketing Attribution Recorded</p>
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Marketing Attribution Recorded</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#2A2118]">
                   This order is linked to your {referralInfo.platform} {referralInfo.platformUsername ? `@${referralInfo.platformUsername}` : ''} campaign.
                   Our team will connect it with the related social content, staff, and tracking metrics.
                 </p>
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                    <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Referral Code</p>
+                    <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Referral Code</p>
                     <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.code}</p>
                   </div>
                   <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                    <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Source Channel</p>
+                    <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Source Channel</p>
                     <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.platform}{referralInfo.platformUsername ? ` · @${referralInfo.platformUsername}` : ''}</p>
                   </div>
                   <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                    <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Promoted Product</p>
+                    <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Promoted Product</p>
                     <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.productName || 'General collection'}</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="rounded-[24px] border border-[#EFE7D4] bg-[#FFFFFF]/80 p-6">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Organic Checkout</p>
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Organic Checkout</p>
                 <p className="mt-2 font-sans text-sm leading-7 text-[#2A2118]">
                   This order carries no marketing referral and will be treated as organic traffic.
                   Attribution info will appear automatically if you later enter through a social link.
@@ -584,7 +584,7 @@ export default function CheckoutPage() {
             )}
 
             <div className="rounded-[24px] border border-[#EFE7D4] bg-[#FFFFFF]/80 p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">What Happens Next</p>
+              <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">What Happens Next</p>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {[
                   'Order confirmation email is sent to your inbox.',
@@ -601,25 +601,25 @@ export default function CheckoutPage() {
 
           <div className="space-y-6">
             <div className="rounded-[24px] border border-[#EFE7D4] bg-[#FFFFFF]/80 p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Fulfillment Snapshot</p>
+              <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Fulfillment Snapshot</p>
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                  <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Payment Method</p>
+                  <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Payment Method</p>
                   <p className="mt-1 font-sans text-sm text-[#2A2118]">PayPal</p>
                 </div>
                 <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                  <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Delivery Estimate</p>
+                  <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Delivery Estimate</p>
                   <p className="mt-1 font-sans text-sm text-[#2A2118]">{estimatedDays} days</p>
                 </div>
                 <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
-                  <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Shipping Zone</p>
+                  <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Shipping Zone</p>
                   <p className="mt-1 font-sans text-sm text-[#2A2118]">{shippingZone?.name || shipping.country}</p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-[24px] border border-[#EFE7D4] bg-[#FFFFFF]/80 p-6">
-              <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Next Actions</p>
+              <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Next Actions</p>
               <div className="mt-4 flex flex-col gap-3">
                 {orderId && (
                   <Link href={`/order-tracking?id=${orderId}`} className="px-6 py-3 bg-[#A07C34] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#A08A5A] transition-colors text-center">
@@ -737,22 +737,22 @@ export default function CheckoutPage() {
             )}
             {referralInfo && (
               <div className="checkout-card p-6 md:p-8">
-                <p className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-3">Attribution Active</p>
+                <p className="font-sans text-micro text-[#A07C34] tracking-[0.24em] uppercase font-medium mb-3">Attribution Active</p>
                 <div className="space-y-2">
                   <p className="font-sans text-sm text-[#2A2118]">
                     This checkout is tied to a marketing campaign — the order will be linked to the related social content and staff member.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="rounded-xl bg-[#FBFAF7] px-4 py-3">
-                      <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Referral Code</p>
+                      <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Referral Code</p>
                       <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.code}</p>
                     </div>
                     <div className="rounded-xl bg-[#FBFAF7] px-4 py-3">
-                      <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Source</p>
+                      <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Source</p>
                       <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.platform}{referralInfo.platformUsername ? ` · @${referralInfo.platformUsername}` : ''}{referralChannel ? ` · ${referralChannel}` : ''}</p>
                     </div>
                     <div className="rounded-xl bg-[#FBFAF7] px-4 py-3">
-                      <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Promoted Product</p>
+                      <p className="font-sans text-micro uppercase tracking-[0.22em] text-[#8A6A2E]">Promoted Product</p>
                       <p className="mt-1 font-sans text-sm text-[#2A2118]">{referralInfo.productName || 'General collection'}</p>
                     </div>
                   </div>
@@ -791,7 +791,7 @@ export default function CheckoutPage() {
                 />
                 <label htmlFor="co-email">Email</label>
               </div>
-              {fieldErrors.email && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors.email}</p>}
+              {fieldErrors.email && <p className="text-red-500 text-micro mt-1 font-sans">{fieldErrors.email}</p>}
 
               {/* 营销订阅（默认不勾，合规上更稳） */}
               <label className="mt-3 flex items-start gap-2.5 cursor-pointer select-none">
@@ -844,7 +844,7 @@ export default function CheckoutPage() {
                 </div>
                 {/* 运费按所选国家实时算出来（服务端 calculateShipping，按国家匹配分区）。
                     但要等客户真的填了地址再显示 —— 否则一进页面就报一个运费数字，不严谨。 */}
-                <p className="font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                <p className="font-sans text-micro" style={{ color: 'rgba(74,58,36,0.55)' }}>
                   {!addressTouched
                     ? 'Shipping cost is calculated from your address'
                     : shippingCost > 0
@@ -867,7 +867,7 @@ export default function CheckoutPage() {
                         style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                       />
                       <label htmlFor={'co-' + key}>{label}</label>
-                      {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
+                      {fieldErrors[key] && <p className="text-red-500 text-micro mt-1 font-sans">{fieldErrors[key]}</p>}
                     </div>
                   ))}
                 </div>
@@ -886,7 +886,7 @@ export default function CheckoutPage() {
                       style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                     />
                     <label htmlFor={'co-' + key}>{label}</label>
-                    {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
+                    {fieldErrors[key] && <p className="text-red-500 text-micro mt-1 font-sans">{fieldErrors[key]}</p>}
                   </div>
                 ))}
 
@@ -905,7 +905,7 @@ export default function CheckoutPage() {
                         style={fieldErrors[key] ? { borderColor: '#f87171' } : undefined}
                       />
                       <label htmlFor={'co-' + key}>{label}</label>
-                      {fieldErrors[key] && <p className="text-red-500 text-[10px] mt-1 font-sans">{fieldErrors[key]}</p>}
+                      {fieldErrors[key] && <p className="text-red-500 text-micro mt-1 font-sans">{fieldErrors[key]}</p>}
                     </div>
                   ))}
                 </div>
@@ -944,7 +944,7 @@ export default function CheckoutPage() {
                 </button>
               </div>
               
-              <p className="text-[10px] text-[#5A4A36]/40 mt-3 font-sans">
+              <p className="text-micro text-[#5A4A36]/40 mt-3 font-sans">
                 Secure payment processing by PayPal. You can pay with PayPal account, Visa, MasterCard, American Express, Discover, or debit card.
               </p>
 
@@ -987,7 +987,7 @@ export default function CheckoutPage() {
                   { icon: Truck, text: 'Tracked worldwide shipping' },
                   { icon: RotateCcw, text: '30-day money back' },
                 ].map(t => (
-                  <span key={t.text} className="inline-flex items-center gap-1.5 font-sans text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: 'rgba(74,58,36,0.65)' }}>
+                  <span key={t.text} className="inline-flex items-center gap-1.5 font-sans text-micro font-semibold tracking-[0.08em] uppercase" style={{ color: 'rgba(74,58,36,0.65)' }}>
                     <t.icon size={12} strokeWidth={1.8} style={{ color: '#8A6A2E' }} /> {t.text}
                   </span>
                 ))}
@@ -1061,13 +1061,13 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={applyCoupon}
                     disabled={couponApplying || !couponCode.trim()}
-                    className="px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-sans font-medium border border-[#2A2118] text-[#2A2118] hover:bg-[#2A2118] hover:text-white transition-colors disabled:opacity-40"
+                    className="px-4 py-2 text-micro tracking-[0.2em] uppercase font-sans font-medium border border-[#2A2118] text-[#2A2118] hover:bg-[#2A2118] hover:text-white transition-colors disabled:opacity-40"
                   >
                     {couponApplying ? '...' : 'Apply'}
                   </button>
                 </div>
                 {couponMsg && (
-                  <p className={`text-[11px] ${couponMsg.type === 'ok' ? 'text-[#4A665D]' : 'text-red-500'}`}>{couponMsg.text}</p>
+                  <p className={`text-micro ${couponMsg.type === 'ok' ? 'text-[#4A665D]' : 'text-red-500'}`}>{couponMsg.text}</p>
                 )}
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-[#4A665D]">
@@ -1103,14 +1103,14 @@ export default function CheckoutPage() {
                 {/* 预计到达日：跨境订单最大的疑虑就是「多久到」，这里给明确日期 */}
                 {!!checkoutEta && (
                   <div className="border-t border-[#EFE7D4]/50 pt-3 space-y-1.5">
-                    <div className="flex items-start gap-2 font-sans text-[11px] text-[#2A2118]">
+                    <div className="flex items-start gap-2 font-sans text-micro text-[#2A2118]">
                       <Truck size={13} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: '#8A6A2E' }} />
                       <span>
                         Arrives <strong className="font-semibold">{checkoutEta}</strong>
                         <span className="text-[#5A4A36]/50"> · {estimatedDays} business days</span>
                       </span>
                     </div>
-                    <p className="font-sans text-[10px] text-[#5A4A36]/50 pl-[21px]">
+                    <p className="font-sans text-micro text-[#5A4A36]/50 pl-[21px]">
                       Tracked shipping from the workshop · dispatched within 1–2 business days
                     </p>
                   </div>
@@ -1120,12 +1120,12 @@ export default function CheckoutPage() {
                 {freeThreshold > 0 && (
                   <div className="border-t border-[#EFE7D4]/50 pt-3">
                     {shippingCost === 0 ? (
-                      <p className="font-sans text-[11px] font-medium text-green-600 flex items-center gap-1.5">
+                      <p className="font-sans text-micro font-medium text-green-600 flex items-center gap-1.5">
                         <CheckCircle size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
                       </p>
                     ) : (
                       <>
-                        <p className="font-sans text-[11px] text-[#5A4A36]/70 mb-2">
+                        <p className="font-sans text-micro text-[#5A4A36]/70 mb-2">
                           Add <strong className="text-[#2A2118]">{formatPrice(convertPrice(freeThreshold - discountedSubtotal, currency), currency)}</strong> more for free shipping
                         </p>
                         <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(74,58,36,0.20)' }}>
@@ -1151,14 +1151,14 @@ export default function CheckoutPage() {
                   <p className="font-sans text-[13px] font-semibold mb-2" style={{ color: '#2A2118' }}>
                     *Note:
                   </p>
-                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.75)' }}>
+                  <p className="font-sans text-micro leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.75)' }}>
                     Please review the following so your order goes smoothly:
                   </p>
 
                   <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
                     Processing time
                   </p>
-                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  <p className="font-sans text-micro leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
                     Orders are prepared within 1–2 business days. During sale periods this can extend to 4 business
                     days — we email you if your order is affected.
                   </p>
@@ -1166,7 +1166,7 @@ export default function CheckoutPage() {
                   <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
                     Shipping
                   </p>
-                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  <p className="font-sans text-micro leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
                     Tracked delivery in 7–14 business days after dispatch. Rates are calculated from your address
                     above. Free over $199 (US &amp; Canada), $249 (Europe), $229 (Asia Pacific), $279 (rest of world).
                   </p>
@@ -1174,7 +1174,7 @@ export default function CheckoutPage() {
                   <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
                     Customs &amp; duties
                   </p>
-                  <p className="font-sans text-[11px] leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  <p className="font-sans text-micro leading-relaxed mb-4" style={{ color: 'rgba(74,58,36,0.7)' }}>
                     Import duties or taxes charged by your country are the recipient&apos;s responsibility and are not
                     included in the price paid here.
                   </p>
@@ -1182,7 +1182,7 @@ export default function CheckoutPage() {
                   <p className="font-sans text-[12px] font-semibold mb-1.5" style={{ color: '#2A2118' }}>
                     Returns
                   </p>
-                  <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  <p className="font-sans text-micro leading-relaxed" style={{ color: 'rgba(74,58,36,0.7)' }}>
                     30 days to return, refunds within 5 business days of us receiving the item. Full details in our{' '}
                     <a href="/refund-policy" className="underline underline-offset-2" style={{ color: '#8A6A2E' }}>
                       Returns &amp; Refunds

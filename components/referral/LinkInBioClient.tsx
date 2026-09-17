@@ -56,7 +56,7 @@ export default function LinkInBioClient({
         <div className="mx-auto max-w-6xl px-6 py-4 sm:px-8 lg:px-12">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-[#8A6A2E]">
+              <p className="font-sans text-micro uppercase tracking-[0.26em] text-[#8A6A2E]">
                 Instagram Link in Bio
               </p>
               <p className="mt-1 font-sans text-sm text-[#5A4A36]">
@@ -76,7 +76,7 @@ export default function LinkInBioClient({
       <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-14">
         <div className="space-y-6">
           <div className="rounded-[28px] border border-[#E7E1D7] bg-[#FFFFFF] p-6 shadow-sm md:p-8">
-            <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-[#8A6A2E]">
+            <p className="font-sans text-micro uppercase tracking-[0.26em] text-[#8A6A2E]">
               Featured Drop
             </p>
             <h1 className="mt-3 font-en text-3xl font-medium tracking-[0.005em] md:text-5xl">
@@ -112,7 +112,7 @@ export default function LinkInBioClient({
 
             <div className="mt-8 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl bg-[#FBFAF7] p-4">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Source</p>
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Source</p>
                 <p className="mt-2 font-sans text-sm text-[#2A2118]">
                   {sourceChannel === 'story'
                     ? 'Instagram Story'
@@ -122,13 +122,13 @@ export default function LinkInBioClient({
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FBFAF7] p-4">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Primary Product</p>
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Primary Product</p>
                 <p className="mt-2 font-sans text-sm text-[#2A2118]">
                   {heroProduct?.nameEn || heroProduct?.name || referralLink?.productName || 'Curated collection'}
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FBFAF7] p-4">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">Link Mode</p>
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">Link Mode</p>
                 <p className="mt-2 font-sans text-sm text-[#2A2118]">Bio landing + product deep link</p>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function LinkInBioClient({
                 />
               </div>
               <div className="p-6">
-                <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-[#8A6A2E]">
+                <p className="font-sans text-micro uppercase tracking-[0.28em] text-[#8A6A2E]">
                   Recommended First Click
                 </p>
                 <h2 className="mt-2 font-en text-2xl font-medium text-[#2A2118]">
@@ -190,7 +190,7 @@ export default function LinkInBioClient({
           <div className="rounded-[28px] border border-[#E7E1D7] bg-[#FFFFFF] p-6 shadow-sm md:p-8">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-[#8A6A2E]">Curated Picks</p>
+                <p className="font-sans text-micro uppercase tracking-[0.26em] text-[#8A6A2E]">Curated Picks</p>
                 <h3 className="mt-2 font-en text-2xl font-medium tracking-[0.005em]">Continue browsing</h3>
               </div>
               <Link href={referralCode ? `/products?ref=${referralCode}&channel=${sourceChannel}` : '/products'} className="text-xs uppercase tracking-[0.26em] text-[#5A4A36] hover:text-[#2A2118]">

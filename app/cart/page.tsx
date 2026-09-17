@@ -123,12 +123,12 @@ export default function CartPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href={'/order-tracking'}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-colors"
                 style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
                 Track my order
               </Link>
               <Link href="/"
-                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-colors"
                 style={{ border: '1px solid rgba(74,58,36,0.3)', color: '#2A2118', borderRadius: 4 }}>
                 <ArrowLeft size={14} strokeWidth={1.8} /> Continue shopping
               </Link>
@@ -163,7 +163,7 @@ export default function CartPage() {
             <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em]">Cart</h1>
             <p className="font-sans text-sm text-[#5A4A36]/60 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
           </div>
-          <button onClick={clearCart} className="font-sans text-[10px] text-[#5A4A36]/40 hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase">
+          <button onClick={clearCart} className="font-sans text-micro text-[#5A4A36]/40 hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase">
             Clear
           </button>
         </div>
@@ -185,7 +185,7 @@ export default function CartPage() {
                       {/* 赠品行：明确标出来，避免客户以为被多收了钱 */}
                       {item.isGift && (
                         <span
-                          className="inline-flex items-center gap-1 ml-2 align-middle px-2 py-0.5 font-sans text-[9px] font-bold tracking-[0.16em] uppercase"
+                          className="inline-flex items-center gap-1 ml-2 align-middle px-2 py-0.5 font-sans text-micro font-bold tracking-[0.16em] uppercase"
                           style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', color: '#8A6A2E', borderRadius: 2 }}
                         >
                           <Gift size={9} strokeWidth={2.2} /> Free gift
@@ -198,7 +198,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     {item.isGift ? (
-                      <span className="font-sans text-[11px] tracking-[0.14em] uppercase" style={{ color: '#4A665D' }}>
+                      <span className="font-sans text-micro tracking-[0.14em] uppercase" style={{ color: '#4A665D' }}>
                         Included with your order
                       </span>
                     ) : (
@@ -247,7 +247,7 @@ export default function CartPage() {
                 </div>
                 {shipping > 0 && freeThreshold !== null ? (
                   <div className="pt-1">
-                    <p className="font-sans text-[11px] text-[#5A4A36]/70 mb-2">
+                    <p className="font-sans text-micro text-[#5A4A36]/70 mb-2">
                       Add <strong className="text-[#2A2118]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
                     </p>
                     <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(74,58,36,0.20)' }}>
@@ -261,7 +261,7 @@ export default function CartPage() {
                     </div>
                   </div>
                 ) : shipping === 0 ? (
-                  <p className="font-sans text-[11px] font-medium text-green-600 flex items-center gap-1.5">
+                  <p className="font-sans text-micro font-medium text-green-600 flex items-center gap-1.5">
                     <Check size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
                   </p>
                 ) : null}
@@ -280,7 +280,7 @@ export default function CartPage() {
 
               <Link href="/checkout"
                 data-cart-checkout="1"
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 font-sans text-micro font-bold tracking-[0.28em] uppercase transition-all duration-300 hover:-translate-y-px"
                 style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
                 Checkout <ArrowRight size={14} strokeWidth={2.2} />
               </Link>
@@ -304,7 +304,7 @@ export default function CartPage() {
           >
             <div className="flex items-end justify-between mb-8">
               <h2 className="font-en text-2xl md:text-3xl font-medium tracking-[0.005em]" style={{ color: '#241C12' }}>You May Also Like</h2>
-              <Link href="/products" className="font-sans text-[10px] tracking-[0.26em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: '#8A6A2E' }}>
+              <Link href="/products" className="font-sans text-micro tracking-[0.26em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: '#8A6A2E' }}>
                 View all →
               </Link>
             </div>
@@ -341,7 +341,7 @@ export default function CartPage() {
           </div>
           <Link
             href="/checkout"
-            className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
+            className="pdp-btn shrink-0 inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 font-sans text-micro font-bold tracking-[0.28em] uppercase text-white transition-all duration-300 hover:-translate-y-px"
             style={{ backgroundColor: '#241C12', borderRadius: 2 }}
           >
             Checkout <ArrowRight size={14} strokeWidth={2.2} />

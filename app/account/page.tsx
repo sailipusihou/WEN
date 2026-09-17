@@ -134,7 +134,7 @@ export default function AccountPage() {
                       {c.code}
                       {copiedCoupon === c.code ? <Check size={14} className="text-green-600" /> : <Copy size={13} className="text-otb-ink/40" />}
                     </button>
-                    <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full"
+                    <span className="text-micro font-sans font-medium px-2 py-0.5 rounded-full"
                       style={{
                         backgroundColor: status === 'active' ? 'rgba(194,120,84,0.12)' : status === 'used' ? 'rgba(107,114,128,0.14)' : 'rgba(245,158,11,0.14)',
                         color: status === 'active' ? '#C27854' : status === 'used' ? '#6B7280' : '#D97706',
@@ -144,8 +144,8 @@ export default function AccountPage() {
                   </div>
                   <p className="font-serif text-2xl font-bold text-otb-ink">{discountLabel}</p>
                   <p className="font-sans text-xs text-otb-ink/50 mt-1">{c.name}</p>
-                  {c.minSpend > 0 && <p className="font-sans text-[11px] text-otb-ink/40 mt-2">Min spend ${c.minSpend}</p>}
-                  <p className="font-sans text-[11px] text-otb-ink/40 mt-1">Valid until {new Date(c.expiresAt).toLocaleDateString()}</p>
+                  {c.minSpend > 0 && <p className="font-sans text-micro text-otb-ink/40 mt-2">Min spend ${c.minSpend}</p>}
+                  <p className="font-sans text-micro text-otb-ink/40 mt-1">Valid until {new Date(c.expiresAt).toLocaleDateString()}</p>
                 </div>
               )
             })}

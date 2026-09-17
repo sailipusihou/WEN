@@ -112,7 +112,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           )}
           {/* Collection tag */}
           <div className="absolute top-3 left-3">
-            <span className="font-sans text-[8px] text-white/70 bg-black/15 backdrop-blur-sm px-2 py-0.5 tracking-[0.2em] uppercase rounded-sm">
+            <span className="font-sans text-micro text-white/70 bg-black/15 backdrop-blur-sm px-2 py-0.5 tracking-[0.2em] uppercase rounded-sm">
               {labelFor(product.category)}
             </span>
           </div>
@@ -152,7 +152,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               onClick={handleQuickView}
               type="button"
               data-quick-view={product.id}
-              className="w-full py-3 font-sans text-[11px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px"
+              className="w-full py-3 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px"
               style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
             >
               Quick view
@@ -161,7 +161,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               onClick={handleAddToCart}
               type="button"
               data-card-add={product.id}
-              className="w-full py-3 font-sans text-[11px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2"
+              className="w-full py-3 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2"
               style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
             >
               <ShoppingBag size={13} strokeWidth={2} /> Add to cart
@@ -171,19 +171,19 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
         {/* Info */}
         <div className="mt-3 md:mt-4 space-y-1">
-          <p className="font-sans text-[8px] text-[#5F7D72]/50 tracking-[0.22em] uppercase">
+          <p className="font-sans text-micro text-[#5F7D72]/50 tracking-[0.22em] uppercase">
             {labelFor(product.category)}
           </p>
           <h3 className="font-en text-sm md:text-base text-[#2A2118] font-medium leading-tight group-hover:text-[#5F7D72] transition-colors duration-300">
             {product.nameEn || product.name}
           </h3>
-          <p className="font-sans text-[11px] text-[#5A4A36]/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
+          <p className="font-sans text-micro text-[#5A4A36]/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
           {/* 评分/评论数: 有真实评价才显示 (列表页决策依据) */}
           {product.reviewCount > 0 && (
             <div className="flex items-center gap-1 pt-0.5">
               <Star size={10} className="fill-[#A07C34] text-[#A07C34]" />
-              <span className="font-sans text-[10px] text-[#5A4A36]/60">{product.rating}</span>
-              <span className="font-sans text-[10px] text-[#5A4A36]/35">({product.reviewCount})</span>
+              <span className="font-sans text-micro text-[#5A4A36]/60">{product.rating}</span>
+              <span className="font-sans text-micro text-[#5A4A36]/35">({product.reviewCount})</span>
             </div>
           )}
           <div className="flex items-baseline gap-2 pt-0.5">

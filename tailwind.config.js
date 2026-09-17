@@ -59,6 +59,27 @@ module.exports = {
         'danger': '#A8472E',
         'info': '#4F5A6E',
       },
+      fontSize: {
+        // 语义化字号阶梯（2026-09-17）
+        //
+        // 为什么建这个：实测首页**37.1% 的文字小于 12px**，最常用的字号是 11px。
+        // 而代码里散着约 1200 处任意值（text-[10px] 586 / text-[11px] 300 /
+        // text-[9px] 81 / text-[8px] 17 / text-[7px] 2）—— 既是"没有尺度"，
+        // 也是"普遍过小"。10px 以下在现代屏幕上基本不可读，移动端更甚。
+        //
+        // 这套阶梯定了可读下限：micro=12px 是**最小可用**，不再有 7~11px。
+        // 注意：这里用**新名字**（micro/small/body…），不动 Tailwind 的
+        // xs/sm/base/lg —— 那两个有 2367 处在用，改值会全站位移，
+        // 属于更大的动作，需要单独评估。
+        'micro': ['12px', { lineHeight: '1.45' }], // 角标 / 大写小标签 / 最小可读
+        'small': ['13px', { lineHeight: '1.5' }],  // 次要说明文字
+        'body': ['15px', { lineHeight: '1.6' }],   // 正文基准
+        'lead': ['17px', { lineHeight: '1.6' }],   // 导语 / 卡片标题
+        'h3': ['20px', { lineHeight: '1.35' }],    // 小标题
+        'h2': ['clamp(22px, 2.6vw, 28px)', { lineHeight: '1.25' }],
+        'h1': ['clamp(30px, 4vw, 40px)', { lineHeight: '1.15' }],
+        'hero': ['clamp(38px, 6vw, 64px)', { lineHeight: '1.05' }],
+      },
       borderRadius: {
         // 新增的语义档位。**刻意避开 sm/md/lg 这些名字** —— 用它们会覆盖
         // Tailwind 默认值，让全站已有的 rounded-lg 等突然改变尺寸（8px → 18px）。

@@ -684,7 +684,7 @@ export default function ProductDetailClient({
     <div className="min-h-screen" style={{ backgroundColor: PANEL }}>
       <div className="max-w-[1560px] mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12">
         {/* Breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-2 font-sans text-[10px] tracking-[0.26em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(74,58,36,0.56)' }}>
+        <nav className="flex flex-wrap items-center gap-2 font-sans text-micro tracking-[0.26em] uppercase mb-8 md:mb-10" style={{ color: 'rgba(74,58,36,0.56)' }}>
           <Link href="/" className="transition-colors hover:opacity-100" style={{ color: 'rgba(74,58,36,0.65)' }}>Home</Link>
           <span>/</span>
           <Link href="/products" className="transition-colors hover:opacity-100" style={{ color: 'rgba(74,58,36,0.65)' }}>All Objects</Link>
@@ -700,7 +700,7 @@ export default function ProductDetailClient({
           <div className="mb-8 rounded-2xl border border-[#A07C34]/20 bg-[#FFFFFF]/70 px-5 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-[#8A6A2E]">
+                <p className="font-sans text-micro uppercase tracking-[0.26em] text-[#8A6A2E]">
                   Social Attribution Active
                 </p>
                 <p className="mt-1 font-sans text-sm text-[#2A2118]">
@@ -709,7 +709,7 @@ export default function ProductDetailClient({
               </div>
               <Link
                 href={buildReferralBioLandingUrl({ code: referralCode, productId: product.id, sourceChannel })}
-                className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-[11px] tracking-[0.22em] uppercase font-sans font-semibold transition-all duration-300"
+                className="pdp-btn inline-flex items-center justify-center px-4 py-2 text-micro tracking-[0.22em] uppercase font-sans font-semibold transition-all duration-300"
                 style={{ border: `1px solid rgba(74,58,36,0.28)`, color: INK, borderRadius: 2 }}
               >
                 Back to Link in Bio
@@ -770,7 +770,7 @@ export default function ProductDetailClient({
                     placeholder="blur"
                   />
                   <span
-                    className="absolute bottom-4 right-4 flex items-center gap-1.5 backdrop-blur-sm px-3 py-2 font-sans text-[9px] font-semibold tracking-[0.26em] uppercase opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                    className="absolute bottom-4 right-4 flex items-center gap-1.5 backdrop-blur-sm px-3 py-2 font-sans text-micro font-semibold tracking-[0.26em] uppercase opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
                     style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: INK, borderRadius: 2 }}
                   >
                     <ZoomIn size={11} strokeWidth={1.8} /> Click to enlarge
@@ -810,7 +810,7 @@ export default function ProductDetailClient({
             transition={{ duration: 0.6, delay: 0.15 }}
             className="lg:pt-1"
           >
-            <span className="font-sans text-[10px] tracking-[0.24em] uppercase font-semibold" style={{ color: GOLD }}>
+            <span className="font-sans text-micro tracking-[0.24em] uppercase font-semibold" style={{ color: GOLD }}>
               {labelFor(product.category)}
             </span>
 
@@ -967,7 +967,7 @@ export default function ProductDetailClient({
               <div className="grid grid-cols-3 gap-5 mt-7 py-6" style={{ borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
                 {specRows.map(([label, value]) => (
                   <div key={label}>
-                    <span className="font-sans text-[9px] tracking-[0.26em] uppercase font-semibold" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</span>
+                    <span className="font-sans text-micro tracking-[0.26em] uppercase font-semibold" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</span>
                     <p className="font-sans text-[14px] mt-1.5 leading-snug font-medium" style={{ color: INK }}>{value}</p>
                   </div>
                 ))}
@@ -1133,12 +1133,12 @@ export default function ProductDetailClient({
                             {b.title || bp.nameEn || bp.name || b.bundleProductId}
                           </button>
                           {b.description && (
-                            <p className="font-sans text-[10px] mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                            <p className="font-sans text-micro mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
                               {b.description}
                             </p>
                           )}
                           {Number(b.discount) > 0 && (
-                            <p className="font-sans text-[10px] mt-0.5" style={{ color: '#4A665D' }}>
+                            <p className="font-sans text-micro mt-0.5" style={{ color: '#4A665D' }}>
                               Bundle saving −{formatPrice(convertPrice(Number(b.discount), currency), currency)}
                             </p>
                           )}
@@ -1167,7 +1167,7 @@ export default function ProductDetailClient({
                             </div>
                           )}
                           {on && vs.length === 1 && (
-                            <p className="font-sans text-[10px] mt-1" style={{ color: 'rgba(74,58,36,0.55)' }}>
+                            <p className="font-sans text-micro mt-1" style={{ color: 'rgba(74,58,36,0.55)' }}>
                               {o?.optionName || 'Style'}: {vs[0].label}
                             </p>
                           )}
@@ -1186,12 +1186,12 @@ export default function ProductDetailClient({
 
                 {/* 金额明细：单品合计 / 优惠 / 总价 */}
                 <div className="mt-4 pt-3 space-y-1.5" style={{ borderTop: `1px solid ${LINE}` }}>
-                  <div className="flex justify-between font-sans text-[11px]" style={{ color: 'rgba(74,58,36,0.7)' }}>
+                  <div className="flex justify-between font-sans text-micro" style={{ color: 'rgba(74,58,36,0.7)' }}>
                     <span>Items total</span>
                     <span>{formatPrice(convertPrice(bundleCalc.listTotal, currency), currency)}</span>
                   </div>
                   {bundleCalc.saving > 0 && (
-                    <div className="flex justify-between font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                    <div className="flex justify-between font-sans text-micro" style={{ color: '#4A665D' }}>
                       <span>Bundle saving</span>
                       <span>−{formatPrice(convertPrice(bundleCalc.saving, currency), currency)}</span>
                     </div>
@@ -1208,7 +1208,7 @@ export default function ProductDetailClient({
                   type="button"
                   data-add-bundle="1"
                   onClick={handleAddBundle}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-6 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:-translate-y-px"
                   style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
                 >
                   <ShoppingBag size={14} strokeWidth={2} /> Add {bundleCalc.items.length + 1} items to cart
@@ -1227,7 +1227,7 @@ export default function ProductDetailClient({
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Gift size={14} strokeWidth={2} style={{ color: '#8A6A2E' }} />
-                  <span className="font-sans text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: '#6B5220' }}>
+                  <span className="font-sans text-micro font-bold tracking-[0.16em] uppercase" style={{ color: '#6B5220' }}>
                     {giftList.length > 1 ? 'Choose your free gift' : 'Free gift with this piece'}
                   </span>
                 </div>
@@ -1241,7 +1241,7 @@ export default function ProductDetailClient({
                       <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
                         {giftList[0].nameEn || giftList[0].name}
                       </p>
-                      <p className="font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                      <p className="font-sans text-micro" style={{ color: '#4A665D' }}>
                         <span className="line-through opacity-50 mr-1.5">{formatPrice(convertPrice(giftList[0].price, currency), currency)}</span>
                         FREE
                       </p>
@@ -1271,7 +1271,7 @@ export default function ProductDetailClient({
                             <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
                               {g.nameEn || g.name}
                             </p>
-                            <p className="font-sans text-[11px]" style={{ color: '#4A665D' }}>
+                            <p className="font-sans text-micro" style={{ color: '#4A665D' }}>
                               <span className="line-through opacity-50 mr-1.5">{formatPrice(convertPrice(g.price, currency), currency)}</span>
                               FREE
                             </p>
@@ -1288,7 +1288,7 @@ export default function ProductDetailClient({
                   </div>
                 )}
 
-                <p className="mt-3 font-sans text-[10px] leading-relaxed" style={{ color: 'rgba(107,82,32,0.75)' }}>
+                <p className="mt-3 font-sans text-micro leading-relaxed" style={{ color: 'rgba(107,82,32,0.75)' }}>
                   Added automatically at checkout — you pay nothing for it.
                 </p>
               </div>
@@ -1312,7 +1312,7 @@ export default function ProductDetailClient({
                 { icon: Truck, text: 'Free Damaged Replacement' },
                 { icon: RotateCcw, text: '30-Day Money Back' },
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-2 font-sans text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: 'rgba(74,58,36,0.65)' }}>
+                <div key={item.text} className="flex items-center gap-2 font-sans text-micro font-semibold tracking-[0.2em] uppercase" style={{ color: 'rgba(74,58,36,0.65)' }}>
                   <item.icon size={13} strokeWidth={1.7} style={{ color: GOLD }} /> {item.text}
                 </div>
               ))}
@@ -1325,7 +1325,7 @@ export default function ProductDetailClient({
                 {(product.tagsEn || product.tags)?.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-5">
                     {(product.tagsEn || product.tags).map((tag, i) => (
-                      <span key={i} className="font-sans text-[10px] tracking-[0.08em] uppercase px-3 py-1.5" style={{ color: GOLD, backgroundColor: 'rgba(139,125,92,0.07)', border: '1px solid rgba(184,160,108,0.22)', borderRadius: 2 }}>
+                      <span key={i} className="font-sans text-micro tracking-[0.08em] uppercase px-3 py-1.5" style={{ color: GOLD, backgroundColor: 'rgba(139,125,92,0.07)', border: '1px solid rgba(184,160,108,0.22)', borderRadius: 2 }}>
                         {tag}
                       </span>
                     ))}
@@ -1338,7 +1338,7 @@ export default function ProductDetailClient({
                   <dl className="space-y-2.5">
                     {specRows.map(([label, value]) => (
                       <div key={label} className="flex gap-4">
-                        <dt className="w-24 shrink-0 text-[9px] tracking-[0.26em] uppercase font-semibold pt-1" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</dt>
+                        <dt className="w-24 shrink-0 text-micro tracking-[0.26em] uppercase font-semibold pt-1" style={{ color: 'rgba(74,58,36,0.56)' }}>{label}</dt>
                         <dd className="text-[14px] font-medium" style={{ color: INK }}>{value}</dd>
                       </div>
                     ))}
@@ -1456,7 +1456,7 @@ export default function ProductDetailClient({
                           </div>
                           <div className="min-w-0">
                             <p className="font-sans text-[13px] font-semibold truncate" style={{ color: INK }}>{review.author}</p>
-                            <p className="font-sans text-[11px] truncate" style={{ color: 'rgba(74,58,36,0.56)' }}>{review.location} · {review.date}</p>
+                            <p className="font-sans text-micro truncate" style={{ color: 'rgba(74,58,36,0.56)' }}>{review.location} · {review.date}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-[2px] shrink-0">
@@ -1484,7 +1484,7 @@ export default function ProductDetailClient({
           >
             <div className="flex items-end justify-between mb-8">
               <h2 className="font-en text-2xl md:text-3xl font-medium tracking-[0.005em]" style={{ color: INK }}>You May Also Like</h2>
-              <Link href={`/category/${product.category}`} className="font-sans text-[10px] tracking-[0.26em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: GOLD }}>
+              <Link href={`/category/${product.category}`} className="font-sans text-micro tracking-[0.26em] uppercase font-semibold transition-opacity hover:opacity-60" style={{ color: GOLD }}>
                 View all →
               </Link>
             </div>

@@ -41,13 +41,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} noValidate className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/60 p-6 md:p-8 space-y-4">
           {error && <p className="text-sm text-red-500 font-sans bg-red-50 p-2.5">{error}</p>}
           <div>
-            <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
+            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
             <input type="text" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} required
               className="input-premium"
               placeholder="yourname@example.com" />
           </div>
           <div>
-            <label className="block text-[10px] font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
+            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
             <div className="relative">
               <input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
                 className="input-premium pr-10"

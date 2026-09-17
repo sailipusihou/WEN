@@ -690,7 +690,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
             通知
             {unreadCount > 0 && (
               <span
-                className="px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[18px] text-center"
+                className="px-1.5 py-0.5 rounded-full text-micro font-bold min-w-[18px] text-center"
                 style={{ backgroundColor: "#ef4444", color: "white" }}
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -771,7 +771,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                           border: "1px solid var(--adm-border)",
                         }}
                       >
-                        <p className="text-[10px] font-semibold" style={{ color: "var(--adm-text-secondary)" }}>
+                        <p className="text-micro font-semibold" style={{ color: "var(--adm-text-secondary)" }}>
                           AI Agent 自动执行中
                         </p>
                         {msg.workflowSteps.map((step, si) => (
@@ -793,7 +793,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                             <span className="min-w-0" style={{ color: step.status === "done" ? "var(--adm-text-secondary)" : "var(--adm-text)" }}>
                               <span className="block">{step.label}</span>
                               {step.detail && (
-                                <span className="block text-[10px] truncate" style={{ color: "var(--adm-text-secondary)" }}>
+                                <span className="block text-micro truncate" style={{ color: "var(--adm-text-secondary)" }}>
                                   {step.detail}
                                 </span>
                               )}
@@ -818,13 +818,13 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                           <video src={msg.workflowResult.videoUrl} controls className="w-full max-h-56 rounded-lg" style={{ backgroundColor: "#000" }} />
                         )}
                         {msg.workflowResult.published && (
-                          <p className="text-[11px] flex items-center gap-1" style={{ color: "#22c55e" }}>
+                          <p className="text-micro flex items-center gap-1" style={{ color: "#22c55e" }}>
                             <span>✓</span> 已发布到 Instagram
                             {msg.workflowResult.published.mediaId ? `（Media ${msg.workflowResult.published.mediaId}）` : ""}
                           </p>
                         )}
                         {msg.workflowResult.error && (
-                          <p className="text-[11px]" style={{ color: "#ef4444" }}>{msg.workflowResult.error}</p>
+                          <p className="text-micro" style={{ color: "#ef4444" }}>{msg.workflowResult.error}</p>
                         )}
                       </div>
                     )}
@@ -862,7 +862,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                     {msg.status === "done" && msg.content && msg.role === "assistant" && (
                       <button
                         onClick={() => toggleSpeak(i, msg.content)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors self-start"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded text-micro transition-colors self-start"
                         style={{
                           color: speakingIndex === i ? "var(--adm-accent)" : "var(--adm-text-secondary)",
                           backgroundColor: speakingIndex === i ? "var(--adm-accent-bg)" : "transparent",
@@ -1052,7 +1052,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                   <Send size={16} />
                 </button>
               </div>
-              <div className="text-[10px] text-center" style={{ color: "var(--adm-text-secondary)" }}>
+              <div className="text-micro text-center" style={{ color: "var(--adm-text-secondary)" }}>
                 {isListening ? "正在录音... 点击麦克风停止" : "Enter 发送 · Shift+Enter 换行 · 点击麦克风语音输入"}
               </div>
             </div>
@@ -1121,7 +1121,7 @@ export function AIAssistantWidget({ isOpen, onClose, assistantName = "Aria", ava
                                 {notif.title}
                               </span>
                               <span
-                                className="text-[10px] shrink-0 mt-0.5"
+                                className="text-micro shrink-0 mt-0.5"
                                 style={{ color: "var(--adm-text-secondary)" }}
                               >
                                 {formatTime(notif.createdAt)}

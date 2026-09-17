@@ -84,7 +84,7 @@ export default function OrderSummaryLines({ items, currency, compact = false }: 
               </span>
             </div>
 
-            <p className="font-sans text-[11px] mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
+            <p className="font-sans text-micro mt-0.5" style={{ color: 'rgba(74,58,36,0.55)' }}>
               Qty {l.quantity}
               {!l.isGift && l.saved > 0 && (
                 <span className="ml-2 line-through">{formatPrice(convertPrice(l.base * l.quantity, currency), currency)}</span>
@@ -93,7 +93,7 @@ export default function OrderSummaryLines({ items, currency, compact = false }: 
 
             {/* 促销标签：告诉你这单省在哪 */}
             {!l.isGift && l.saved > 0 && (
-              <p className="font-sans text-[10px] mt-1 inline-flex items-center gap-1 px-1.5 py-0.5"
+              <p className="font-sans text-micro mt-1 inline-flex items-center gap-1 px-1.5 py-0.5"
                 style={{ backgroundColor: '#F2F6F4', color: '#4A665D', borderRadius: 2 }}>
                 <Tag size={9} strokeWidth={2.2} />
                 {l.promoName || 'Promotion'} · save {formatPrice(convertPrice(l.saved * l.quantity, currency), currency)}
@@ -102,7 +102,7 @@ export default function OrderSummaryLines({ items, currency, compact = false }: 
 
             {/* 赠品提示 */}
             {l.isGift && (
-              <p className="font-sans text-[10px] mt-1 inline-flex items-center gap-1 px-1.5 py-0.5"
+              <p className="font-sans text-micro mt-1 inline-flex items-center gap-1 px-1.5 py-0.5"
                 style={{ backgroundColor: '#FBF3DF', color: '#8A6A2E', borderRadius: 2 }}>
                 <Gift size={9} strokeWidth={2.2} /> Free gift — included with your order
               </p>

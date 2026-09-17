@@ -212,7 +212,7 @@ function MessagesPage() {
       <div className="flex items-center gap-3 mb-6">
         <MessageCircle size={22} className="text-otb-terracotta" />
         <h1 className="font-serif text-2xl md:text-3xl text-otb-ink">My Messages</h1>
-        {msgs.filter(m => m.senderType === 'admin').length > 0 && <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-sans">{msgs.filter(m => m.senderType === 'admin').length} replies</span>}
+        {msgs.filter(m => m.senderType === 'admin').length > 0 && <span className="bg-green-500 text-white text-micro px-2 py-0.5 rounded-full font-sans">{msgs.filter(m => m.senderType === 'admin').length} replies</span>}
       </div>
 
       <div className="bg-[#FFFFFF]/70 border border-otb-sand/50 rounded-sm overflow-hidden" style={{ height: "calc(100vh - 240px)", minHeight: "400px" }}>
@@ -244,7 +244,7 @@ function MessagesPage() {
                           className="mb-1"
                         />
                         <div className="bg-paper text-otb-ink text-sm px-4 py-3 rounded-xl rounded-bl-sm">
-                          <div className="flex items-center gap-1.5 mb-1"><Bot size={12} className="text-otb-terracotta" /><span className="text-[10px] text-otb-terracotta/70 font-medium">{m.adminName || "Customer Service"}</span></div>
+                          <div className="flex items-center gap-1.5 mb-1"><Bot size={12} className="text-otb-terracotta" /><span className="text-micro text-otb-terracotta/70 font-medium">{m.adminName || "Customer Service"}</span></div>
                           {m.message && <p className="leading-relaxed whitespace-pre-wrap">{m.message}</p>}
                           {(m.adminAttachments || m.attachments)?.map((a: any, ai: number) => {
                             if (a.type === "product" || a.type === "product_card") {
@@ -255,11 +255,11 @@ function MessagesPage() {
                                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                                       <div>
                                         <p className="text-xs font-medium text-otb-ink truncate">{a.name}</p>
-                                        {a.category && <p className="text-[10px] text-otb-ink/50 mt-0.5">{a.category}</p>}
+                                        {a.category && <p className="text-micro text-otb-ink/50 mt-0.5">{a.category}</p>}
                                       </div>
                                       <div className="flex items-center justify-between">
                                         <span className="text-sm font-serif font-bold text-otb-terracotta">${(a.price || 0).toFixed(2)}</span>
-                                        <span className="text-[10px] text-otb-terracotta flex items-center gap-0.5"><ShoppingBag size={10} /> View</span>
+                                        <span className="text-micro text-otb-terracotta flex items-center gap-0.5"><ShoppingBag size={10} /> View</span>
                                       </div>
                                     </div>
                                   </div>
@@ -270,13 +270,13 @@ function MessagesPage() {
                             return <a key={ai} href={a.url} download className="flex items-center gap-2 bg-otb-sand/20 rounded-lg p-2 mt-1.5 text-xs text-otb-ink/60 hover:text-otb-terracotta transition-colors"><Paperclip size={12} />{a.name || "File"}</a>
                           })}
                           <div className="flex items-center gap-1 mt-1">
-                            <p className="text-[10px] text-otb-ink/30">{new Date(m.createdAt).toLocaleString()}</p>
+                            <p className="text-micro text-otb-ink/30">{new Date(m.createdAt).toLocaleString()}</p>
                             {m.adminRead ? (
-                              <span className="flex items-center gap-0.5 text-[10px] text-green-500" title="You've read this">
+                              <span className="flex items-center gap-0.5 text-micro text-green-500" title="You've read this">
                                 <CheckCheck size={11} />
                               </span>
                             ) : (
-                              <span className="flex items-center gap-0.5 text-[10px] text-otb-ink/20" title="Unread">
+                              <span className="flex items-center gap-0.5 text-micro text-otb-ink/20" title="Unread">
                                 <Check size={11} />
                               </span>
                             )}
@@ -300,11 +300,11 @@ function MessagesPage() {
                                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                                     <div>
                                       <p className="text-xs font-medium text-white truncate">{a.name}</p>
-                                      {a.category && <p className="text-[10px] text-white/60 mt-0.5">{a.category}</p>}
+                                      {a.category && <p className="text-micro text-white/60 mt-0.5">{a.category}</p>}
                                     </div>
                                     <div className="flex items-center justify-between">
                                       <span className="text-sm font-serif font-bold text-white">${(a.price || 0).toFixed(2)}</span>
-                                      <span className="text-[10px] text-white/80 flex items-center gap-0.5"><ShoppingBag size={10} /> View</span>
+                                      <span className="text-micro text-white/80 flex items-center gap-0.5"><ShoppingBag size={10} /> View</span>
                                     </div>
                                   </div>
                                 </div>
@@ -320,13 +320,13 @@ function MessagesPage() {
                           return <a key={ai} href={a.url} download className="flex items-center gap-2 bg-[#FFFFFF]/10 rounded-lg p-2 mt-1.5 text-xs text-white/80 hover:text-white transition-colors"><Paperclip size={12} />{a.name || "File"}</a>
                         })}
                         <div className="flex items-center justify-end gap-1 mt-1">
-                          <p className="text-[10px] text-white/50">{new Date(m.createdAt).toLocaleTimeString()}</p>
+                          <p className="text-micro text-white/50">{new Date(m.createdAt).toLocaleTimeString()}</p>
                           {m.read ? (
-                            <span className="flex items-center gap-0.5 text-[10px] text-white/60" title="Read by admin">
+                            <span className="flex items-center gap-0.5 text-micro text-white/60" title="Read by admin">
                               <CheckCheck size={11} />
                             </span>
                           ) : (
-                            <span className="flex items-center gap-0.5 text-[10px] text-white/40" title="Not yet read by admin">
+                            <span className="flex items-center gap-0.5 text-micro text-white/40" title="Not yet read by admin">
                               <Check size={11} />
                             </span>
                           )}
@@ -364,7 +364,7 @@ function MessagesPage() {
                     <div className="absolute bottom-full left-0 mb-2 w-72 bg-[#FFFFFF] border border-otb-sand/50 rounded-lg shadow-xl z-20 overflow-hidden">
                       <div className="flex border-b border-otb-sand/30">
                         {EMOJI_CATEGORIES.map((cat, idx) => (
-                          <button key={cat.name} onClick={() => setEmojiCategory(idx)} className={`flex-1 py-1.5 text-[10px] transition-colors ${emojiCategory === idx ? 'bg-otb-terracotta/10 text-otb-terracotta' : 'text-otb-ink/50 hover:bg-otb-sand/20'}`}>
+                          <button key={cat.name} onClick={() => setEmojiCategory(idx)} className={`flex-1 py-1.5 text-micro transition-colors ${emojiCategory === idx ? 'bg-otb-terracotta/10 text-otb-terracotta' : 'text-otb-ink/50 hover:bg-otb-sand/20'}`}>
                             {cat.name}
                           </button>
                         ))}
@@ -401,7 +401,7 @@ function MessagesPage() {
                               {product.image && <div className="w-10 h-10 rounded shrink-0 overflow-hidden bg-otb-sand/20"><img src={product.image} alt="" className="w-full h-full object-cover" /></div>}
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-otb-ink truncate">{product.nameEn || product.name}</p>
-                                <p className="text-[10px] text-otb-terracotta font-serif">${(product.price || 0).toFixed(2)}</p>
+                                <p className="text-micro text-otb-terracotta font-serif">${(product.price || 0).toFixed(2)}</p>
                               </div>
                               <Send size={12} className="text-otb-terracotta shrink-0" />
                             </button>

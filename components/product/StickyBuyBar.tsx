@@ -92,7 +92,7 @@ export default function StickyBuyBar({
     >
       {/* 免邮进度提示条 */}
       {showShip && (
-        <div className="font-sans text-[11px] text-center py-1.5 tracking-[0.02em]" style={{ backgroundColor: '#EFE4CE', color: INK }}>
+        <div className="font-sans text-micro text-center py-1.5 tracking-[0.02em]" style={{ backgroundColor: '#EFE4CE', color: INK }}>
           Add <strong>{formatPrice(convertPrice(remain, currency), currency)}</strong> more for <strong>free shipping</strong>
         </div>
       )}
@@ -145,7 +145,7 @@ export default function StickyBuyBar({
             <button
               type="button"
               onClick={handleAdd}
-              className="pdp-btn hidden sm:flex items-center justify-center gap-2 px-6 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300"
+              className="pdp-btn hidden sm:flex items-center justify-center gap-2 px-6 py-3 font-sans text-micro font-bold tracking-[0.28em] uppercase transition-all duration-300"
               style={{ backgroundColor: INK, color: '#fff', borderRadius: 2, minWidth: 148 }}
             >
               <ShoppingBag size={14} strokeWidth={2.2} /> Add to cart
@@ -153,7 +153,7 @@ export default function StickyBuyBar({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="pdp-btn flex items-center justify-center gap-2 px-5 sm:px-6 py-3 font-sans text-[11px] font-bold tracking-[0.28em] uppercase transition-all duration-300"
+              className="pdp-btn flex items-center justify-center gap-2 px-5 sm:px-6 py-3 font-sans text-micro font-bold tracking-[0.28em] uppercase transition-all duration-300"
               style={{ backgroundColor: '#fff', color: INK, border: `1px solid ${INK}`, borderRadius: 2 }}
             >
               <Zap size={14} strokeWidth={2.2} className="sm:hidden" />

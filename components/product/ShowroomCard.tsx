@@ -147,7 +147,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           )}
 
           {/* Number */}
-          <span className="absolute top-3 left-3 z-10 font-en text-[10px] tracking-[0.25em] text-[#A07C34]">
+          <span className="absolute top-3 left-3 z-10 font-en text-micro tracking-[0.25em] text-[#A07C34]">
             {String(index + 1).padStart(2, '0')}
           </span>
 
@@ -190,7 +190,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
               onClick={handleQuickView}
               type="button"
               data-quick-view={product.id}
-              className="w-full py-2.5 font-sans text-[10px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px shadow-soft"
+              className="w-full py-2.5 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px shadow-soft"
               style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
             >
               Quick view
@@ -199,7 +199,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
               onClick={handleAddToCart}
               type="button"
               data-card-add={product.id}
-              className="w-full py-2.5 font-sans text-[10px] font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2 shadow-soft"
+              className="w-full py-2.5 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px flex items-center justify-center gap-2 shadow-soft"
               style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}
             >
               <ShoppingBag size={12} strokeWidth={2} /> Add to cart
@@ -212,7 +212,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
               <h3 className="font-en text-sm md:text-base text-[#2A2118] font-medium truncate">
                 {product.nameEn || product.name}
               </h3>
-              <p className="font-sans text-[10px] text-[#5A4A36]/60 truncate mt-0.5">
+              <p className="font-sans text-micro text-[#5A4A36]/60 truncate mt-0.5">
                 {product.subtitleEn || product.subtitle}
               </p>
             </div>
@@ -223,7 +223,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
                 {eff.discount > 0 && <PromoSaleTag />}
               </span>
               {eff.originalPrice && (
-                <span className="font-sans text-[11px] text-[#5A4A36]/70 line-through block">
+                <span className="font-sans text-micro text-[#5A4A36]/70 line-through block">
                   {formatPrice(convertPrice(eff.originalPrice, currency), currency)}
                 </span>
               )}

@@ -138,7 +138,7 @@ export default function VariantOptionPicker({
         // 选项名只在这里出现（与竞品的 `Style: Classic Duoqiu` 对齐），
         // 图块下方不再重复
         <div className="flex items-baseline gap-3 mb-2.5">
-          <span className="font-sans text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: SOFT }}>
+          <span className="font-sans text-micro font-semibold tracking-[0.16em] uppercase" style={{ color: SOFT }}>
             {label || optionName}
           </span>
           {/* 未选中任何款式时这里不显示名称（只有左侧的 STYLE 标签） */}

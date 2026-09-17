@@ -31,7 +31,7 @@ export default function CheckoutTopBar({ isCart = false }: { isCart?: boolean })
         {isCart && (
           <Link
             href="/products"
-            className="inline-flex items-center gap-1.5 font-sans text-[11px] tracking-[0.14em] uppercase transition-all hover:-translate-x-0.5"
+            className="inline-flex items-center gap-1.5 font-sans text-micro tracking-[0.14em] uppercase transition-all hover:-translate-x-0.5"
             style={{ color: 'rgba(74,58,36,0.62)' }}
           >
             Continue shopping

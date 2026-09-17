@@ -188,7 +188,7 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
 
   return (
     <div className="mb-4" data-cart-express="1">
-      <p className="font-sans text-[10px] font-semibold tracking-[0.2em] uppercase mb-2.5 text-center"
+      <p className="font-sans text-micro font-semibold tracking-[0.2em] uppercase mb-2.5 text-center"
         style={{ color: 'rgba(74,58,36,0.55)' }}>
         Express checkout
       </p>
@@ -202,7 +202,7 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
       )}
 
       {!loading && error && (
-        <p className="font-sans text-[11px] text-center py-2" style={{ color: '#A83420' }} data-cart-express-error="1">
+        <p className="font-sans text-micro text-center py-2" style={{ color: '#A83420' }} data-cart-express-error="1">
           {error}
         </p>
       )}
@@ -226,14 +226,14 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
       )}
 
       {!loading && paypal && !error && (
-        <p className="font-sans text-[10px] text-center mt-2.5 leading-relaxed"
+        <p className="font-sans text-micro text-center mt-2.5 leading-relaxed"
           style={{ color: 'rgba(74,58,36,0.5)' }}>
           Shipping address and payment details are collected securely by your wallet.
         </p>
       )}
 
       {processing && !loading && (
-        <p className="font-sans text-[11px] text-center mt-2" style={{ color: 'rgba(74,58,36,0.7)' }}>
+        <p className="font-sans text-micro text-center mt-2" style={{ color: 'rgba(74,58,36,0.7)' }}>
           Processing payment…
         </p>
       )}
@@ -241,7 +241,7 @@ export default function CartExpressCheckout({ onSuccess }: { onSuccess?: (orderI
       {/* 分隔线：快捷支付 / 常规结算 */}
       <div className="flex items-center gap-3 my-4" data-cart-express-divider="1">
         <span className="flex-1 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.18)' }} />
-        <span className="font-sans text-[10px] tracking-[0.18em] uppercase" style={{ color: 'rgba(74,58,36,0.45)' }}>or</span>
+        <span className="font-sans text-micro tracking-[0.18em] uppercase" style={{ color: 'rgba(74,58,36,0.45)' }}>or</span>
         <span className="flex-1 h-px" style={{ backgroundColor: 'rgba(74,58,36,0.18)' }} />
       </div>
     </div>

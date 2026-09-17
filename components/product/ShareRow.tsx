@@ -74,7 +74,7 @@ export default function ShareRow({ title, image, initialUrl }: { title: string; 
   return (
     <div className="mt-7 pt-6 flex items-center gap-2 flex-wrap" data-share-row="1"
       style={{ borderTop: `1px solid ${LINE}` }}>
-      <span className="font-sans text-[11px] tracking-[0.18em] uppercase mr-1" style={{ color: SOFT }}>
+      <span className="font-sans text-micro tracking-[0.18em] uppercase mr-1" style={{ color: SOFT }}>
         Share
       </span>
       {CHANNELS.map(c => (
@@ -91,7 +91,7 @@ export default function ShareRow({ title, image, initialUrl }: { title: string; 
           <svg viewBox="0 0 24 24" width={13} height={13} fill={INK} aria-hidden="true">
             <path d={PATHS[c.icon]} />
           </svg>
-          <span className="font-sans text-[11px]">{c.label}</span>
+          <span className="font-sans text-micro">{c.label}</span>
         </a>
       ))}
     </div>

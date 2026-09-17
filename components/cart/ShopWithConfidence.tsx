@@ -31,7 +31,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
       style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }}
     >
       <p
-        className="text-center font-sans text-[10px] font-bold tracking-[0.24em] uppercase mb-4"
+        className="text-center font-sans text-micro font-bold tracking-[0.24em] uppercase mb-4"
         style={{ color: 'rgba(74,58,36,0.5)' }}
       >
         — Shop with Confidence —
@@ -47,7 +47,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
             <t.icon size={14} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: '#8A6A2E' }} />
             <div className="min-w-0">
               <p className="font-sans text-[12px] leading-tight" style={{ color: '#2A2118' }}>{t.title}</p>
-              <p className="font-sans text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>{t.sub}</p>
+              <p className="font-sans text-micro leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>{t.sub}</p>
             </div>
           </div>
         ))}
@@ -60,7 +60,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
               <p className="font-sans text-[12px] leading-tight" style={{ color: '#2A2118' }}>
                 Rated {rating.toFixed(1)} / 5 by {reviewCount} customers
               </p>
-              <p className="font-sans text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>
+              <p className="font-sans text-micro leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>
                 From verified purchases on this store
               </p>
             </div>
@@ -94,7 +94,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
         ))}
       </div>
 
-      <p className="flex items-center justify-center gap-1 mt-3 font-sans text-[10px]" style={{ color: 'rgba(74,58,36,0.45)' }}>
+      <p className="flex items-center justify-center gap-1 mt-3 font-sans text-micro" style={{ color: 'rgba(74,58,36,0.45)' }}>
         <Lock size={9} strokeWidth={2} /> Your details are encrypted end to end
       </p>
     </div>

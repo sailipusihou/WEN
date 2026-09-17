@@ -47,7 +47,7 @@ export default function CategoryClient({
             <p className="mt-4 text-white/50 font-sans text-sm md:text-base max-w-lg mx-auto leading-relaxed">
               {category.descriptionEn || category.description}
             </p>
-            <p className="mt-2 text-white/30 font-sans text-[10px] tracking-[0.18em] uppercase">
+            <p className="mt-2 text-white/30 font-sans text-micro tracking-[0.18em] uppercase">
               {products.length} pieces
             </p>
           </motion.div>
@@ -58,7 +58,7 @@ export default function CategoryClient({
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 font-sans text-[10px] text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-10">
+          <nav className="flex items-center gap-2 font-sans text-micro text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-10">
             <Link href="/" className="hover:text-[#2A2118] transition-colors">Home</Link>
             <span>/</span>
             <span className="text-[#8A6A2E]">{category.nameEn || category.name}</span>

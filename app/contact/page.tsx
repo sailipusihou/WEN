@@ -39,7 +39,7 @@ export default function ContactPage() {
         </Link>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="font-sans text-[10px] text-[#A07C34] tracking-[0.24em] uppercase font-medium">Get in Touch</span>
+            <span className="font-sans text-micro text-[#A07C34] tracking-[0.24em] uppercase font-medium">Get in Touch</span>
             <h1 className="font-en text-3xl md:text-5xl text-[#2A2118] font-medium mt-2 tracking-[0.005em]">Contact</h1>
             <p className="font-sans text-sm text-[#5A4A36]/60 mt-3 leading-relaxed max-w-sm">
               Questions about a piece, need help with an order, or want to learn more about our artisans? We would love to hear from you.

@@ -395,9 +395,9 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               { number: "04", label: "Timeless Design", desc: "Objects made to last" },
             ]).map((item: any, i: number) => (
               <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }}>
-                <span className="font-en text-[11px] text-coral tracking-[0.18em]">{item.number}</span>
-                <h4 className="font-sans text-[11px] font-medium text-ink-deep mt-2 tracking-[0.08em] uppercase">{item.label}</h4>
-                <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{item.desc}</p>
+                <span className="font-en text-micro text-coral tracking-[0.18em]">{item.number}</span>
+                <h4 className="font-sans text-micro font-medium text-ink-deep mt-2 tracking-[0.08em] uppercase">{item.label}</h4>
+                <p className="font-sans text-micro text-ink-soft/82 mt-1 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -461,7 +461,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               </div>
               <div className="absolute -bottom-4 -right-4 bg-[#FFFFFF] p-5 md:p-6 shadow-soft-lg max-w-[170px]">
                 <span className="font-en text-2xl font-medium text-ink-deep">{artisanStory.badgeNumber || "45+"}</span>
-                <p className="font-sans text-[11px] text-ink-soft/82 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
+                <p className="font-sans text-micro text-ink-soft/82 mt-1 leading-relaxed">{artisanStory.badgeText || "Master artisans"}</p>
               </div>
             </div>
             <div>
@@ -531,13 +531,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                       />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-ink-soft/66 font-sans tracking-[0.2em] uppercase mb-2">
+                  <div className="flex items-center gap-2 text-micro text-ink-soft/66 font-sans tracking-[0.2em] uppercase mb-2">
                     <span>{entry.date}</span>
                     <span className="w-1 h-1 rounded-full bg-coral/30" />
                     <span>{entry.readTime} min</span>
                   </div>
                   <h3 className="font-en text-base text-ink-deep font-semibold group-hover:text-coral transition-colors leading-snug">{entry.title}</h3>
-                  <p className="font-sans text-[11px] text-ink-soft/79 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
+                  <p className="font-sans text-micro text-ink-soft/79 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
                 </>
               )
               return (
@@ -616,11 +616,11 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
               </button>
             </form>
             {newsletterStatus !== 'idle' && newsletterStatus !== 'loading' && (
-              <p className={`font-sans text-[11px] mt-3 ${newsletterStatus === 'success' ? 'text-jade-dark' : 'text-red-500'}`}>
+              <p className={`font-sans text-micro mt-3 ${newsletterStatus === 'success' ? 'text-jade-dark' : 'text-red-500'}`}>
                 {newsletterMessage}
               </p>
             )}
-            <p className="font-sans text-[11px] text-ink-soft/66 mt-3">{newsletter.disclaimer || "No spam. Unsubscribe anytime."}</p>
+            <p className="font-sans text-micro text-ink-soft/66 mt-3">{newsletter.disclaimer || "No spam. Unsubscribe anytime."}</p>
           </motion.div>
         </div>
       </section>
@@ -683,9 +683,9 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
 
         {/* Glass info card */}
         <div className="absolute bottom-4 right-4 left-4 md:left-auto md:w-[360px] rounded-xl bg-[#FFFFFF]/75 backdrop-blur-md border border-white/60 shadow-soft-lg p-5 md:p-6">
-          <span className="font-sans text-[11px] text-coral tracking-[0.24em] uppercase">{current.subtitle}</span>
+          <span className="font-sans text-micro text-coral tracking-[0.24em] uppercase">{current.subtitle}</span>
           <h3 className="font-en text-xl md:text-2xl text-ink-deep font-semibold mt-1.5">{current.title}</h3>
-          <p className="font-sans text-[11px] text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
+          <p className="font-sans text-micro text-ink-soft/86 mt-2 leading-relaxed line-clamp-3">{current.description}</p>
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#F2EBD8]/60">
             <span className="font-sans text-[12px] text-ink-soft/76">{current.productCount ?? 0} items</span>
             {/* 没有 slug 就不渲染链接 —— 此前会兜底成早已废弃的 'cultural-gifts'，点了必然 404 */}
@@ -720,7 +720,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <h4 className={`font-en text-lg md:text-xl truncate transition-colors ${isActive ? 'text-ink-deep' : 'text-ink-soft group-hover:text-ink-deep'}`}>{item.title}</h4>
-                    <span className="font-sans text-[11px] text-ink-soft/76 truncate">{item.subtitle}</span>
+                    <span className="font-sans text-micro text-ink-soft/76 truncate">{item.subtitle}</span>
                   </div>
                   <ArrowUpRight size={13} strokeWidth={1.5} className={`shrink-0 transition-all duration-300 ${isActive ? 'text-coral' : 'text-ink-soft/62 group-hover:text-coral'}`} />
                 </div>
@@ -728,7 +728,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
                   <motion.p
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="font-sans text-[11px] text-ink-soft/82 pb-4 pl-6 leading-relaxed line-clamp-2"
+                    className="font-sans text-micro text-ink-soft/82 pb-4 pl-6 leading-relaxed line-clamp-2"
                   >
                     {item.description}
                   </motion.p>
