@@ -1,9 +1,16 @@
 // VPS SSH 操作工具：执行命令 / 上传文件
+//
+// 认证方式二选一（**优先用密钥**）：
+//   密钥：设置 SSH_KEY=私钥路径
+//   密码：设置 SSH_PASS=密码
+//
 // 用法：
-//   设置环境变量 SSH_PASS，然后：
-//   node scripts/deploy/ssh-run.cjs run "命令"
-//   node scripts/deploy/ssh-run.cjs upload <本地路径> <远程路径>
-//   node scripts/deploy/ssh-run.cjs uploaddir <本地目录> <远程目录>
+//   SSH_KEY=... node scripts/deploy/ssh-run.cjs run "命令"
+//   SSH_KEY=... node scripts/deploy/ssh-run.cjs upload <本地路径> <远程路径>
+//   SSH_KEY=... node scripts/deploy/ssh-run.cjs uploaddir <本地目录> <远程目录>
+//
+// ⚠️ 为什么推荐密钥：这台机器长期被人爆破密码。用密码登录意味着 sshd 每次都要
+//    处理大量失败的认证请求；密钥认证失败得早、开销小，也更不容易被挤掉。
 const { Client } = require('ssh2')
 const fs = require('fs')
 const path = require('path')
@@ -12,11 +19,15 @@ const HOST = process.env.SSH_HOST || '43.110.46.49'
 const PORT = Number(process.env.SSH_PORT || 22)
 const USER = process.env.SSH_USER || 'root'
 const PASS = process.env.SSH_PASS
+/** 私钥路径。设了就优先用密钥认证，否则回退到密码。 */
+const KEY = process.env.SSH_KEY
 
-if (!PASS) {
-  console.error('❌ 请先设置环境变量 SSH_PASS')
+if (!PASS && !KEY) {
+  console.error('❌ 请设置 SSH_KEY（私钥路径）或 SSH_PASS（密码）')
   process.exit(1)
 }
+
+const AUTH = KEY ? { privateKey: fs.readFileSync(KEY) } : { password: PASS }
 
 const mode = process.argv[2]
 const arg1 = process.argv[3]
@@ -28,7 +39,7 @@ function connect() {
     conn.on('ready', () => resolve(conn))
     conn.on('error', reject)
     conn.connect({
-      host: HOST, port: PORT, username: USER, password: PASS,
+      host: HOST, port: PORT, username: USER, ...AUTH,
       readyTimeout: 120000,
       keepaliveInterval: 20000,
     })
