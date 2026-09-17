@@ -228,7 +228,7 @@ export default function CartPage() {
               整页滚动统一交给 DraggableScrollbar。 */}
           <div
             className="lg:col-span-1 pt-8 lg:pt-0 -mx-6 sm:-mx-8 lg:mx-0"
-            style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)' }}
+            style={{ backgroundColor: 'var(--paper-warm)', borderLeft: '1px solid rgba(74,58,36,0.14)' }}
           >
             <div className="px-6 sm:px-8 lg:px-7 py-6">
               <h2 className="section-heading mb-4">Order Summary</h2>

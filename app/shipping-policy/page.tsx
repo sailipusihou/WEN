@@ -27,7 +27,7 @@ export default function ShippingPolicyPage() {
         <p className="font-sans text-xs text-[#5A4A36]/50 mb-8">Last updated: September 2026</p>
 
         <div className="space-y-6 font-sans text-sm leading-7 text-[#4A4A36]">
-          <section className="p-4" style={{ backgroundColor: '#EFF5F0', borderRadius: 8 }}>
+          <section className="p-4" style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 8 }}>
             <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">The short version</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>Dispatched from our workshop within <strong>1–2 business days</strong>.</li>

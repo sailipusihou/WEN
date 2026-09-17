@@ -655,10 +655,13 @@ export default function CheckoutPage() {
      *   · 每列内部再限制内容宽度并靠向中线，让正文和原来一样居中
      *     （左列 ml-auto / 右列 mr-auto，各 max-w-[576px] = 1152/2）
      */
-    <div className="min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
+    <div className="min-h-screen bg-paper-base">
       <div className="lg:grid lg:grid-cols-2">
-        {/* ===================== 左半：表单区（白） ===================== */}
-        <div style={{ backgroundColor: '#FFFFFF' }}>
+        {/* ===================== 左半：表单区 =====================
+            底色改为暖纸底（原来硬编码纯白 #FFFFFF，把外层的暖纸底整个盖掉了）。
+            对照竞品：Kettl 购物车页背景是 rgb(252 248 245)、TeaTsy 是暖白 ——
+            没有一家用冷白。纯白在屏幕上偏冷偏硬，和全站暖调不一致。 */}
+        <div style={{ backgroundColor: 'var(--paper-base)' }}>
           <div className="px-6 sm:px-8 py-8 md:py-10 pb-28 lg:max-w-[576px] lg:ml-auto lg:pr-10">
         {/* 站名：参考站把店名当纯文字 logo 放在表单列顶部，不另开一条导航栏 */}
 
@@ -1018,10 +1021,15 @@ export default function CheckoutPage() {
         </div>
           </div>
         </div>
-        {/* ===================== 右半：订单摘要（淡绿） =====================
+        {/* ===================== 右半：订单摘要 =====================
             这是满宽 grid 的第二列 → 天然的视口右半部分，
-            背景色从页面顶端一直铺到底端，和左半在正中形成分界线。 */}
-        <div style={{ backgroundColor: '#EFF5F0', borderLeft: '1px solid rgba(74,102,93,0.16)' }}>
+            背景色从页面顶端一直铺到底端，和左半在正中形成分界线。
+
+            底色（2026-09-17）：原来是 #EFF5F0 冷调薄荷绿 + 青瓷色左边框 ——
+            那是"青瓷点睛色"时期的有意选择，但实测三家竞品**没有任何一家**用冷绿
+            侧栏（Kettl 暖奶油 / TeaTsy 白与暖白 / Tea Drunk 的冷灰是它全站品牌色）。
+            改为暖色面板 paper-warm，和左半形成"暖纸底 vs 更暖的纸块"的层次。 */}
+        <div style={{ backgroundColor: 'var(--paper-warm)', borderLeft: '1px solid rgba(74,58,36,0.14)' }}>
           <div className="px-6 sm:px-8 py-8 md:py-10 pb-28 lg:max-w-[576px] lg:mr-auto lg:pl-10">
             {/* 右栏跟随整页一起滚动，**不再单独 sticky、也不设内部滚动条**。
                 原因：
