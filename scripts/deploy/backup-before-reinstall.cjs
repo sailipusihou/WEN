@@ -16,7 +16,7 @@
  *      重装后要全部轮换（PayPal 密钥、SMTP 密码、各平台 OAuth token、后台密码）
  *    · 配置文件只作参考，**不要原样拷回新系统**，重装后重新配一遍更干净
  *
- * 用法：SSH_PASS='...' node scripts/deploy/backup-before-reinstall.cjs
+ * 用法：SSH_KEY=私钥路径 node scripts/deploy/backup-before-reinstall.cjs
  */
 const { Client } = require('ssh2')
 const fs = require('fs')

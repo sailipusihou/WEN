@@ -19,8 +19,8 @@
  * （s.bind(s, 53103)），因此不参与 require 解析。已实际核对过。
  *
  * 用法（本地）:
- *   $env:SSH_PASS='...'; node scripts/deploy/fast-deploy.cjs            # 用现有 .next
- *   $env:SSH_PASS='...'; node scripts/deploy/fast-deploy.cjs --build    # 先本地构建
+ *   $env:SSH_KEY='D:\2026-06-20\lowflame-server-key'; node scripts/deploy/fast-deploy.cjs            # 用现有 .next
+ *   $env:SSH_KEY='D:\2026-06-20\lowflame-server-key'; node scripts/deploy/fast-deploy.cjs --build    # 先本地构建
  */
 const path = require('path')
 const fs = require('fs')

@@ -21,7 +21,7 @@
  *   5. 封 C2
  *   6. 复检 + 看站点是否恢复
  *
- * 用法（本地）：SSH_PASS='...' node scripts/deploy/contain-reinfection.cjs [--apply]
+ * 用法（本地）：SSH_KEY=私钥路径 node scripts/deploy/contain-reinfection.cjs [--apply]
  */
 const { Client } = require('ssh2')
 const path = require('path')

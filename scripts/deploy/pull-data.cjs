@@ -15,7 +15,7 @@
  *
  * ⚠️ 会**覆盖本地** data/，所以默认先把本地那份备份到 backups/pre-datapull-<时间戳>/
  *
- * 用法：SSH_PASS='...' node scripts/deploy/pull-data.cjs
+ * 用法：SSH_KEY=私钥路径 node scripts/deploy/pull-data.cjs
  */
 const { Client } = require('ssh2')
 const fs = require('fs')

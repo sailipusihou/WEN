@@ -35,20 +35,20 @@ Write-Host "项目目录: $ProjectDir"
 Write-Host "目标服务器: $ServerIP"
 Write-Host ""
 
-# ---------- 0. 获取服务器密码 ----------
-if (-not $env:SSH_PASS) {
-    Write-Host "未检测到环境变量 SSH_PASS" -ForegroundColor Yellow
-    try {
-        $env:SSH_PASS = Read-Host "请输入服务器 root 密码"
-    } catch {
-        Write-Host "无法读取输入。请先设置环境变量：" -ForegroundColor Red
-        Write-Host '  $env:SSH_PASS="你的密码"' -ForegroundColor Gray
+# ---------- 0. 认证方式 ----------
+# 2026-09-17 起服务器已关闭 SSH 密码登录（PasswordAuthentication no），
+# 必须用密钥。这里若是没设 SSH_KEY，就自动用本机的默认密钥路径。
+if (-not $env:SSH_KEY) {
+    $defaultKey = 'D:\2026-06-20\lowflame-server-key'
+    if (Test-Path $defaultKey) {
+        $env:SSH_KEY = $defaultKey
+        Write-Host "使用 SSH 密钥: $defaultKey" -ForegroundColor Gray
+    } else {
+        Write-Host "未检测到 SSH 密钥。" -ForegroundColor Red
+        Write-Host "服务器已关闭密码登录，必须用密钥，请先设置：" -ForegroundColor Gray
+        Write-Host "  `$env:SSH_KEY='D:\2026-06-20\lowflame-server-key'" -ForegroundColor Gray
         exit 1
     }
-}
-if (-not $env:SSH_PASS) {
-    Write-Host "密码为空，已取消。" -ForegroundColor Red
-    exit 1
 }
 
 # ---------- 1. 检查本地改动 ----------

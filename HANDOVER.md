@@ -87,7 +87,8 @@ git commit -m "..."
 git push origin master          # 需要代理 http://127.0.0.1:7890
 
 # 3. 部署（会自动校验 BUILD_ID）
-$env:SSH_PASS='<root密码>'
+#    ⚠️ 2026-09-17 起 SSH 密码登录已关闭，必须用密钥。所有部署脚本都认 SSH_KEY。
+$env:SSH_KEY='D:\2026-06-20\lowflame-server-key'
 node scripts/deploy/fast-deploy.cjs
 ```
 
@@ -284,6 +285,13 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
 · 社媒 3 个账号已断开（instagram / twitter / facebook，token 已从数据库清除），
   另清理了 data/social-oauth/ 下 3 个过期授权握手残留
 · watchdog.sh 已装 cron（每分钟自检，连续 2 分钟不通才重启应用）
+· **SSH 改为仅密钥登录**：密码登录已关闭（`PasswordAuthentication no` +
+  `PermitRootLogin prohibit-password`）。密钥在本地 `lowflame-server-key`，
+  所有部署脚本传 `SSH_KEY=私钥路径` 即可。⚠️ 这就是当初被爆破进来的那条路，
+  现在从根上关掉了
+· sshd `MaxStartups` 10 → `50:30:100`：原来只允许 10 个未认证并发连接，
+  被持续爆破流量打满，导致我们自己连接时好时坏（实测 6 次只成 2 次），
+  调大后 5/5 成功
 ```
 
 ---

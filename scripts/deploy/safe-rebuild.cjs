@@ -11,7 +11,7 @@
  *     4. 构建结束后校验 .next/BUILD_ID、pm2 状态、站点 HTTP
  *
  * 用法（本地）:
- *   $env:SSH_PASS='...'; node scripts/deploy/safe-rebuild.cjs
+ *   $env:SSH_KEY='D:\2026-06-20\lowflame-server-key'; node scripts/deploy/safe-rebuild.cjs
  *   node scripts/deploy/safe-rebuild.cjs --no-pull   跳过 git 拉取
  */
 const path = require('path')

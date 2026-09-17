@@ -6,7 +6,7 @@
  * （Live 环境版本），存成本地文件，然后用这个脚本上传。
  *
  * 用法（本地）:
- *   $env:SSH_PASS='...'; node scripts/deploy/set-applepay-domain-file.cjs .\apple-developer-merchantid-domain-association
+ *   $env:SSH_KEY='D:\2026-06-20\lowflame-server-key'; node scripts/deploy/set-applepay-domain-file.cjs .\apple-developer-merchantid-domain-association
  *
  * 脚本做的事：
  *   1. 读本地文件，做基本校验（非空、无 BOM、不是 HTML）
