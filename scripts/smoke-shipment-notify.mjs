@@ -47,8 +47,11 @@ async function notify(adminCookie, shipmentId, channel) {
 }
 
 async function main() {
-  const token = execFileSync(process.execPath, ['scripts/new-admin-session.cjs'], { encoding: 'utf8' })
-    .trim().replace(/^NEW_TOKEN=/, '')
+  const token = execFileSync(process.execPath, ['scripts/new-admin-session.cjs'], {
+    encoding: 'utf8',
+    // new-admin-session.cjs 默认拒绝执行（无认证即可铸造管理员会话），测试里显式放行
+    env: { ...process.env, ALLOW_SESSION_MINT: '1' },
+  }).trim().replace(/^NEW_TOKEN=/, '')
   const adminCookie = 'admin_token=' + token
   check('生成管理员会话', token.length === 64, token.slice(0, 12) + '…')
 

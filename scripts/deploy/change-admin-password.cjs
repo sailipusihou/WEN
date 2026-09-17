@@ -2,7 +2,9 @@
  * change-admin-password.cjs —— 更换后台管理员密码
  *
  * 背景：服务器被 root 级入侵，site.db 里存的密码哈希已泄露（虽然哈希本身不可逆，
- *      但旧密码 Hws12282411. 的攻击面太大 —— 它是被暴力破解过的那类弱密码）。
+ *      但旧密码是那种容易被爆破的弱密码，攻击面太大）。
+ *      ⚠️ 本文件**不写任何真实密码** —— 旧值曾被硬编码在这里（连注释一起），
+ *      等于把弱口令提交进版本库，已清理。
  *
  * 机制（读自 lib/auth.ts）：
  *   hashAdminPassword(pw, salt) = pbkdf2Sync(pw, salt, 210000, 64, 'sha512').hex
@@ -59,10 +61,13 @@ console.log('  adminPasswordHash :', cfg.adminPasswordHash ? cfg.adminPasswordHa
 console.log('  adminPasswordSalt :', cfg.adminPasswordSalt ? cfg.adminPasswordSalt.slice(0, 12) + '…' : '(空)')
 console.log('  明文 adminPassword:', cfg.adminPassword ? '⚠️ 有值（应清空）' : '✅ 已空')
 
-const OLD_PASS = process.env.OLD_ADMIN_PASS || 'Hws12282411.'
-if (cfg.adminPasswordHash && cfg.adminPasswordSalt) {
+// 旧密码只用于「验证它确实失效了」这一步，不影响新密码，**不设任何默认值**。
+const OLD_PASS = process.env.OLD_ADMIN_PASS || ''
+if (OLD_PASS && cfg.adminPasswordHash && cfg.adminPasswordSalt) {
   const oldWorks = verifyAdminPassword(OLD_PASS, cfg.adminPasswordHash, cfg.adminPasswordSalt)
   console.log('  旧密码是否仍可登录  :', oldWorks ? '是（即将失效）' : '否')
+} else if (!OLD_PASS) {
+  console.log('  旧密码是否仍可登录  : （未提供 OLD_ADMIN_PASS，跳过检查）')
 }
 
 console.log()

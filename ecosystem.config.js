@@ -25,7 +25,10 @@ module.exports = {
     {
       name: 'lowflame',
       script: 'node_modules/next/dist/bin/next',
-      args: 'start -p 3000',
+      // -H 127.0.0.1：只监听本机，不绑 0.0.0.0。
+      // 这样外部**只能经 nginx**（80/443）访问应用，不能直连 3000 绕过 HTTPS ——
+      // 万一哪天 ufw 规则被清掉/失手 disable，应用也不会直接暴露在公网上。
+      args: 'start -p 3000 -H 127.0.0.1',
       cwd: '/var/www/lowflame',
       instances: 1,
       exec_mode: 'fork',

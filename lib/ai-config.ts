@@ -33,6 +33,11 @@ function cleanKey(k?: string): string {
 }
 
 // 修复 H17 (SSRF): 仅允许公网 HTTP(S) 主机 — 拒绝 localhost/内网/链路本地/云元数据地址
+//
+// ⚠️ 这是**字符串层面**的判断，只看主机名的写法。它拦不住「域名解析到内网」
+//    （DNS rebinding）—— 那需要在真正 fetch 前解析并二次校验。
+//    这里额外挡掉了常见的 IP 变体写法：十进制整数、十六进制、八进制、
+//    IPv4-mapped IPv6。否则 `http://2130706433/` 这种写法能绕过点分十进制那段检查。
 export function isSafeHttpUrl(raw: string): boolean {
   if (!raw || typeof raw !== 'string') return false
   let u: URL
@@ -42,17 +47,37 @@ export function isSafeHttpUrl(raw: string): boolean {
     return false
   }
   if (u.protocol !== 'https:' && u.protocol !== 'http:') return false
-  const host = u.hostname.toLowerCase()
-  if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) return false
-  if (host === '::1' || host === '[::1]') return false
+
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '')
+
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return false
+
+  // 非标准 IP 写法：十进制整数(2130706433) / 十六进制(0x7f000001) / 八进制(0177.0.0.1)
+  if (/^\d+$/.test(host)) return false
+  if (/^0x/i.test(host) || /\.0x/i.test(host)) return false
+  if (/(^|\.)0[0-7]+(\.|$)/.test(host)) return false
+
+  // IPv6
+  if (host.includes(':')) {
+    if (host === '::1' || host === '::') return false
+    if (host.startsWith('::ffff:')) return false // IPv4-mapped，能指向 127.0.0.1
+    if (/^(fe80|fc|fd)/i.test(host)) return false // 链路本地 / ULA
+    return true
+  }
+
+  // IPv4 点分十进制
   if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-    const parts = host.split('.').map(Number)
-    const [a, b] = parts
+    const [a, b] = host.split('.').map(Number)
     if (a === 0 || a === 127 || a === 10) return false
     if (a === 169 && b === 254) return false // 云元数据 169.254.169.254
     if (a === 172 && b >= 16 && b <= 31) return false
     if (a === 192 && b === 168) return false
+    if (a === 100 && b >= 64 && b <= 127) return false // CGNAT 100.64/10
+    if (a === 198 && (b === 18 || b === 19)) return false // 基准测试段
+    if (a >= 224) return false // 组播 / 保留
+    return true
   }
+
   return true
 }
 
