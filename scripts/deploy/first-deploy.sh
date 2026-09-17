@@ -48,7 +48,7 @@ if [ -d "$APP_DIR/.git" ]; then
   echo "    目录已存在，执行 git pull"
   cd "$APP_DIR" && git pull
 else
-  git clone "$REPO_URL" "$APP_DIR"
+  git clone -b master "$REPO_URL" "$APP_DIR"
   cd "$APP_DIR"
 fi
 
