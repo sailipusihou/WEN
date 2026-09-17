@@ -1,6 +1,15 @@
 # 部署脚本必须保持 LF 换行，否则 Linux 上会报 "bad interpreter"
 *.sh text eol=lf
 
+# 前端静态资源也强制 LF。
+# 为什么：这些文件会经「本地打包 → 上传 → 服务器解压」上到 Linux。
+# 不指定的话，Windows 检出差出 CRLF，解压到服务器后与仓库（LF）不一致 ——
+# git status 会一直显示 public/avatars/*.svg 等被改动（实测 23 个文件、
+# 447 增 447 删，纯粹是行尾差异），干扰部署脚本的「工作区是否干净」判断。
+*.svg text eol=lf
+*.txt text eol=lf
+*.css text eol=lf
+
 # Windows 脚本保持 CRLF
 *.ps1 text eol=crlf
 *.bat text eol=crlf
