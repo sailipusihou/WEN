@@ -11,21 +11,35 @@
   --font-noto-sans-sc: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
   --font-noto-serif-sc: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC', Georgia, serif;
 
-  /* —— 色彩（2026-09 三轮调色定稿）——
-     第一轮诊断：79% 面积为近白、背景平均饱和度仅 19.6%、次要文字饱和 4%（纯灰）→ 发浅发灰。
-     第二轮矫枉过正：底色压成深羊皮纸，反而更闷 —— 对比是相对的，
-     底色一旦发深，深色字就不"跳"了。
-     定稿：底色回到近乎纯白（参考站 #FAFAF6 的路子）+ 商品区单独泛微黄 + 文字改暖深棕。 */
+  /* ═══════════════════════════════════════════════════════════════
+     设计 token 层（2026-09-17 建立）
+
+     ⚠️ 颜色的**唯一事实来源**是 tailwind.config.js 的 theme.extend.colors
+        —— 实际在用的全是 Tailwind 类（ink 235 处 / otb 389 处 / indigo 56 处…）。
+        这里的是**镜像**，供行内 style、第三方组件、以及需要 var() 的场合。
+
+     为什么要有这一段：之前两边各写一份，后来只改了 tailwind.config.js
+     （9/16 那次"对照竞品重定底色层次"），globals.css 留在旧值 ——
+     paper 那一族出现"Tailwind 暖白 / CSS 变量纯白"两套值。
+     好在这些变量几乎没被引用（实测 var(--paper*) 仅 1 处），
+     所以当时没造成可见问题，但迟早会。从今往后：**改色两处一起改**。
+
+     下面「圆角 / 字号 / 状态色 / 节奏」是本层**新增**的能力：
+     以前散在各处硬编码（圆角甚至用 !important 硬压），现在收成一套。
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* —— 色彩（镜像 tailwind.config.js）—— */
   --ink-deep: #1F1811;
   --ink: #2A2118;
   --ink-mid: #4A3E2E;
   --ink-soft: #5A4A36;
   --ink-faint: #7A6B54;
-  --paper: #FDFCFA;
-  --paper-light: #FFFFFF;   /* 参考站的"实际的纯白感" */
-  --paper-warm: #F8F2E2;    /* 商品图区/暖块：泛微黄 */
-  --paper-dark: #F2EBD8;
-  --jade: #5F7D72;       /* 原 #8BA8A0 饱和14% —— 淡到没记忆点 */
+  --paper-base: #FAF8F2;
+  --paper: #F7F3EA;
+  --paper-light: #FFFDF9;
+  --paper-warm: #F6F0E0;
+  --paper-dark: #EFE8D8;
+  --jade: #5F7D72;
   --jade-light: #7D9B8F;
   --jade-dark: #4A665D;
   --jade-pale: #B9CFC6;
@@ -43,6 +57,42 @@
   --coral: #A8472E;
   --coral-light: #C4694F;
   --coral-dark: #8E3C28;
+
+  /* —— 状态色（新增）——
+     以前直接用了 Tailwind 默认的 #22c55e/#ef4444/#f59e0b/#3b82f6
+     （冷调高饱和，实测 83/56/30/21 处），和全站暖色调打架。
+     这里定一套暖调版本。⚠️ 换用会**可见**，属于后续步骤，本层只定义。 */
+  --success: #5A7A55;
+  --warning: #A87C2E;
+  --danger: #A8472E;
+  --info: #4F5A6E;
+
+  /* —— 圆角（新增）——
+     以前 0 / 2 / 4 / 6 / 10 / 12 / 18px 混用，还有 `0!important`、`18px!important`
+     这种硬压（是在和框架对抗）。收成三档。
+     器物类商品宜用紧圆角。**变量名与 Tailwind 类名一一对应**
+     （--radius-card ↔ rounded-card），避免同一数值出现两套叫法。 */
+  --radius-card: 10px;
+  --radius-block: 18px;
+  --radius-pill: 999px;
+  /* 更细的两档，备用 */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+
+  /* —— 字号阶梯（新增）——
+     以前 px 与 rem 混用、层级断层（3rem 大标题 ↔ 11px 小字）。
+     收成 7 档。⚠️ 本层只**定义**，替换调用是下一步（字号统一）。 */
+  --t-hero: clamp(2.4rem, 6vw, 4rem);
+  --t-h1: 2.2rem;
+  --t-h2: 1.75rem;
+  --t-h3: 1.25rem;
+  --t-body: 15px;
+  --t-small: 13px;
+  --t-micro: 11px;
+
+  /* —— 纵向节奏（新增）—— */
+  --space-section: 5rem;
+  --space-block: 2.5rem;
 }
 
 * { box-sizing: border-box; }

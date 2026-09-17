@@ -48,6 +48,24 @@ module.exports = {
         'otb-terracotta': '#A8472E',
         'otb-ink': '#2A2118',
         'otb-sand': '#F2EBD8',
+
+        // 状态色（新增 2026-09-17）—— 暖调版本。
+        // 以前直接用 Tailwind 默认的 #22c55e / #ef4444 / #f59e0b / #3b82f6
+        // （冷调高饱和，实测 83 / 56 / 30 / 21 处），和全站暖色调打架。
+        // ⚠️ 本步只**定义**，不改任何调用 —— 换用会让徽标/提示变色，属于后续步骤。
+        // 名字不冲突（Tailwind 默认只有 green/red/amber/blue，没有这几个）。
+        'success': '#5A7A55',
+        'warning': '#A87C2E',
+        'danger': '#A8472E',
+        'info': '#4F5A6E',
+      },
+      borderRadius: {
+        // 新增的语义档位。**刻意避开 sm/md/lg 这些名字** —— 用它们会覆盖
+        // Tailwind 默认值，让全站已有的 rounded-lg 等突然改变尺寸（8px → 18px）。
+        // 以前圆角是 0/2/4/6/10/12/18px 混用、还有 !important 硬压，这里收成三档。
+        'card': '10px',
+        'block': '18px',
+        'pill': '999px',
       },
       lineHeight: {
         // Tailwind 默认 relaxed = 1.625，在 16px 正文下偏松 —— 全站 50 处都在用它。
