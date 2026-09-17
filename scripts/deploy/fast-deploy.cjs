@@ -37,8 +37,18 @@ const DO_BUILD = process.argv.includes('--build')
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 function sh(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', cwd: opts.cwd || ROOT, timeout: opts.timeout || 600000 })
-  return { out: (r.stdout || '') + (r.stderr || ''), code: r.status }
+  const r = spawnSync(cmd, args, {
+    encoding: 'utf8',
+    cwd: opts.cwd || ROOT,
+    timeout: opts.timeout || 600000,
+    // ⚠️ Windows 上 npm / npx 是 .cmd 的 shim，**不开 shell 时 spawnSync 找不到它们**，
+    //    直接报 ENOENT、输出为空 —— 表现为"构建失败"但看不到任何原因（踩过）。
+    //    只有 npm 这类 shim 需要开；git / tar 是真 .exe，保持关闭更安全。
+    shell: opts.shell === true,
+  })
+  const out = (r.stdout || '') + (r.stderr || '')
+  // 进程压根没起来时（ENOENT 等）把原因带出来，否则调用方只看到"失败"两个字
+  return { out: r.error ? out + '\n[spawn 失败] ' + r.error.code + ' ' + r.error.message : out, code: r.status, error: r.error }
 }
 function remote(cmd, timeout) {
   const r = spawnSync(process.execPath, [RUNNER, 'run', cmd], { encoding: 'utf8', timeout: timeout || 180000 })
@@ -62,9 +72,12 @@ function http(url) {
   // ---------- 1. 本地构建 ----------
   if (DO_BUILD) {
     console.log('=== 1. 本地构建 ===')
-    const b = sh('npm', ['run', 'build'], { timeout: 900000 })
-    const ok = /Compiled successfully/.test(b.out)
-    console.log(ok ? '  ✓ 本地构建成功' : '  ✗ 本地构建失败')
+    // shell:true 是必须的（见 sh() 的注释：Windows 上 npm 是 .cmd shim）
+    const b = sh('npm', ['run', 'build'], { timeout: 900000, shell: true })
+    // 判定改用**退出码**。原来匹配字符串 "Compiled successfully" —— 那是 Next 13/14
+    // 的输出，Next 15 只打路由表，不含这句话，于是构建明明成功也报失败。
+    const ok = b.code === 0 && !b.error
+    console.log(ok ? '  ✓ 本地构建成功' : '  ✗ 本地构建失败（退出码 ' + b.code + '）')
     if (!ok) { console.log(b.out.slice(-2500)); process.exit(1) }
   } else {
     console.log('=== 1. 使用现有本地构建产物（加 --build 可强制重建）===')
