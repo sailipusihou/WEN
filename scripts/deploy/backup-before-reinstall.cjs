@@ -27,8 +27,11 @@ const HOST = process.env.SSH_HOST || '43.110.46.49'
 const PORT = Number(process.env.SSH_PORT || 22)
 const USER = process.env.SSH_USER || 'root'
 const PASS = process.env.SSH_PASS
+/** 私钥路径。设了就用密钥认证（推荐），否则回退到密码。 */
+const KEY = process.env.SSH_KEY
 
-if (!PASS) { console.error('❌ 请先设置环境变量 SSH_PASS'); process.exit(1) }
+if (!PASS && !KEY) { console.error('❌ 请设置 SSH_KEY（私钥路径）或 SSH_PASS（密码）'); process.exit(1) }
+const AUTH = KEY ? { privateKey: fs.readFileSync(KEY) } : { password: PASS }
 
 const ROOT = path.join(__dirname, '..', '..')
 // 注意：不要把 ISO 串直接切 15 位 —— 那会把毫秒前的 "." 一起带上，
@@ -43,7 +46,7 @@ function connect() {
   return new Promise((resolve, reject) => {
     const conn = new Client()
     conn.on('ready', () => resolve(conn)).on('error', reject)
-    conn.connect({ host: HOST, port: PORT, username: USER, password: PASS, readyTimeout: 30000 })
+    conn.connect({ host: HOST, port: PORT, username: USER, ...AUTH, readyTimeout: 30000 })
   })
 }
 function exec(conn, command, timeout = 300000) {
