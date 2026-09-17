@@ -48,7 +48,6 @@ export default function CheckoutPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [paypalError, setPaypalError] = useState('')
-  const [payoneerError, setPayoneerError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [shippingCost, setShippingCost] = useState(0)
   const [estimatedDays, setEstimatedDays] = useState('')
@@ -64,8 +63,9 @@ export default function CheckoutPage() {
    * 这里同样处理：没填地址前只显示小计，运费写「结算时计算」。
    */
   const [addressTouched, setAddressTouched] = useState(false)
-  const [payoneerEnabled, setPayoneerEnabled] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'payoneer'>('paypal')
+  // Payoneer 已下线（用户不使用；其下单接口曾是未认证漏洞，已删除），支付方式恒为 PayPal。
+  // 保留这个常量而不是删掉整条分支，是为了不动 JSX 结构、把改动面压到最小。
+  const paymentMethod = 'paypal' as const
   // Apple Pay / Google Pay：额度开关来自 /api/paypal/config，默认关闭
   const [wallets, setWallets] = useState({ enabled: false, applePay: false, googlePay: false })
   const [paypalInstance, setPaypalInstance] = useState<any>(null)
@@ -190,21 +190,17 @@ export default function CheckoutPage() {
   }
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/paypal/config').then(r => r.json()).catch(() => ({ enabled: false })),
-      fetch('/api/payoneer/config').then(r => r.json()).catch(() => ({ enabled: false })),
-    ]).then(([paypalConfig, payoneerConfig]) => {
-      if (!paypalConfig.enabled && payoneerConfig.enabled) {
-        setPaymentMethod('payoneer')
-      }
-      setPayoneerEnabled(payoneerConfig.enabled)
-      if (paypalConfig.wallets) setWallets(paypalConfig.wallets)
-      // 进页面就加载，不再等客户去点「Continue with PayPal」
-      if (paypalConfig.enabled && paypalConfig.clientId) {
-        setPaypalLoading(true)
-        ensurePayPalSdk(paypalConfig)
-      }
-    })
+    // Payoneer 已下线：用户不使用它，且它的下单接口
+    // (/api/create-payoneer-order) 曾是「未认证 + 金额由客户端决定」的漏洞，已删除。
+    fetch('/api/paypal/config').then(r => r.json()).catch(() => ({ enabled: false }))
+      .then(paypalConfig => {
+        if (paypalConfig.wallets) setWallets(paypalConfig.wallets)
+        // 进页面就加载，不再等客户去点「Continue with PayPal」
+        if (paypalConfig.enabled && paypalConfig.clientId) {
+          setPaypalLoading(true)
+          ensurePayPalSdk(paypalConfig)
+        }
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -306,7 +302,7 @@ export default function CheckoutPage() {
       body: JSON.stringify({
         items: discountedItems, shipping, subtotal: discountedSubtotal, shippingCost,
         discount: couponDiscount, couponCode: couponAppliedCode || undefined,
-        total: totalPrice, currency, notes: `Payment: ${paymentMethod === 'payoneer' ? 'Payoneer' : 'PayPal'}`, userEmail,
+        total: totalPrice, currency, notes: 'Payment: PayPal', userEmail,
         paymentMethod,
         paypalTransaction: paypalTransaction || null,
         referralCode: referralCode || undefined,
@@ -515,49 +511,6 @@ export default function CheckoutPage() {
     await ensurePayPalSdk()
   }
 
-  const handlePayoneerClick = async () => {
-    if (!validateShipping()) return
-    if (processing) return
-    try {
-      setProcessing(true)
-      const res = await fetch('/api/payoneer/config')
-      const config = await res.json()
-      if (!config.enabled || !config.clientId) {
-        setPayoneerError('Payoneer is not available at the moment.')
-        setProcessing(false)
-        return
-      }
-      
-      const orderData = await submitOrder(null)
-      if (!orderData) {
-        setProcessing(false)
-        return
-      }
-      
-      const createRes = await fetch('/api/create-payoneer-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // 修复 M2: Payoneer 按 USD 实收金额下单 (原传 CNY 数值, 金额口径与订单/对账不一致)
-          amount: convertPrice(totalPrice, 'USD'),
-          orderId: orderData.id,
-          customerEmail: shipping.email || userEmail,
-        }),
-      })
-      
-      const payoneerOrder = await createRes.json()
-      if (payoneerOrder.id) {
-        window.location.href = payoneerOrder.redirectUrl || ''
-      } else {
-        setPayoneerError(payoneerOrder.error || 'Failed to create Payoneer order')
-      }
-    } catch (e) {
-      setPayoneerError('Payoneer configuration error: ' + (e as Error).message)
-    } finally {
-      setProcessing(false)
-    }
-  }
-
   if (items.length === 0 && !submitted) {
     return <div className="min-h-[70vh] flex items-center justify-center bg-[#FBFAF7]">
       <div className="text-center max-w-md mx-auto px-6">
@@ -652,7 +605,7 @@ export default function CheckoutPage() {
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
                   <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Payment Method</p>
-                  <p className="mt-1 font-sans text-sm text-[#2A2118]">{paymentMethod === 'payoneer' ? 'Payoneer' : 'PayPal'}</p>
+                  <p className="mt-1 font-sans text-sm text-[#2A2118]">PayPal</p>
                 </div>
                 <div className="rounded-2xl bg-[#FBFAF7] px-4 py-3">
                   <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-[#8A6A2E]">Delivery Estimate</p>
@@ -727,7 +680,7 @@ export default function CheckoutPage() {
             而 Payment 卡片在很下面；原来报错只显示在 Payment 卡片里，
             客户点了顶部的按钮、报错却出现在下面看不见的地方，
             体感就是「点了没反应」。这里在顶部再显示一份。 */}
-        {(paypalError || payoneerError) && (
+        {paypalError && (
           <div
             role="alert"
             data-checkout-error="1"
@@ -740,7 +693,7 @@ export default function CheckoutPage() {
             }}
           >
             <AlertCircle size={15} strokeWidth={2} className="mt-0.5 shrink-0" />
-            <span className="min-w-0 break-words">{paypalError || payoneerError}</span>
+            <span className="min-w-0 break-words">{paypalError}</span>
           </div>
         )}
 
@@ -963,9 +916,9 @@ export default function CheckoutPage() {
               <h2 className="section-heading mb-5">Payment</h2>
               <p className="font-sans text-sm text-[#5A4A36]/60 mb-4">Secure payment options available</p>
               
-              {(paypalError || payoneerError) && (
+              {paypalError && (
                 <p className="text-sm text-red-500 font-sans mb-3 bg-red-50 p-2">
-                  {paypalError || payoneerError}
+                  {paypalError}
                 </p>
               )}
               
@@ -977,12 +930,7 @@ export default function CheckoutPage() {
               
               <div className="space-y-3">
                 <button
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`w-full p-4 rounded-lg border flex items-center justify-center gap-3 transition-all ${
-                    paymentMethod === 'paypal'
-                      ? 'border-[#0070BA] bg-[#0070BA]/5'
-                      : 'border-[#EFE7D4]/50 hover:border-[#0070BA]/50'
-                  }`}
+                  className="w-full p-4 rounded-lg border flex items-center justify-center gap-3 transition-all border-[#0070BA] bg-[#0070BA]/5"
                 >
                   <svg width="24" height="6" viewBox="0 0 100 26" className="w-8 h-auto">
                     <path d="M11.2 0H4.8C4.4 0 4 0.3 3.9 0.7L1.3 17.2C1.2 17.5 1.4 17.8 1.7 17.8H4.8C5.2 17.8 5.6 17.5 5.7 17.1L6.4 12.4C6.5 11.9 6.9 11.6 7.4 11.6H9.4C13.5 11.6 15.9 9.6 16.5 5.7C16.8 4 16.5 2.7 15.7 1.8C14.7 0.7 13.2 0 11.2 0ZM11.9 5.9C11.6 8.1 9.9 8.1 8.3 8.1H7.4L8 4.2C8 3.9 8.3 3.7 8.6 3.7H9C10.1 3.7 11.1 3.7 11.7 4.3C11.9 4.7 12 5.2 11.9 5.9Z" fill="#003087"/>
@@ -994,24 +942,6 @@ export default function CheckoutPage() {
                   </svg>
                   <span className="text-sm font-medium text-[#2A2118]">Pay with PayPal or Credit Card</span>
                 </button>
-                
-                {payoneerEnabled && (
-                  <button
-                    onClick={() => setPaymentMethod('payoneer')}
-                    className={`w-full p-4 rounded-lg border flex items-center justify-center gap-3 transition-all ${
-                      paymentMethod === 'payoneer'
-                        ? 'border-[#0070BA] bg-[#0070BA]/5'
-                        : 'border-[#EFE7D4]/50 hover:border-[#0070BA]/50'
-                    }`}
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#0070BA"/>
-                      <path d="M8 17L11 12L8 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 17L13 12L16 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span className="text-sm font-medium text-[#2A2118]">Pay with Payoneer</span>
-                  </button>
-                )}
               </div>
               
               <p className="text-[10px] text-[#5A4A36]/40 mt-3 font-sans">
@@ -1082,13 +1012,6 @@ export default function CheckoutPage() {
                     <div id="paypal-button-container" className="mt-4"></div>
                   )}
                 </div>
-              )}
-              
-              {paymentMethod === 'payoneer' && payoneerEnabled && (
-                <button onClick={handlePayoneerClick} disabled={processing}
-                  className="w-full mt-4 px-6 py-3 bg-[#0070BA] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#003087] disabled:opacity-50 transition-colors">
-                  Continue with Payoneer
-                </button>
               )}
             </div>
           </div>
