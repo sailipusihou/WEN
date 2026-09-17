@@ -6,18 +6,29 @@ import { ArrowLeft, Package, MapPin, CheckCircle, Clock, CreditCard, FileText, T
 import { findAvatarMeta } from "@/lib/avatars"
 
 // 物流状态显示配置 (面向海外客户, 英文界面)
+//
+// 配色（2026-09-17）：原来是 7 个 Tailwind 默认色（blue #3b82f6 / violet #8b5cf6 /
+// amber #f59e0b / emerald #10b981 / green #22c55e / red #ef4444 / gray #6b7280），
+// 全是冷调高饱和，压在暖纸色底上很扎眼。
+// 现改用品牌 token，保留"由浅入深"的语义推进：
+//   灰(未开始) → 蓝灰(揽收/运输) → 青(报关/国际) → 金(进口清关) → 绿(送达) → 红陶(异常)
+// 背景用 color-mix 从**同一个** token 派生，不再另写一份 rgba（否则改色又要改两处）。
+const tok = (v: string) => ({
+  color: `var(${v})`,
+  bg: `color-mix(in srgb, var(${v}) 12%, transparent)`,
+})
 const TRACK_STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  pending:           { label: 'Pending',            color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: Clock },
-  picked_up:         { label: 'Picked Up',          color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: Package },
-  in_transit:        { label: 'In Transit',         color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: Truck },
-  export_customs:    { label: 'Export Customs',     color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  icon: FileText },
-  international:     { label: 'International',      color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  icon: Plane },
-  import_customs:    { label: 'Import Customs',     color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  icon: FileText },
-  at_local_facility: { label: 'At Local Facility',  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: Warehouse },
-  out_for_delivery:  { label: 'Out for Delivery',   color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: Truck },
-  delivered:         { label: 'Delivered',          color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   icon: CheckCircle },
-  exception:         { label: 'Exception',          color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   icon: AlertCircle },
-  returned:          { label: 'Returned',           color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   icon: Undo },
+  pending:           { label: 'Pending',            ...tok('--ink-faint'), icon: Clock },
+  picked_up:         { label: 'Picked Up',          ...tok('--info'),      icon: Package },
+  in_transit:        { label: 'In Transit',         ...tok('--info'),      icon: Truck },
+  export_customs:    { label: 'Export Customs',     ...tok('--jade'),      icon: FileText },
+  international:     { label: 'International',      ...tok('--jade'),      icon: Plane },
+  import_customs:    { label: 'Import Customs',     ...tok('--warning'),   icon: FileText },
+  at_local_facility: { label: 'At Local Facility',  ...tok('--success'),   icon: Warehouse },
+  out_for_delivery:  { label: 'Out for Delivery',   ...tok('--success'),   icon: Truck },
+  delivered:         { label: 'Delivered',          ...tok('--success'),   icon: CheckCircle },
+  exception:         { label: 'Exception',          ...tok('--danger'),    icon: AlertCircle },
+  returned:          { label: 'Returned',           ...tok('--danger'),    icon: Undo },
 }
 
 export default function OrderDetailPage() {

@@ -9,7 +9,9 @@ import type { Category } from "@/lib/products"
 const ON_DARK = 'rgba(248,246,242,0.92)'      // 主
 const ON_DARK_SOFT = 'rgba(248,246,242,0.68)' // 次（仍清晰）
 const ON_DARK_FAINT = 'rgba(248,246,242,0.55)' // 弱但仍达 WCAG AA
-const ACCENT = '#5F7D72'                       // jade 强调
+// 用 token 而不是硬编码色值：以后调主色只改 globals.css / tailwind.config.js 一处。
+// （值与原硬编码的 #5F7D72 相同 —— 改这里零视觉变化）
+const ACCENT = 'var(--jade)'
 
 /** 真实品牌图标（内联 SVG，替代此前的 X/IG/FB 文字圆圈） */
 function SocialIcon({ label, size = 17 }: { label: string; size?: number }) {
