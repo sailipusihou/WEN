@@ -251,12 +251,22 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
 ### 待办
 
 ```
+· 🔴 凭据轮换**未完成** —— 攻击者拿过旧机器的 root，以下都要视为已泄露并更换：
+    PayPal Client Secret / SMTP 邮箱密码 / 各平台 OAuth token
+    （Instagram·Facebook·X·LinkedIn·Pinterest·TikTok·YouTube）/ 阿里云账号密码 + 开 MFA
+    / GitHub 密码（若与服务器密码相同）；并核对 PayPal 有无异常交易
+· 🔴 next@15.1.0 有已知漏洞（CVE-2025-66478），npm 安装时明确告警，建议升级
 · 参考站还有几个元素没做：DELIVERY COST CALCULATOR 折叠运费计算器、
   WISHLIST(n) 带数字的收藏
 · 搭配商品各自的规格下拉
-· watchdog.sh 还没装 cron
 · lib/db/repository-sqlite.ts 里有 24 行注释是乱码（历史遗留，仅注释，不影响编译）
-· 服务器是否重装 —— 待用户决定
+
+已完成（2026-09-17）：
+· 服务器重装（阿里云「更换操作系统」，IP 不变）+ 安全基线六步
+  （fail2ban / ufw / SSH 加固 / 自动更新 / rkhunter + chkrootkit）
+· 数据与上传文件恢复、应用重新部署、PM2 开机自启、HTTPS 重新签发
+· 后台管理员密码已更换（新密码在本地「新后台管理员密码.txt」）
+· watchdog.sh 已装 cron（每分钟自检，连续 2 分钟不通才重启应用）
 ```
 
 ---
