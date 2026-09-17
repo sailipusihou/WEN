@@ -700,7 +700,9 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
 
       {/* Right: category list */}
       <div className="lg:col-span-5 flex flex-col justify-center">
-        <div className="divide-y divide-[#F7F0DE] border-y border-[#F7F0DE]">
+        {/* 不再用 divide-y/border-y 画横线 —— 每一行上下都是发丝线，整列看起来
+            像一张表格。改成靠行距分组 + 选中态的浅底块来表达结构。 */}
+        <div className="space-y-0.5">
           {items.map((item, i) => {
             const isActive = i === active
             return (
@@ -710,7 +712,7 @@ function CollectionLookbook({ items, slideshowEnabled, slideshowInterval }: { it
                 onMouseEnter={() => { setActive(i); setPaused(true) }}
                 onMouseLeave={() => setPaused(false)}
                 onClick={() => setActive(i)}
-                className={`group w-full text-left transition-colors duration-300 ${isActive ? 'bg-[#FFFFFF] px-3' : 'px-1 hover:bg-[#FFFFFF]/60'}`}
+                className={`group w-full text-left transition-all duration-300 rounded-sm ${isActive ? 'bg-paper-light px-4 shadow-soft' : 'px-2 hover:bg-paper-light/60'}`}
               >
                 <div className="py-4 md:py-5 flex items-baseline justify-between gap-4">
                   <div className="flex items-baseline gap-2.5 min-w-0">

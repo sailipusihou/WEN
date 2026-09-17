@@ -51,6 +51,10 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Tailwind preflight 默认 1.5，在 16px 正文下偏松。
+     竞品实测是 14px / 1.3（更紧、更"编辑式"）。
+     取 1.45 作为新的基准：比 1.5 紧凑，但不至于像 1.3 那样压得喘不过气。 */
+  line-height: 1.45;
 }
 
 body {

@@ -49,6 +49,13 @@ module.exports = {
         'otb-ink': '#2A2118',
         'otb-sand': '#F2EBD8',
       },
+      lineHeight: {
+        // Tailwind 默认 relaxed = 1.625，在 16px 正文下偏松 —— 全站 50 处都在用它。
+        // 实测竞品是 14px / 1.3，明显更紧、更"编辑式"。
+        // 收到 1.55：保留 relaxed 的可读性，同时把整页密度提上来。
+        // 在这里改一处，胜过逐个文件去改 50 处调用。
+        relaxed: '1.55',
+      },
       fontFamily: {
         'sans': ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
         'serif': ['Noto Serif SC', 'Georgia', 'serif'],
@@ -61,6 +68,11 @@ module.exports = {
         'elevated': '0 12px 48px rgba(26,28,30,0.07)',
         'inner-soft': 'inset 0 1px 0 rgba(255,255,255,0.4)',
         'card': '0 1px 3px rgba(26,28,30,0.04), 0 1px 2px rgba(26,28,30,0.02)',
+        // 商品图块的"纸上一张照片"感：贴着边缘有一道极细的接触阴影，
+        // 外面一层大范围浅投影。颜色用暖棕而不是纯黑 —— 现有的 soft/soft-lg
+        // 都是冷调灰（rgba(26,28,30)），压在新换的暖纸底上会发脏。
+        'card-lift': '0 1px 2px rgba(31,24,17,0.05), 0 12px 28px -16px rgba(31,24,17,0.22)',
+        'card-lift-hover': '0 1px 2px rgba(31,24,17,0.06), 0 18px 38px -18px rgba(31,24,17,0.28)',
       },
       backgroundImage: {
         'paper-texture': "url('/images/paper-texture.png')",

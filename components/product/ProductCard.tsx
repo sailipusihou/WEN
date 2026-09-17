@@ -87,7 +87,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* 4:5 Image —— 只渲染主图。
             ⚠️ 已移除「悬停切换第二张图」动效：它和新增的两个操作按钮抢同一块视觉焦点，
             一起出现画面很乱，而且切图会让客户以为商品变了。 */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#F8F2E2]">
+        {/* 图块加一档克制的暖调投影：像"纸面上压着一张照片"。
+            之前卡片完全平贴在底色上，没有实体感。 */}
+        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-[#F8F2E2] shadow-card-lift transition-shadow duration-500 group-hover:shadow-card-lift-hover">
           <OptimizedImage
             src={product.image}
             alt={product.nameEn || product.name}

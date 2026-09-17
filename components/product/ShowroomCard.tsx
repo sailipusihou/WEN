@@ -107,7 +107,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           style={tilt as React.CSSProperties}
-          className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#F7F0DE] bg-[#FFFFFF] shadow-soft will-change-transform"
+          className="relative aspect-[4/5] overflow-hidden rounded-sm bg-paper-light shadow-card-lift will-change-transform"
         >
           {/* Cursor glow */}
           <div
