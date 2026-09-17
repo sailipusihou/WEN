@@ -251,10 +251,20 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
 ### 待办
 
 ```
-· 🔴 凭据轮换**未完成** —— 攻击者拿过旧机器的 root，以下都要视为已泄露并更换：
-    PayPal Client Secret / SMTP 邮箱密码 / 各平台 OAuth token
-    （Instagram·Facebook·X·LinkedIn·Pinterest·TikTok·YouTube）/ 阿里云账号密码 + 开 MFA
-    / GitHub 密码（若与服务器密码相同）；并核对 PayPal 有无异常交易
+· 🔴 凭据轮换**未完成**（攻击者拿过旧机器的 root，机器上所有凭据都要视为已泄露）
+    ✅ 已换：PayPal Client Secret、后台管理员密码、SSH root 密码；社媒 3 个账号已断开
+    ⏸ **待换（用户 2026-09-17 决定暂缓）**：
+       · Resend API Key —— 发邮件用，字段 `smtpPass`（smtp.resend.com）
+       · DeepSeek —— `aiApiKey` / `aiCopyApiKey`（对话与文案）
+       · 火山方舟 ARK —— `aiImageApiKey` / `aiImageRefApiKey`（生图）
+       · MiniMax —— `aiVideoApiKey`（视频）
+       · X/Twitter 开发者应用 —— `xApiKey` / `xApiSecret` / `xClientId` / `xClientSecret`
+       · Facebook 应用 —— `fbClientId`（App Secret 一并重置）
+       ⚠️ 这些都还在数据库里、也还在线上使用中，泄露状态下攻击者可直接消耗你的额度/余额
+    ☐ 阿里云账号**开 MFA**（账号安全页）＋ **查 RAM AccessKey** 有无多出来的
+      （AccessKey 是长期凭据且不受 MFA 保护，攻击者留后门首选）
+    ☐ GitHub 密码（若与服务器密码相同）
+    ☐ 核对 PayPal 有无异常交易
 · 🔴 next@15.1.0 有已知漏洞（CVE-2025-66478），npm 安装时明确告警，建议升级
 · 参考站还有几个元素没做：DELIVERY COST CALCULATOR 折叠运费计算器、
   WISHLIST(n) 带数字的收藏
@@ -266,6 +276,11 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
   （fail2ban / ufw / SSH 加固 / 自动更新 / rkhunter + chkrootkit）
 · 数据与上传文件恢复、应用重新部署、PM2 开机自启、HTTPS 重新签发
 · 后台管理员密码已更换（新密码在本地「新后台管理员密码.txt」）
+· SSH root 密码已轮换为 28 位随机串（本地「新建 文本文档.txt」）
+· PayPal Client Secret 已轮换（新值存本地「PayPal新密钥.txt」；
+  更新用 `scripts/deploy/update-paypal-creds.cjs`，它会先用新密钥实测换 token 再写入）
+· 社媒 3 个账号已断开（instagram / twitter / facebook，token 已从数据库清除），
+  另清理了 data/social-oauth/ 下 3 个过期授权握手残留
 · watchdog.sh 已装 cron（每分钟自检，连续 2 分钟不通才重启应用）
 ```
 
