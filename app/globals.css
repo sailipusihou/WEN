@@ -2235,10 +2235,14 @@ apple-pay-button {
 --------------------------------------------------------------------------- */
 .section-heading {
   font-family: var(--font-inter), system-ui, sans-serif;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  color: #2A2118;
+  /* 2026-09-17：由墨色 #2A2118 改为品牌红陶 var(--coral)。
+     这个类只用在购物车与结算页的「购物信息」面板标题
+     （Cart / Order Summary / Contact / Shipping / Payment 等），
+     改成点睛色后标题层级更鲜明，与正文明显区分开。 */
+  color: var(--coral);
   line-height: 1.2;
 }
 

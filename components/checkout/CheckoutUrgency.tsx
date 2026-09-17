@@ -58,10 +58,10 @@ export default function CheckoutUrgency() {
     <div
       data-checkout-urgency="1"
       className="flex items-center gap-2.5 px-4 py-3"
-      style={{ backgroundColor: '#FBF3DF', border: '1px solid #EBD9AE', borderRadius: 3 }}
+      style={{ backgroundColor: 'var(--coral)', borderRadius: 3 }}
     >
-      <Clock size={15} strokeWidth={2} className="shrink-0" style={{ color: '#8A6A2E' }} />
-      <p className="font-sans text-[13px] leading-none" style={{ color: '#6B5220' }}>
+      <Clock size={15} strokeWidth={2.2} className="shrink-0" style={{ color: 'rgba(255,255,255,0.9)' }} />
+      <p className="font-sans text-[13px] leading-none" style={{ color: '#FFFFFF' }}>
         Your order is reserved for the next{' '}
         <span className="font-semibold tabular-nums tracking-[0.04em]">{mm}:{ss}</span>
       </p>

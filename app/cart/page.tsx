@@ -154,14 +154,14 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-[#FFFFFF] min-h-screen">
+    <div className="bg-paper-base min-h-screen">
       {/* pb-28：给底部常驻购物车条（GlobalCartBar，fixed bottom，约 70px 高）留出空间，
           否则它会盖住右栏底部的支付方式图标和版权信息 */}
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8 md:py-12 pb-28">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em]">Cart</h1>
-            <p className="font-sans text-sm text-[#5A4A36]/60 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
+            <h1 className="font-en text-3xl md:text-4xl text-coral font-medium tracking-[0.005em]">Cart</h1>
+            <p className="font-sans text-sm text-[#5A4A36]/75 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
           </div>
           <button onClick={clearCart} className="font-sans text-micro text-[#5A4A36]/40 hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase">
             Clear
@@ -169,17 +169,17 @@ export default function CartPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-8">
             {discountedItems.map((item, i) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="checkout-card p-4 md:p-6 flex gap-4 md:gap-6">
+                className="flex gap-4 md:gap-6">
                 <Link href={`/products/${item.id}`} className="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#EFE7D4]/30 overflow-hidden relative">
                   <OptimizedImage src={item.image} alt={item.nameEn || item.name} fill sizes="(max-width: 768px) 80px, 96px" objectFit="cover" placeholder="blur" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <Link href={`/products/${item.id}`} className="font-en text-sm md:text-base text-[#2A2118] hover:text-[#8A6A2E] transition-colors font-medium">
+                      <Link href={`/products/${item.id}`} className="font-en text-base md:text-lg text-[#2A2118] hover:text-coral transition-colors font-medium">
                         {item.nameEn || item.name}
                       </Link>
                       {/* 赠品行：明确标出来，避免客户以为被多收了钱 */}
@@ -237,11 +237,11 @@ export default function CartPage() {
               <OrderSummaryLines items={items} currency={currency} compact />
 
               <div className="space-y-3 font-sans text-sm mt-4 pt-4" style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }}>
-                <div className="flex justify-between text-[#5A4A36]/70">
+                <div className="flex justify-between text-[#5A4A36]/85">
                   <span>Subtotal</span>
                   <span className="text-[#2A2118]">{formatPrice(subtotalConverted, currency)}</span>
                 </div>
-                <div className="flex justify-between text-[#5A4A36]/70">
+                <div className="flex justify-between text-[#5A4A36]/85">
                   <span>Shipping{shipCountry ? ` to ${shipCountryLabel(shipCountry)}` : ''}</span>
                   <span className="text-[#2A2118]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
