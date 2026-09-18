@@ -26,14 +26,14 @@ export default function RefundPolicyPage() {
   return (
     <div className="bg-[#FFFFFF] min-h-screen">
       <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-12 py-12 md:py-16">
-        <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">
+        <h1 className="font-en text-3xl md:text-4xl text-ink font-medium tracking-[0.005em] mb-2">
           Returns &amp; Refunds
         </h1>
-        <p className="font-sans text-xs text-[#5A4A36]/50 mb-8">Last updated: September 2026</p>
+        <p className="font-sans text-xs text-ink-soft/50 mb-8">Last updated: September 2026</p>
 
         <div className="space-y-6 font-sans text-sm leading-7 text-[#4A4A36]">
           <section className="p-4" style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 8 }}>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">The short version</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">The short version</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>30 days</strong> from delivery to request a return.</li>
               <li><strong>We pay return shipping</strong> if the item arrived damaged, defective, or is not what you ordered.</li>
@@ -44,7 +44,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">1. Return window</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">1. Return window</h2>
             <p>
               You may request a return within <strong>30 calendar days</strong> of the delivery date recorded by the
               carrier. Requests made after this window cannot be accepted, unless the item is covered by a
@@ -53,7 +53,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">2. Condition of returned items</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">2. Condition of returned items</h2>
             <p>
               Items must be returned unused, undamaged, and in their original packaging with any tags, certificates,
               or accessories included. Handcrafted pieces are individually made, so minor variations in glaze,
@@ -66,7 +66,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">3. Damaged, defective, or incorrect items</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">3. Damaged, defective, or incorrect items</h2>
             <p>
               Please inspect your parcel on arrival. If anything is damaged, faulty, or not what you ordered,
               contact us within <strong>7 days of delivery</strong> with your order number and photographs of the
@@ -76,7 +76,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">4. How to start a return</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">4. How to start a return</h2>
             <p>
               Email <a href="mailto:hello@lowflame.store" className="underline underline-offset-2 text-[#8A6A2E]">hello@lowflame.store</a> or
               use the <Link href="/contact" className="underline underline-offset-2 text-[#8A6A2E]">contact form</Link> with:
@@ -94,13 +94,13 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">5. Who pays return shipping</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">5. Who pays return shipping</h2>
             <div className="overflow-x-auto mt-2">
               <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(74,58,36,0.2)' }}>
-                    <th className="py-2 pr-4 font-semibold text-[#2A2118]">Reason</th>
-                    <th className="py-2 font-semibold text-[#2A2118]">Return shipping</th>
+                    <th className="py-2 pr-4 font-semibold text-ink">Reason</th>
+                    <th className="py-2 font-semibold text-ink">Return shipping</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -122,7 +122,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">6. Refund timing and method</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">6. Refund timing and method</h2>
             <p>
               Once we receive and inspect your return, we will email you to confirm. Refunds are issued to the
               <strong> original payment method</strong> within <strong>5 business days</strong> of that confirmation.
@@ -138,7 +138,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">7. Exchanges</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">7. Exchanges</h2>
             <p>
               We do not operate a direct exchange process. If you would like a different item, please return the
               original for a refund and place a new order — this is faster than waiting for a cross-shipment.
@@ -146,7 +146,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">8. Non-returnable items</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">8. Non-returnable items</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>Custom or personalised pieces made to your specification</li>
               <li>Items marked as final sale at the time of purchase</li>
@@ -156,7 +156,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">9. Orders cancelled before dispatch</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">9. Orders cancelled before dispatch</h2>
             <p>
               You may cancel an order at no cost any time before it is dispatched. Email us with your order number
               and we will cancel and refund in full. Once the parcel has left our workshop, the return process above
@@ -165,7 +165,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">10. Statutory rights</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">10. Statutory rights</h2>
             <p>
               Nothing in this policy limits any rights you have under the mandatory consumer protection laws of
               your country of residence. Where local law provides a longer cancellation period or stronger
@@ -174,7 +174,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">11. Contact</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">11. Contact</h2>
             <p>
               Questions about a return or refund? Email{' '}
               <a href="mailto:hello@lowflame.store" className="underline underline-offset-2 text-[#8A6A2E]">hello@lowflame.store</a>{' '}

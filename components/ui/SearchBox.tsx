@@ -107,7 +107,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
         <Search
           size={16}
           strokeWidth={1.5}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A4A36]/40 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/40 pointer-events-none"
         />
         <input
           ref={inputRef}
@@ -117,13 +117,13 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search products..."
-          className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#FBFAF7] border border-[#F7F0DE] focus:border-[#5F7D72] focus:outline-none transition-colors font-sans text-[#2A2118]"
+          className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#FBFAF7] border border-[#F7F0DE] focus:border-[#5F7D72] focus:outline-none transition-colors font-sans text-ink"
         />
         {query && (
           <button
             type="button"
             onClick={() => { setQuery(''); setSuggestions([]); inputRef.current?.focus() }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A4A36]/40 hover:text-[#2A2118] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft/40 hover:text-ink transition-colors"
             aria-label="Clear search"
           >
             <X size={16} strokeWidth={1.5} />
@@ -161,14 +161,14 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-en text-xs text-[#2A2118] font-medium truncate">
+                    <h4 className="font-en text-xs text-ink font-medium truncate">
                       {item.name}
                     </h4>
-                    <p className="font-sans text-micro text-[#5A4A36]/50 truncate">
+                    <p className="font-sans text-micro text-ink-soft/50 truncate">
                       {item.subtitle}
                     </p>
                   </div>
-                  <span className="font-en text-xs font-medium text-[#2A2118] shrink-0">
+                  <span className="font-en text-xs font-medium text-ink shrink-0">
                     {formatPrice(convertPrice(item.price, currency), currency)}
                   </span>
                 </Link>
@@ -183,7 +183,7 @@ export default function SearchBox({ onClose }: { onClose?: () => void }) {
             </>
           ) : !loading ? (
             <div className="p-6 text-center">
-              <p className="font-sans text-xs text-[#5A4A36]/50">
+              <p className="font-sans text-xs text-ink-soft/50">
                 No products found for &ldquo;{query}&rdquo;
               </p>
             </div>

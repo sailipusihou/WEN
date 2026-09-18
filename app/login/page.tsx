@@ -35,34 +35,34 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 bg-[#FBFAF7]">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-1">Sign In</h1>
-          <p className="font-sans text-sm text-[#5A4A36]/60">Welcome back</p>
+          <h1 className="font-en text-3xl md:text-4xl text-ink font-medium tracking-[0.005em] mb-1">Sign In</h1>
+          <p className="font-sans text-sm text-ink-soft/60">Welcome back</p>
         </div>
         <form onSubmit={handleSubmit} noValidate className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/60 p-6 md:p-8 space-y-4">
           {error && <p className="text-sm text-red-500 font-sans bg-red-50 p-2.5">{error}</p>}
           <div>
-            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
+            <label className="block text-micro font-sans text-ink-soft/60 tracking-[0.18em] uppercase mb-1.5">Email</label>
             <input type="text" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} required
               className="input-premium"
               placeholder="yourname@example.com" />
           </div>
           <div>
-            <label className="block text-micro font-sans text-[#5A4A36]/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
+            <label className="block text-micro font-sans text-ink-soft/60 tracking-[0.18em] uppercase mb-1.5">Password</label>
             <div className="relative">
               <input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
                 className="input-premium pr-10"
                 placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" />
               <button type="button" onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A4A36]/30 hover:text-[#2A2118]/60 transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft/30 hover:text-ink/60 transition-colors">
                 {showPw ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
               </button>
             </div>
           </div>
           <button type="submit" disabled={loading}
-            className="w-full py-3 bg-[#2A2118] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] disabled:opacity-50 transition-colors">
+            className="w-full py-3 bg-ink text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-ink-deep disabled:opacity-50 transition-colors">
             {loading ? "Signing in..." : "Sign In"}
           </button>
-          <p className="text-center text-xs font-sans text-[#5A4A36]/50 mt-2">
+          <p className="text-center text-xs font-sans text-ink-soft/50 mt-2">
             No account? <Link href="/register" className="text-[#8A6A2E] hover:underline">Create one</Link>
           </p>
         </form>

@@ -59,7 +59,7 @@ export default function OrderSummaryLines({ items, currency, compact = false }: 
           <Link
             href={`/products/${l.id}`}
             className="shrink-0 overflow-hidden"
-            style={{ width: compact ? 44 : 52, height: compact ? 55 : 65, borderRadius: 3, backgroundColor: '#F8F2E2' }}
+            style={{ width: compact ? 44 : 52, height: compact ? 55 : 65, borderRadius: 3, backgroundColor: 'var(--paper-warm)' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={l.image} alt="" className="w-full h-full object-cover" />
@@ -70,13 +70,13 @@ export default function OrderSummaryLines({ items, currency, compact = false }: 
               <Link
                 href={`/products/${l.id}`}
                 className="font-sans text-[13px] leading-snug hover:opacity-70 transition-opacity"
-                style={{ color: '#2A2118' }}
+                style={{ color: 'var(--ink)' }}
               >
                 {l.nameEn || l.name}
               </Link>
               <span
                 className="font-sans text-[13px] whitespace-nowrap shrink-0"
-                style={{ color: l.isGift ? '#4A665D' : '#2A2118', fontWeight: l.isGift ? 600 : 500 }}
+                style={{ color: l.isGift ? '#4A665D' : 'var(--ink)', fontWeight: l.isGift ? 600 : 500 }}
               >
                 {l.isGift
                   ? 'FREE'

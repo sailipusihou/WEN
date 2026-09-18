@@ -23,7 +23,7 @@ export default function CheckoutTopBar({ isCart = false }: { isCart?: boolean })
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
         <span
           className="font-en text-[19px] font-medium tracking-[0.01em] select-none"
-          style={{ color: '#2A2118' }}
+          style={{ color: 'var(--ink)' }}
         >
           Low Flame
         </span>

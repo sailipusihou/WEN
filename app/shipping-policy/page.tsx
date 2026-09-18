@@ -21,14 +21,14 @@ export default function ShippingPolicyPage() {
   return (
     <div className="bg-[#FFFFFF] min-h-screen">
       <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-12 py-12 md:py-16">
-        <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">
+        <h1 className="font-en text-3xl md:text-4xl text-ink font-medium tracking-[0.005em] mb-2">
           Shipping Policy
         </h1>
-        <p className="font-sans text-xs text-[#5A4A36]/50 mb-8">Last updated: September 2026</p>
+        <p className="font-sans text-xs text-ink-soft/50 mb-8">Last updated: September 2026</p>
 
         <div className="space-y-6 font-sans text-sm leading-7 text-[#4A4A36]">
           <section className="p-4" style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 8 }}>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">The short version</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">The short version</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>Dispatched from our workshop within <strong>1–2 business days</strong>.</li>
               <li>Delivery usually takes <strong>7–14 business days</strong> after dispatch.</li>
@@ -39,7 +39,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">1. Processing time</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">1. Processing time</h2>
             <p>
               Orders are prepared and dispatched from our workshop within <strong>1–2 business days</strong>
               (Monday–Friday, excluding public holidays). During sale periods and the weeks before major holidays,
@@ -49,7 +49,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">2. Delivery estimates</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">2. Delivery estimates</h2>
             <p>
               Estimated delivery is <strong>7–14 business days</strong> after dispatch for most destinations.
               The estimate shown at checkout is calculated from your delivery address. These are estimates, not
@@ -58,14 +58,14 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">3. Shipping rates</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">3. Shipping rates</h2>
             <div className="overflow-x-auto mt-2">
               <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(74,58,36,0.2)' }}>
-                    <th className="py-2 pr-4 font-semibold text-[#2A2118]">Region</th>
-                    <th className="py-2 pr-4 font-semibold text-[#2A2118]">Flat rate</th>
-                    <th className="py-2 font-semibold text-[#2A2118]">Free over</th>
+                    <th className="py-2 pr-4 font-semibold text-ink">Region</th>
+                    <th className="py-2 pr-4 font-semibold text-ink">Flat rate</th>
+                    <th className="py-2 font-semibold text-ink">Free over</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -91,7 +91,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">4. Tracking</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">4. Tracking</h2>
             <p>
               Every parcel ships with a tracking number, emailed to you as soon as the order is dispatched. If you
               have not received tracking within 3 business days of ordering, check your spam folder, then contact us.
@@ -99,7 +99,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">5. Customs, duties and taxes</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">5. Customs, duties and taxes</h2>
             <p>
               Orders are shipped from our workshop to your delivery address. Depending on your country, the
               shipment may be subject to import duties, taxes, or customs handling fees. <strong>These charges are
@@ -112,7 +112,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">6. Address accuracy</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">6. Address accuracy</h2>
             <p>
               Please check your delivery address carefully at checkout. We cannot change the address after dispatch.
               If a parcel is returned to us as undeliverable because of an incorrect or incomplete address, we will
@@ -121,7 +121,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">7. Lost or delayed parcels</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">7. Lost or delayed parcels</h2>
             <p>
               If tracking has not updated for more than <strong>10 business days</strong>, contact us and we will
               open a trace with the carrier. If the parcel is confirmed lost, we will send a replacement or issue a
@@ -130,7 +130,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">8. Split shipments</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">8. Split shipments</h2>
             <p>
               If your order contains items with different preparation times, we may ship them separately at no extra
               cost. You will receive a tracking number for each parcel.
@@ -138,7 +138,7 @@ export default function ShippingPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-en text-lg font-semibold text-[#2A2118] mb-2">9. Contact</h2>
+            <h2 className="font-en text-lg font-semibold text-ink mb-2">9. Contact</h2>
             <p>
               Questions about a shipment? Email{' '}
               <a href="mailto:hello@lowflame.store" className="underline underline-offset-2 text-[#8A6A2E]">hello@lowflame.store</a>{' '}

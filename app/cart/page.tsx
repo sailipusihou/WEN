@@ -112,14 +112,14 @@ export default function CartPage() {
               style={{ backgroundColor: 'rgba(76,85,70,0.12)' }}>
               <Check size={34} strokeWidth={1.6} style={{ color: '#4C5546' }} />
             </div>
-            <h1 className="font-en text-2xl md:text-3xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">
+            <h1 className="font-en text-2xl md:text-3xl text-ink font-medium tracking-[0.005em] mb-2">
               Order Confirmed
             </h1>
-            <p className="font-sans text-sm text-[#5A4A36]/70 mb-1">
+            <p className="font-sans text-sm text-ink-soft/70 mb-1">
               Thank you — your payment went through and your order is in our system.
             </p>
-            <p className="font-sans text-[12px] text-[#5A4A36]/55 mb-8">
-              Order reference: <span className="font-mono" style={{ color: '#2A2118' }}>{expressOrderId}</span>
+            <p className="font-sans text-[12px] text-ink-soft/55 mb-8">
+              Order reference: <span className="font-mono" style={{ color: 'var(--ink)' }}>{expressOrderId}</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href={'/order-tracking'}
@@ -129,7 +129,7 @@ export default function CartPage() {
               </Link>
               <Link href="/"
                 className="inline-flex items-center justify-center gap-2 px-7 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-colors"
-                style={{ border: '1px solid rgba(74,58,36,0.3)', color: '#2A2118', borderRadius: 4 }}>
+                style={{ border: '1px solid rgba(74,58,36,0.3)', color: 'var(--ink)', borderRadius: 4 }}>
                 <ArrowLeft size={14} strokeWidth={1.8} /> Continue shopping
               </Link>
             </div>
@@ -141,11 +141,11 @@ export default function CartPage() {
       <div className="min-h-[70vh] flex items-center justify-center bg-[#FBFAF7]">
         <div className="text-center max-w-md mx-auto px-6">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#EFE7D4]/50 flex items-center justify-center">
-            <ShoppingBag size={32} strokeWidth={1} className="text-[#5A4A36]/30" />
+            <ShoppingBag size={32} strokeWidth={1} className="text-ink-soft/30" />
           </div>
-          <h1 className="font-en text-2xl md:text-3xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">Your cart is empty</h1>
-          <p className="font-sans text-sm text-[#5A4A36]/60 mb-8">Discover our collection of handcrafted objects.</p>
-          <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-[#2A2118] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] transition-colors">
+          <h1 className="font-en text-2xl md:text-3xl text-ink font-medium tracking-[0.005em] mb-2">Your cart is empty</h1>
+          <p className="font-sans text-sm text-ink-soft/60 mb-8">Discover our collection of handcrafted objects.</p>
+          <Link href="/" className="inline-flex items-center gap-2 px-8 py-3 bg-ink text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-ink-deep transition-colors">
             <ArrowLeft size={14} strokeWidth={1.5} /> Browse Collection
           </Link>
         </div>
@@ -161,9 +161,9 @@ export default function CartPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-en text-3xl md:text-4xl text-coral font-medium tracking-[0.005em]">Cart</h1>
-            <p className="font-sans text-sm text-[#5A4A36]/75 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
+            <p className="font-sans text-sm text-ink-soft/75 mt-1">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>
           </div>
-          <button onClick={clearCart} className="font-sans text-micro text-[#5A4A36]/40 hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase">
+          <button onClick={clearCart} className="font-sans text-micro text-ink-soft/40 hover:text-ink transition-colors tracking-[0.18em] uppercase">
             Clear
           </button>
         </div>
@@ -179,7 +179,7 @@ export default function CartPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <Link href={`/products/${item.id}`} className="font-en text-base md:text-lg text-[#2A2118] hover:text-coral transition-colors font-medium">
+                      <Link href={`/products/${item.id}`} className="font-en text-base md:text-lg text-ink hover:text-coral transition-colors font-medium">
                         {item.nameEn || item.name}
                       </Link>
                       {/* 赠品行：明确标出来，避免客户以为被多收了钱 */}
@@ -192,7 +192,7 @@ export default function CartPage() {
                         </span>
                       )}
                     </div>
-                    <button onClick={() => removeItem(item.id)} className="p-1 text-[#5A4A36]/30 hover:text-red-400 transition-colors shrink-0">
+                    <button onClick={() => removeItem(item.id)} className="p-1 text-ink-soft/30 hover:text-red-400 transition-colors shrink-0">
                       <Trash2 size={14} strokeWidth={1.5} />
                     </button>
                   </div>
@@ -203,16 +203,16 @@ export default function CartPage() {
                       </span>
                     ) : (
                       <div className="flex items-center border border-[#EFE7D4]">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 text-ink-soft/50 hover:text-ink transition-colors">
                           <Minus size={12} strokeWidth={1.5} />
                         </button>
-                        <span className="w-8 text-center font-sans text-sm text-[#2A2118]">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
+                        <span className="w-8 text-center font-sans text-sm text-ink">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 text-ink-soft/50 hover:text-ink transition-colors">
                           <Plus size={12} strokeWidth={1.5} />
                         </button>
                       </div>
                     )}
-                    <span className="font-en text-base font-medium" style={{ color: item.isGift ? '#4A665D' : '#2A2118' }}>
+                    <span className="font-en text-base font-medium" style={{ color: item.isGift ? '#4A665D' : 'var(--ink)' }}>
                       {item.isGift ? 'FREE' : formatPrice(convertPrice(item.price * item.quantity, currency), currency)}
                     </span>
                   </div>
@@ -237,18 +237,18 @@ export default function CartPage() {
               <OrderSummaryLines items={items} currency={currency} compact />
 
               <div className="space-y-3 font-sans text-sm mt-4 pt-4" style={{ borderTop: '1px solid rgba(74,58,36,0.14)' }}>
-                <div className="flex justify-between text-[#5A4A36]/85">
+                <div className="flex justify-between text-ink-soft/85">
                   <span>Subtotal</span>
-                  <span className="text-[#2A2118]">{formatPrice(subtotalConverted, currency)}</span>
+                  <span className="text-ink">{formatPrice(subtotalConverted, currency)}</span>
                 </div>
-                <div className="flex justify-between text-[#5A4A36]/85">
+                <div className="flex justify-between text-ink-soft/85">
                   <span>Shipping{shipCountry ? ` to ${shipCountryLabel(shipCountry)}` : ''}</span>
-                  <span className="text-[#2A2118]">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
+                  <span className="text-ink">{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shippingConverted, currency)}</span>
                 </div>
                 {shipping > 0 && freeThreshold !== null ? (
                   <div className="pt-1">
-                    <p className="font-sans text-micro text-[#5A4A36]/70 mb-2">
-                      Add <strong className="text-[#2A2118]">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
+                    <p className="font-sans text-micro text-ink-soft/70 mb-2">
+                      Add <strong className="text-ink">{formatPrice(convertPrice(Math.max(0, freeThreshold - subtotal), currency), currency)}</strong> more for free shipping
                     </p>
                     <div data-free-ship-bar="1" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(74,58,36,0.20)' }}>
                       <div
@@ -265,7 +265,7 @@ export default function CartPage() {
                     <Check size={12} strokeWidth={2} /> You&apos;ve unlocked free shipping
                   </p>
                 ) : null}
-                <div className="border-t border-[#EFE7D4]/60 pt-3 flex justify-between font-medium text-[#2A2118]">
+                <div className="border-t border-[#EFE7D4]/60 pt-3 flex justify-between font-medium text-ink">
                   <span className="font-sans text-sm">Total</span>
                   <span className="font-en text-lg font-semibold">{formatPrice(totalConverted, currency)}</span>
                 </div>
@@ -284,7 +284,7 @@ export default function CartPage() {
                 style={{ backgroundColor: '#4C5546', color: '#FFFFFF', borderRadius: 4 }}>
                 Checkout <ArrowRight size={14} strokeWidth={2.2} />
               </Link>
-              <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors">
+              <Link href="/" className="mt-3 w-full flex items-center justify-center gap-1 font-sans text-xs text-ink-soft/50 hover:text-ink transition-colors">
                 <ArrowLeft size={12} strokeWidth={1.5} /> Continue Shopping
               </Link>
 
@@ -321,14 +321,14 @@ export default function CartPage() {
       <div
         data-cart-bottom-bar="1"
         className="fixed left-0 right-0 bottom-0 z-[101]"
-        style={{ backgroundColor: '#FBF7EF', borderTop: '1px solid rgba(74,58,36,0.24)', boxShadow: 'rgba(74,58,36,0.24) 0 0 14px' }}
+        style={{ backgroundColor: 'var(--paper-light)', borderTop: '1px solid rgba(74,58,36,0.24)', boxShadow: 'rgba(74,58,36,0.24) 0 0 14px' }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4">
           <div className="flex items-center shrink-0">
             {discountedItems.slice(0, 3).map((it, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={it.id + i} src={it.image} alt="" className="w-11 h-11 object-cover"
-                style={{ border: '2px solid #FBF7EF', borderRadius: 2, marginLeft: i === 0 ? 0 : -12, backgroundColor: '#F8F2E2', zIndex: 10 - i }} />
+                style={{ border: '2px solid #FBF7EF', borderRadius: 2, marginLeft: i === 0 ? 0 : -12, backgroundColor: 'var(--paper-warm)', zIndex: 10 - i }} />
             ))}
           </div>
           <div className="min-w-0 flex-1">

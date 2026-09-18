@@ -48,7 +48,7 @@ function OptionThumb({ src, label, size, active }: { src: string; label: string;
         width: size,
         height: size,
         borderRadius: 3,
-        backgroundColor: '#F8F2E2',
+        backgroundColor: 'var(--paper-warm)',
         border: `1.5px solid ${active ? INK : 'rgba(74,58,36,0.18)'}`,
         // 选中态用外圈阴影而不是填充色 —— 填充会把图盖住
         boxShadow: active ? '0 0 0 2px rgba(36,28,18,0.12)' : 'none',

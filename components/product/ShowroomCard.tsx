@@ -191,7 +191,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
               type="button"
               data-quick-view={product.id}
               className="w-full py-2.5 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px shadow-soft"
-              style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
+              style={{ backgroundColor: '#FFFFFF', color: 'var(--ink)', borderRadius: 4 }}
             >
               Quick view
             </button>
@@ -209,10 +209,10 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
           {/* Glass info bar */}
           <div className="absolute bottom-0 inset-x-0 z-10 flex items-end justify-between gap-3 px-4 py-3 bg-[#FFFFFF]/85 backdrop-blur-md border-t border-[#F2EBD8]">
             <div className="min-w-0">
-              <h3 className="font-en text-sm md:text-base text-[#2A2118] font-medium truncate">
+              <h3 className="font-en text-sm md:text-base text-ink font-medium truncate">
                 {product.nameEn || product.name}
               </h3>
-              <p className="font-sans text-micro text-[#5A4A36]/60 truncate mt-0.5">
+              <p className="font-sans text-micro text-ink-soft/60 truncate mt-0.5">
                 {product.subtitleEn || product.subtitle}
               </p>
             </div>
@@ -223,7 +223,7 @@ export default function ShowroomCard({ product, index = 0 }: { product: Product;
                 {eff.discount > 0 && <PromoSaleTag />}
               </span>
               {eff.originalPrice && (
-                <span className="font-sans text-micro text-[#5A4A36]/70 line-through block">
+                <span className="font-sans text-micro text-ink-soft/70 line-through block">
                   {formatPrice(convertPrice(eff.originalPrice, currency), currency)}
                 </span>
               )}

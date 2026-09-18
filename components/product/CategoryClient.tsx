@@ -17,7 +17,7 @@ export default function CategoryClient({
   if (!category) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-[#FBFAF7]">
-        <p className="font-en text-2xl text-[#5A4A36]">Collection not found</p>
+        <p className="font-en text-2xl text-ink-soft">Collection not found</p>
       </div>
     )
   }
@@ -25,7 +25,7 @@ export default function CategoryClient({
   return (
     <div className="bg-[#FBFAF7]">
       {/* Hero Banner */}
-      <section className="relative py-20 md:py-28 overflow-hidden bg-[#2A2118]">
+      <section className="relative py-20 md:py-28 overflow-hidden bg-ink">
         {category.image && (
           <OptimizedImage
             src={category.image}
@@ -38,7 +38,7 @@ export default function CategoryClient({
             placeholder="blur"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A1A]/70 via-[#1A1A1A]/40 to-[#1A1A1A]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink-deep/70 via-ink-deep/40 to-ink-deep/80" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="font-en text-4xl md:text-6xl text-white font-medium tracking-[0.005em]">
@@ -58,8 +58,8 @@ export default function CategoryClient({
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 font-sans text-micro text-[#5A4A36]/50 tracking-[0.18em] uppercase mb-10">
-            <Link href="/" className="hover:text-[#2A2118] transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 font-sans text-micro text-ink-soft/50 tracking-[0.18em] uppercase mb-10">
+            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
             <span>/</span>
             <span className="text-[#8A6A2E]">{category.nameEn || category.name}</span>
           </nav>
@@ -72,13 +72,13 @@ export default function CategoryClient({
             </div>
           ) : (
             <div className="text-center py-20">
-              <p className="font-sans text-sm text-[#5A4A36]/50">This collection is being curated. Check back soon.</p>
+              <p className="font-sans text-sm text-ink-soft/50">This collection is being curated. Check back soon.</p>
             </div>
           )}
 
           <div className="mt-16 text-center">
             <Link href="/products"
-              className="inline-flex items-center gap-1.5 text-xs text-[#5A4A36] hover:text-[#2A2118] transition-colors tracking-[0.18em] uppercase font-sans font-medium">
+              className="inline-flex items-center gap-1.5 text-xs text-ink-soft hover:text-ink transition-colors tracking-[0.18em] uppercase font-sans font-medium">
               <ArrowUpLeft size={12} strokeWidth={1.5} /> Back to All Products
             </Link>
           </div>

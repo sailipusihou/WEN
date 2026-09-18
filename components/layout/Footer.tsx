@@ -102,7 +102,7 @@ export default function Footer() {
   ]).filter((l: any) => l.href && (l.href.startsWith('http') || l.href.startsWith('/')))
 
   return (
-    <footer style={{ backgroundColor: '#211C17' }}>
+    <footer style={{ backgroundColor: 'var(--ink-deep)' }}>
       {/* ============ 主区 ============ */}
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 pt-20 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
@@ -135,7 +135,7 @@ export default function Footer() {
                     title={s.label}
                     className="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5"
                     style={{ border: '1px solid rgba(184,160,108,0.22)', color: '#C9BEAA', borderRadius: 3, backgroundColor: 'rgba(184,160,108,0.05)' }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#211C17'; e.currentTarget.style.backgroundColor = ACCENT; e.currentTarget.style.borderColor = ACCENT }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink-deep)'; e.currentTarget.style.backgroundColor = ACCENT; e.currentTarget.style.borderColor = ACCENT }}
                     onMouseLeave={e => { e.currentTarget.style.color = '#C9BEAA'; e.currentTarget.style.backgroundColor = 'rgba(184,160,108,0.05)'; e.currentTarget.style.borderColor = 'rgba(184,160,108,0.22)' }}
                   >
                     <SocialIcon label={s.label} />

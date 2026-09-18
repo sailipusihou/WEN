@@ -46,7 +46,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
           <div key={t.title} className="flex items-start gap-2.5">
             <t.icon size={14} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: '#8A6A2E' }} />
             <div className="min-w-0">
-              <p className="font-sans text-[12px] leading-tight" style={{ color: '#2A2118' }}>{t.title}</p>
+              <p className="font-sans text-[12px] leading-tight" style={{ color: 'var(--ink)' }}>{t.title}</p>
               <p className="font-sans text-micro leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>{t.sub}</p>
             </div>
           </div>
@@ -57,7 +57,7 @@ export default function ShopWithConfidence({ reviewCount = 0, rating = 0 }: Prop
           <div className="flex items-start gap-2.5">
             <Star size={14} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: '#8A6A2E' }} />
             <div className="min-w-0">
-              <p className="font-sans text-[12px] leading-tight" style={{ color: '#2A2118' }}>
+              <p className="font-sans text-[12px] leading-tight" style={{ color: 'var(--ink)' }}>
                 Rated {rating.toFixed(1)} / 5 by {reviewCount} customers
               </p>
               <p className="font-sans text-micro leading-tight mt-0.5" style={{ color: 'rgba(74,58,36,0.5)' }}>

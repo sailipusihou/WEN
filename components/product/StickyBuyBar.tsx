@@ -100,14 +100,14 @@ export default function StickyBuyBar({
       <div
         className="w-full"
         style={{
-          backgroundColor: '#FBF7EF',
+          backgroundColor: 'var(--paper-light)',
           borderTop: '1px solid rgba(74,58,36,0.20)',
           boxShadow: 'rgba(74,58,36,0.20) 0 0 12px',
         }}
       >
         <div className="max-w-[1560px] mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center gap-4 lg:gap-6">
           {/* 缩略图 */}
-          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: '#F8F2E2', borderRadius: 2 }}>
+          <div className="shrink-0 w-14 h-14 sm:w-[68px] sm:h-[68px] overflow-hidden" style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={product.image} alt={product.nameEn || product.name} className="w-full h-full object-cover" />
           </div>

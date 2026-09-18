@@ -75,16 +75,16 @@ export default function OrderTrackingPage() {
   return (
     <div className="bg-[#FBFAF7] min-h-screen">
       <div className="max-w-3xl mx-auto px-6 sm:px-8 py-12 md:py-16">
-        <Link href="/" className="inline-flex items-center gap-1 font-sans text-xs text-[#5A4A36]/50 hover:text-[#2A2118] transition-colors mb-8 tracking-[0.18em] uppercase">
+        <Link href="/" className="inline-flex items-center gap-1 font-sans text-xs text-ink-soft/50 hover:text-ink transition-colors mb-8 tracking-[0.18em] uppercase">
           <ArrowLeft size={12} strokeWidth={1.5} /> Back to Home
         </Link>
 
         <div className="text-center mb-10">
           <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-[#EFE7D4]/50 flex items-center justify-center">
-            <Package size={28} strokeWidth={1} className="text-[#5A4A36]/40" />
+            <Package size={28} strokeWidth={1} className="text-ink-soft/40" />
           </div>
-          <h1 className="font-en text-3xl md:text-4xl text-[#2A2118] font-medium tracking-[0.005em] mb-2">Track Your Order</h1>
-          <p className="font-sans text-sm text-[#5A4A36]/60 max-w-md mx-auto">
+          <h1 className="font-en text-3xl md:text-4xl text-ink font-medium tracking-[0.005em] mb-2">Track Your Order</h1>
+          <p className="font-sans text-sm text-ink-soft/60 max-w-md mx-auto">
             Enter your order ID to check the status and details of your purchase.
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function OrderTrackingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#2A2118] text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-[#1A1A1A] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-ink text-white text-xs tracking-[0.08em] uppercase font-sans font-medium hover:bg-ink-deep disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -149,8 +149,8 @@ export default function OrderTrackingPage() {
             <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.24em] uppercase mb-1">Order</p>
-                  <h2 className="font-en text-xl font-semibold text-[#2A2118]">#{order.id}</h2>
+                  <p className="font-sans text-micro text-ink-soft/40 tracking-[0.24em] uppercase mb-1">Order</p>
+                  <h2 className="font-en text-xl font-semibold text-ink">#{order.id}</h2>
                 </div>
                 <span className={`font-sans text-micro px-3 py-1 rounded-full ${statusColors[order.status] || 'bg-paper text-ink'}`}>
                   {statusLabels[order.status] || order.status}
@@ -159,18 +159,18 @@ export default function OrderTrackingPage() {
 
               <div className="grid grid-cols-2 gap-4 mb-6 text-sm font-sans">
                 <div>
-                  <p className="text-[#5A4A36]/40 text-micro uppercase tracking-[0.18em] mb-1">Date</p>
-                  <p className="text-[#2A2118]">{new Date(order.createdAt).toLocaleDateString()}</p>
+                  <p className="text-ink-soft/40 text-micro uppercase tracking-[0.18em] mb-1">Date</p>
+                  <p className="text-ink">{new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-[#5A4A36]/40 text-micro uppercase tracking-[0.18em] mb-1">Total</p>
-                  <p className="text-[#2A2118] font-medium">${order.total?.toFixed(2)}</p>
+                  <p className="text-ink-soft/40 text-micro uppercase tracking-[0.18em] mb-1">Total</p>
+                  <p className="text-ink font-medium">${order.total?.toFixed(2)}</p>
                 </div>
               </div>
 
               {order.items && order.items.length > 0 && (
                 <div className="border-t border-[#EFE7D4]/50 pt-5">
-                  <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.24em] uppercase mb-3">Items ({order.items.length})</p>
+                  <p className="font-sans text-micro text-ink-soft/40 tracking-[0.24em] uppercase mb-3">Items ({order.items.length})</p>
                   <div className="space-y-3">
                     {order.items.map((item: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-3">
@@ -178,14 +178,14 @@ export default function OrderTrackingPage() {
                           <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-sans text-sm text-[#2A2118] truncate">
+                          <p className="font-sans text-sm text-ink truncate">
                             {item.nameEn || item.name}
                           </p>
-                          <p className="font-sans text-xs text-[#5A4A36]/50">
+                          <p className="font-sans text-xs text-ink-soft/50">
                             Qty: {item.quantity}
                           </p>
                         </div>
-                        <p className="font-sans text-sm font-medium text-[#2A2118]">
+                        <p className="font-sans text-sm font-medium text-ink">
                           ${(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
@@ -196,27 +196,27 @@ export default function OrderTrackingPage() {
 
               {order.shipping && (
                 <div className="border-t border-[#EFE7D4]/50 pt-5 mt-5">
-                  <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.24em] uppercase mb-3">Shipping Address</p>
-                  <p className="font-sans text-sm text-[#2A2118]">
+                  <p className="font-sans text-micro text-ink-soft/40 tracking-[0.24em] uppercase mb-3">Shipping Address</p>
+                  <p className="font-sans text-sm text-ink">
                     {order.shipping.firstName} {order.shipping.lastName}
                   </p>
-                  <p className="font-sans text-sm text-[#5A4A36]/70">
+                  <p className="font-sans text-sm text-ink-soft/70">
                     {order.shipping.address}
                     {order.shipping.city && `, ${order.shipping.city}`}
                     {order.shipping.state && `, ${order.shipping.state}`}
                     {order.shipping.zipCode && ` ${order.shipping.zipCode}`}
                   </p>
-                  <p className="font-sans text-sm text-[#5A4A36]/70">{order.shipping.country}</p>
+                  <p className="font-sans text-sm text-ink-soft/70">{order.shipping.country}</p>
                 </div>
               )}
 
               {order.tracking && (
                 <div className="border-t border-[#EFE7D4]/50 pt-5 mt-5">
-                  <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.24em] uppercase mb-3">Tracking</p>
-                  <p className="font-sans text-sm text-[#2A2118]">
+                  <p className="font-sans text-micro text-ink-soft/40 tracking-[0.24em] uppercase mb-3">Tracking</p>
+                  <p className="font-sans text-sm text-ink">
                     Carrier: {order.tracking.carrier}
                   </p>
-                  <p className="font-sans text-sm text-[#2A2118] font-medium">
+                  <p className="font-sans text-sm text-ink font-medium">
                     {order.tracking.trackingNumber}
                   </p>
                   {order.tracking.trackingUrl && (
@@ -231,7 +231,7 @@ export default function OrderTrackingPage() {
 
             {order.statusHistory && order.statusHistory.length > 0 && (
               <div className="bg-[#FFFFFF]/80 border border-[#EFE7D4]/50 p-6 md:p-8">
-                <p className="font-sans text-micro text-[#5A4A36]/40 tracking-[0.24em] uppercase mb-4">Status History</p>
+                <p className="font-sans text-micro text-ink-soft/40 tracking-[0.24em] uppercase mb-4">Status History</p>
                 <div className="space-y-3">
                   {[...order.statusHistory].reverse().map((h: any, idx: number) => (
                     <div key={idx} className="flex items-start gap-3">
@@ -243,14 +243,14 @@ export default function OrderTrackingPage() {
                             : 'bg-[#A07C34]'
                       }`} />
                       <div>
-                        <p className="font-sans text-sm text-[#2A2118]">
+                        <p className="font-sans text-sm text-ink">
                           {statusLabels[h.status] || h.status}
                         </p>
-                        <p className="font-sans text-xs text-[#5A4A36]/50">
+                        <p className="font-sans text-xs text-ink-soft/50">
                           {new Date(h.timestamp).toLocaleString()}
                         </p>
                         {h.note && (
-                          <p className="font-sans text-xs text-[#5A4A36]/70 mt-0.5">{h.note}</p>
+                          <p className="font-sans text-xs text-ink-soft/70 mt-0.5">{h.note}</p>
                         )}
                       </div>
                     </div>

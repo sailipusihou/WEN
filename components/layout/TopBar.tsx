@@ -13,7 +13,7 @@ export default function TopBar() {
   if (!visible) return null
 
   return (
-    <div className="relative z-40 bg-[#2A2118]/80 backdrop-blur-md text-white/76 text-micro py-1.5 px-4 font-sans tracking-[0.22em] uppercase">
+    <div className="relative z-40 bg-ink/80 backdrop-blur-md text-white/76 text-micro py-1.5 px-4 font-sans tracking-[0.22em] uppercase">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <p>
           <span className="text-[#5F7D72]">◈</span>

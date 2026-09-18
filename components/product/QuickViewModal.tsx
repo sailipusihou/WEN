@@ -165,13 +165,13 @@ export default function QuickViewModal({
           style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 4 }}
           aria-label="Close quick view"
         >
-          <X size={16} strokeWidth={1.8} style={{ color: '#2A2118' }} />
+          <X size={16} strokeWidth={1.8} style={{ color: 'var(--ink)' }} />
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* ===== 左：图片 ===== */}
           <div className="p-5 md:p-7">
-            <div className="relative aspect-[4/5] overflow-hidden" style={{ backgroundColor: '#F8F2E2', borderRadius: 4 }}>
+            <div className="relative aspect-[4/5] overflow-hidden" style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 4 }}>
               <OptimizedImage
                 src={useImage}
                 alt={product.nameEn || product.name}
@@ -190,8 +190,8 @@ export default function QuickViewModal({
                     className="relative overflow-hidden shrink-0"
                     style={{
                       width: 54, height: 66, borderRadius: 3,
-                      border: `2px solid ${i === imgIdx ? '#2A2118' : 'transparent'}`,
-                      backgroundColor: '#F8F2E2',
+                      border: `2px solid ${i === imgIdx ? 'var(--ink)' : 'transparent'}`,
+                      backgroundColor: 'var(--paper-warm)',
                     }}
                     aria-label={`Image ${i + 1}`}
                   >
@@ -205,7 +205,7 @@ export default function QuickViewModal({
 
           {/* ===== 右：信息与操作 ===== */}
           <div className="p-5 md:p-7 flex flex-col">
-            <h2 className="font-en text-[22px] leading-tight mb-1" style={{ color: '#2A2118' }}>
+            <h2 className="font-en text-[22px] leading-tight mb-1" style={{ color: 'var(--ink)' }}>
               {product.nameEn || product.name}
             </h2>
             {(product.subtitleEn || product.subtitle) && (
@@ -216,7 +216,7 @@ export default function QuickViewModal({
 
             {/* 价格 */}
             <div className="flex items-baseline gap-2.5 mb-4">
-              <span className="font-en text-[26px] font-medium" style={{ color: eff.discount > 0 ? '#A83420' : '#2A2118' }}>
+              <span className="font-en text-[26px] font-medium" style={{ color: eff.discount > 0 ? '#A83420' : 'var(--ink)' }}>
                 {formatPrice(convertPrice(usePrice, currency), currency)}
               </span>
               {eff.discount > 0 && <PromoSaleTag />}
@@ -268,12 +268,12 @@ export default function QuickViewModal({
                   <div className="flex items-center" style={{ border: '1px solid rgba(74,58,36,0.28)', borderRadius: 4 }}>
                     <button type="button" onClick={() => setQty(Math.max(1, qty - 1))}
                       className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Decrease">
-                      <Minus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
+                      <Minus size={13} strokeWidth={1.8} style={{ color: 'var(--ink-soft)' }} />
                     </button>
-                    <span className="px-1 font-sans text-[15px] min-w-[2rem] text-center" style={{ color: '#2A2118' }}>{qty}</span>
+                    <span className="px-1 font-sans text-[15px] min-w-[2rem] text-center" style={{ color: 'var(--ink)' }}>{qty}</span>
                     <button type="button" onClick={() => setQty(qty + 1)}
                       className="px-3.5 py-3 transition-opacity hover:opacity-60" aria-label="Increase">
-                      <Plus size={13} strokeWidth={1.8} style={{ color: '#5A4A36' }} />
+                      <Plus size={13} strokeWidth={1.8} style={{ color: 'var(--ink-soft)' }} />
                     </button>
                   </div>
 
@@ -284,8 +284,8 @@ export default function QuickViewModal({
                     className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3 font-sans text-micro font-bold tracking-[0.2em] uppercase transition-all duration-300"
                     style={{
                       backgroundColor: added ? '#8A6A2E' : '#FFFFFF',
-                      color: added ? '#FFFFFF' : '#2A2118',
-                      border: `1px solid ${added ? '#8A6A2E' : '#2A2118'}`,
+                      color: added ? '#FFFFFF' : 'var(--ink)',
+                      border: `1px solid ${added ? '#8A6A2E' : 'var(--ink)'}`,
                       borderRadius: 4,
                     }}
                   >

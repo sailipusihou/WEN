@@ -65,7 +65,7 @@ export default function GlobalCartBar() {
     >
       <div
         style={{
-          backgroundColor: '#FBF7EF',
+          backgroundColor: 'var(--paper-light)',
           borderTop: '1px solid rgba(74,58,36,0.24)',
           boxShadow: 'rgba(74,58,36,0.24) 0 0 14px',
         }}
@@ -84,7 +84,7 @@ export default function GlobalCartBar() {
                   border: '2px solid #FBF7EF',
                   borderRadius: 2,
                   marginLeft: i === 0 ? 0 : -12,
-                  backgroundColor: '#F8F2E2',
+                  backgroundColor: 'var(--paper-warm)',
                   zIndex: 10 - i,
                 }}
               />

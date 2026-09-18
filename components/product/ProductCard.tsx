@@ -120,7 +120,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <button
             onClick={handleToggleWishlist}
             type="button"
-            className="absolute top-3 right-3 w-9 h-9 bg-[#FFFFFF]/85 hover:bg-[#FFFFFF] text-[#2A2118] flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
+            className="absolute top-3 right-3 w-9 h-9 bg-[#FFFFFF]/85 hover:bg-[#FFFFFF] text-ink flex items-center justify-center transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto md:translate-y-1 md:opacity-0 md:pointer-events-none md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:pointer-events-auto shadow-soft z-10"
             aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
             aria-pressed={isWishlisted(product.id)}
           >
@@ -153,7 +153,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               type="button"
               data-quick-view={product.id}
               className="w-full py-3 font-sans text-micro font-bold tracking-[0.24em] uppercase transition-all duration-200 hover:-translate-y-px"
-              style={{ backgroundColor: '#FFFFFF', color: '#2A2118', borderRadius: 4 }}
+              style={{ backgroundColor: '#FFFFFF', color: 'var(--ink)', borderRadius: 4 }}
             >
               Quick view
             </button>
@@ -174,24 +174,24 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <p className="font-sans text-micro text-[#5F7D72]/50 tracking-[0.22em] uppercase">
             {labelFor(product.category)}
           </p>
-          <h3 className="font-en text-sm md:text-base text-[#2A2118] font-medium leading-tight group-hover:text-[#5F7D72] transition-colors duration-300">
+          <h3 className="font-en text-sm md:text-base text-ink font-medium leading-tight group-hover:text-[#5F7D72] transition-colors duration-300">
             {product.nameEn || product.name}
           </h3>
-          <p className="font-sans text-micro text-[#5A4A36]/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
+          <p className="font-sans text-micro text-ink-soft/45 leading-relaxed line-clamp-1">{product.subtitleEn || product.subtitle}</p>
           {/* 评分/评论数: 有真实评价才显示 (列表页决策依据) */}
           {product.reviewCount > 0 && (
             <div className="flex items-center gap-1 pt-0.5">
               <Star size={10} className="fill-[#A07C34] text-[#A07C34]" />
-              <span className="font-sans text-micro text-[#5A4A36]/60">{product.rating}</span>
-              <span className="font-sans text-micro text-[#5A4A36]/35">({product.reviewCount})</span>
+              <span className="font-sans text-micro text-ink-soft/60">{product.rating}</span>
+              <span className="font-sans text-micro text-ink-soft/35">({product.reviewCount})</span>
             </div>
           )}
           <div className="flex items-baseline gap-2 pt-0.5">
             {/* 促销价重点标注: 强调色 + SALE 标签 */}
-            <span className={`font-en text-sm font-medium ${eff.discount > 0 ? 'text-[#A83420] font-semibold' : 'text-[#2A2118]'}`}>{formatPrice(convertPrice(eff.price, currency), currency)}</span>
+            <span className={`font-en text-sm font-medium ${eff.discount > 0 ? 'text-[#A83420] font-semibold' : 'text-ink'}`}>{formatPrice(convertPrice(eff.price, currency), currency)}</span>
             {eff.discount > 0 && <PromoSaleTag />}
             {(eff.originalPrice || product.originalPrice) && (
-              <span className="font-sans text-[12px] text-[#5A4A36]/60 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
+              <span className="font-sans text-[12px] text-ink-soft/60 line-through">{formatPrice(convertPrice(eff.originalPrice || product.originalPrice || 0, currency), currency)}</span>
             )}
           </div>
         </div>

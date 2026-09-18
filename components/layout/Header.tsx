@@ -136,7 +136,7 @@ export default function Header() {
   const navChip = overlayTop
     ? 'hover:bg-black/25 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]'
     : 'hover:bg-[#FFFFFF]/45 hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
-  const iconText = overlayTop ? 'text-white/85 hover:text-white' : 'text-[#5A4A36] hover:text-[#2A2118]'
+  const iconText = overlayTop ? 'text-white/85 hover:text-white' : 'text-ink-soft hover:text-ink'
   const iconChip = overlayTop ? 'hover:bg-black/25 hover:backdrop-blur-md' : 'hover:bg-[#FFFFFF]/45 hover:backdrop-blur-md'
 
   return (
@@ -154,7 +154,7 @@ export default function Header() {
                 否则竖版 logo 在圆里只有 23×32px，细节看不清。
               */}
               <div className="h-11 w-11 md:h-[52px] md:w-[52px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-soft"
-                style={{ backgroundColor: '#2A2118' }}>
+                style={{ backgroundColor: 'var(--ink)' }}>
                 <img
                   src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                   alt="Low Flame"
@@ -162,11 +162,11 @@ export default function Header() {
                 />
               </div>
               <div className={`flex flex-col leading-tight border-l pl-2.5 ${overlayTop ? 'border-white/30' : 'border-[#F2EBD8]'}`}>
-                <span className={`font-en text-sm md:text-base tracking-[0.22em] font-semibold group-hover:text-[#5F7D72] transition-colors duration-300 ${overlayTop ? 'text-white' : 'text-[#2A2118]'}`}>
+                <span className={`font-en text-sm md:text-base tracking-[0.22em] font-semibold group-hover:text-[#5F7D72] transition-colors duration-300 ${overlayTop ? 'text-white' : 'text-ink'}`}>
                   {siteSettings?.siteName ? siteSettings.siteName.toUpperCase() : "LOW FLAME"}
                 </span>
                 {siteSettings?.siteTagline && (
-                  <span className={`font-sans text-micro tracking-[0.18em] ${overlayTop ? 'text-white/80' : 'text-[#5A4A36]/80'}`}>
+                  <span className={`font-sans text-micro tracking-[0.18em] ${overlayTop ? 'text-white/80' : 'text-ink-soft/80'}`}>
                     {siteSettings.siteTagline}
                   </span>
                 )}
@@ -232,18 +232,18 @@ export default function Header() {
               <Link href="/cart" className={`p-2 rounded-full transition-all duration-300 relative ${iconText} ${iconChip}`} aria-label="Cart">
                 <ShoppingBag size={15} strokeWidth={1.5} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#2A2118] text-white text-micro font-sans font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-ink text-white text-micro font-sans font-bold rounded-full flex items-center justify-center">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
               </Link>
-              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-micro tracking-[0.22em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#F2EBD8] text-[#2A2118] hover:bg-[#FFFFFF]/45 hover:backdrop-blur-md hover:border-[#5F7D72] hover:text-[#5F7D72]'}`}>
+              <Link href="/products" className={`ml-2 rounded-full px-4 py-2 text-micro tracking-[0.22em] uppercase font-sans font-medium border transition-all duration-300 ${overlayTop ? 'border-white/50 text-white hover:bg-black/25 hover:backdrop-blur-md hover:border-white/70' : 'border-[#F2EBD8] text-ink hover:bg-[#FFFFFF]/45 hover:backdrop-blur-md hover:border-[#5F7D72] hover:text-[#5F7D72]'}`}>
                 Explore
               </Link>
             </div>
 
             {/* Mobile Toggle */}
-            <button className={`md:hidden p-2 ${overlayTop ? 'text-white' : 'text-[#2A2118]'}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            <button className={`md:hidden p-2 ${overlayTop ? 'text-white' : 'text-ink'}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
               {menuOpen ? <X size={18} strokeWidth={1.5} /> : <Menu size={18} strokeWidth={1.5} />}
             </button>
           </div>
@@ -281,7 +281,7 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
               <div className="flex items-center gap-2 mb-8">
                 <span className="text-[#5F7D72] text-micro">◈</span>
-                <h3 className="font-sans text-micro text-[#5A4A36] tracking-[0.24em] uppercase font-medium">Curated Collections</h3>
+                <h3 className="font-sans text-micro text-ink-soft tracking-[0.24em] uppercase font-medium">Curated Collections</h3>
               </div>
               <div className={`grid grid-cols-2 sm:grid-cols-3 gap-4 ${MEGA_COLS[Math.min(Math.max(collections.length, 2), 6)]}`}>
                 {collections.map((col) => (
@@ -297,18 +297,18 @@ export default function Header() {
                         placeholder="blur"
                       />
                     </div>
-                    <h4 className="font-sans text-micro font-medium text-[#2A2118] tracking-[0.18em] uppercase group-hover:text-[#5F7D72] transition-colors">{col.label}</h4>
-                    <p className="font-sans text-micro text-[#5A4A36]/72 mt-0.5">{col.desc}</p>
+                    <h4 className="font-sans text-micro font-medium text-ink tracking-[0.18em] uppercase group-hover:text-[#5F7D72] transition-colors">{col.label}</h4>
+                    <p className="font-sans text-micro text-ink-soft/72 mt-0.5">{col.desc}</p>
                   </Link>
                 ))}
               </div>
               <div className="mt-8 pt-5 border-t border-[#F2EBD8]/40 flex items-center justify-between">
                 <Link href="/products" onClick={() => setMegaOpen(false)}
-                  className="text-micro text-[#5A4A36] hover:text-[#5F7D72] transition-colors tracking-[0.22em] uppercase font-sans font-medium">
+                  className="text-micro text-ink-soft hover:text-[#5F7D72] transition-colors tracking-[0.22em] uppercase font-sans font-medium">
                   View All Objects →
                 </Link>
                 <Link href="/#journal" onClick={() => setMegaOpen(false)}
-                  className="text-micro text-[#5A4A36] hover:text-[#5F7D72] transition-colors tracking-[0.22em] uppercase font-sans font-medium">
+                  className="text-micro text-ink-soft hover:text-[#5F7D72] transition-colors tracking-[0.22em] uppercase font-sans font-medium">
                   Read the Journal →
                 </Link>
               </div>
@@ -329,7 +329,7 @@ export default function Header() {
             transition={{ duration: 0.2 }}
             onClick={() => setMenuOpen(false)}
             aria-hidden="true"
-            className="fixed inset-0 z-[70] bg-[#2A2118]/40 backdrop-blur-[2px] md:hidden"
+            className="fixed inset-0 z-[70] bg-ink/40 backdrop-blur-[2px] md:hidden"
           />
         )}
       </AnimatePresence>
@@ -350,18 +350,18 @@ export default function Header() {
               <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 group">
                 {/* 手机端侧边菜单的 logo —— 与桌面端保持一致：深色圆底 + 白色 logo */}
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-soft"
-                  style={{ backgroundColor: '#2A2118' }}>
+                  style={{ backgroundColor: 'var(--ink)' }}>
                   <img
                     src={siteSettings?.siteLogo || "/images/low-flame-logo.png"}
                     alt="Low Flame"
                     className="h-[86%] w-auto object-contain"
                   />
                 </div>
-                <span className="font-en text-xs md:text-sm tracking-[0.22em] text-[#2A2118] font-semibold group-hover:text-[#5F7D72] transition-colors">
+                <span className="font-en text-xs md:text-sm tracking-[0.22em] text-ink font-semibold group-hover:text-[#5F7D72] transition-colors">
                   {siteSettings?.siteName ? siteSettings.siteName.toUpperCase() : "LOW FLAME"}
                 </span>
               </Link>
-              <button className="p-2 text-[#2A2118]" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+              <button className="p-2 text-ink" onClick={() => setMenuOpen(false)} aria-label="Close menu">
                 <X size={18} strokeWidth={1.5} />
               </button>
             </div>
@@ -372,7 +372,7 @@ export default function Header() {
                   className="font-sans text-sm text-[#4A3E2E] py-2.5 px-4 hover:bg-[#F7F0DE]/30 transition-colors flex items-center justify-between"
                   onClick={() => setMenuOpen(false)}>
                   <span>{col.label}</span>
-                  <span className="text-micro text-[#5A4A36]/65">→</span>
+                  <span className="text-micro text-ink-soft/65">→</span>
                 </Link>
               ))}
               <div className="divider-refined my-3" />
@@ -386,15 +386,15 @@ export default function Header() {
               {/* 移动端此前只有桌面端才有收藏入口 —— 补上，并带件数 */}
               <div className="px-4 pt-4">
                 <Link href={loggedIn ? "/account/wishlist" : "/login"}
-                  className="flex items-center justify-center gap-1.5 py-3 border border-[#F2EBD8] text-[#2A2118] text-micro tracking-[0.22em] uppercase font-sans"
+                  className="flex items-center justify-center gap-1.5 py-3 border border-[#F2EBD8] text-ink text-micro tracking-[0.22em] uppercase font-sans"
                   onClick={() => setMenuOpen(false)}>
                   <Heart size={12} strokeWidth={1.6} />
                   Wishlist{wishlistCount > 0 && ` (${wishlistCount})`}
                 </Link>
               </div>
               <div className="flex items-center gap-2 px-4 pt-2 border-t border-[#F2EBD8]/30 mt-3">
-                <Link href="/search" className="flex-1 text-center py-3 border border-[#2A2118] text-[#2A2118] text-micro tracking-[0.22em] uppercase font-sans" onClick={() => setMenuOpen(false)}>Search</Link>
-                <Link href="/cart" className="flex-1 text-center py-3 bg-[#2A2118] text-white text-micro tracking-[0.22em] uppercase font-sans flex items-center justify-center gap-1" onClick={() => setMenuOpen(false)}>
+                <Link href="/search" className="flex-1 text-center py-3 border border-ink text-ink text-micro tracking-[0.22em] uppercase font-sans" onClick={() => setMenuOpen(false)}>Search</Link>
+                <Link href="/cart" className="flex-1 text-center py-3 bg-ink text-white text-micro tracking-[0.22em] uppercase font-sans flex items-center justify-center gap-1" onClick={() => setMenuOpen(false)}>
                   Cart {totalItems > 0 && `(${totalItems})`}
                 </Link>
               </div>

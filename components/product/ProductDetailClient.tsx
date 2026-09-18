@@ -703,7 +703,7 @@ export default function ProductDetailClient({
                 <p className="font-sans text-micro uppercase tracking-[0.26em] text-[#8A6A2E]">
                   Social Attribution Active
                 </p>
-                <p className="mt-1 font-sans text-sm text-[#2A2118]">
+                <p className="mt-1 font-sans text-sm text-ink">
                   This page is carrying social tracking parameters — your next order can be attributed back to the campaign.
                 </p>
               </div>
@@ -739,7 +739,7 @@ export default function ProductDetailClient({
                       aria-label={`View image ${i + 1}`}
                       className="relative aspect-[4/5] w-full overflow-hidden transition-all duration-300 hover:opacity-80"
                       style={{
-                        backgroundColor: '#F8F2E2',
+                        backgroundColor: 'var(--paper-warm)',
                         border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                         borderRadius: 2,
                         opacity: i === selectedImage ? 1 : 0.72,
@@ -755,7 +755,7 @@ export default function ProductDetailClient({
               <div className="flex-1 min-w-0">
                 <div
                   className="pdp-media relative aspect-[4/5] lg:aspect-auto lg:h-[calc(100dvh-9rem)] overflow-hidden group cursor-zoom-in"
-                  style={{ backgroundColor: '#F8F2E2', borderRadius: 3 }}
+                  style={{ backgroundColor: 'var(--paper-warm)', borderRadius: 3 }}
                   onClick={() => setLightbox(true)}
                 >
                   <PromoImageBadge eff={eff} currency={currency} className="top-4 left-4 z-10" />
@@ -788,7 +788,7 @@ export default function ProductDetailClient({
                         aria-label={`View image ${i + 1}`}
                         className="relative w-16 h-16 overflow-hidden transition-opacity duration-300"
                         style={{
-                          backgroundColor: '#F8F2E2',
+                          backgroundColor: 'var(--paper-warm)',
                           border: `1px solid ${i === selectedImage ? INK : 'transparent'}`,
                           borderRadius: 2,
                           opacity: i === selectedImage ? 1 : 0.72,
@@ -1065,7 +1065,7 @@ export default function ProductDetailClient({
                         data-bundle-thumb={it.key}
                         onClick={() => openBundleQuickView(it.key)}
                         className="overflow-hidden transition-opacity duration-200 hover:opacity-80"
-                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: '#F8F2E2' }}
+                        style={{ width: 76, height: 76, borderRadius: 3, backgroundColor: 'var(--paper-warm)' }}
                         aria-label={`View ${it.name}`}
                         title={`View ${it.name}`}
                       >
@@ -1236,7 +1236,7 @@ export default function ProductDetailClient({
                   <div className="flex items-center gap-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={giftList[0].image} alt="" className="w-12 h-12 object-cover shrink-0"
-                      style={{ borderRadius: 2, backgroundColor: '#F8F2E2' }} />
+                      style={{ borderRadius: 2, backgroundColor: 'var(--paper-warm)' }} />
                     <div className="min-w-0 flex-1">
                       <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
                         {giftList[0].nameEn || giftList[0].name}
@@ -1266,7 +1266,7 @@ export default function ProductDetailClient({
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={g.image} alt="" className="w-11 h-11 object-cover shrink-0"
-                            style={{ borderRadius: 2, backgroundColor: '#F8F2E2' }} />
+                            style={{ borderRadius: 2, backgroundColor: 'var(--paper-warm)' }} />
                           <div className="min-w-0 flex-1">
                             <p className="font-sans text-[13px] font-medium truncate" style={{ color: INK }}>
                               {g.nameEn || g.name}
@@ -1514,7 +1514,7 @@ export default function ProductDetailClient({
       {/* ============ 主图放大灯箱 ============ */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[100] bg-[#1A1A1A]/95 flex items-center justify-center p-4 md:p-10"
+          className="fixed inset-0 z-[100] bg-ink-deep/95 flex items-center justify-center p-4 md:p-10"
           onClick={closeLightbox}
           role="dialog"
           aria-modal="true"
