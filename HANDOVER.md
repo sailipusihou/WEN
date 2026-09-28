@@ -294,6 +294,36 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
   调大后 5/5 成功
 ```
 
+已完成（2026-09-28）—— **第三次入侵后的重装**：
+
+```
+· 9/21 攻击者再次进入（矿机 xmrig + 二进制 jajang_xex94 + 守护 d1_7cb3pt_w1
+  + **UID 0 后门账号 pakchoi** + docker 容器 + **systemd 单元 / docker 重启策略**
+  做持久化 —— 所以"杀进程"完全没用，被 systemd 每秒拉起来一次）。
+  清除记录见 `scripts/deploy/contain-20260928.cjs`。
+  前两次清理都没挡住，最终按 `docs/服务器重装方案.md` 重装
+  （**轻量应用服务器「重置系统」**，不是 ECS「更换操作系统」；IP 不变）。
+
+· 🔑 **找到并堵上了三次入侵的共同入口**：
+  `/etc/sudoers` 里有 `admin ALL=(ALL)  NOPASSWD:ALL` —— 配合阿里云注入到
+  `admin` 账号的 `swas-imported-key`（控制台「远程连接」用，**重装后会自动注回**），
+  就是「拿到密钥 → 登录 admin → 免密 sudo → root」这条链。
+  **已摘掉那行免密 sudo**；密钥没删（删了也会被注回），但单独一把已提不了权。
+  ⚠️ 这行**在 `/etc/sudoers` 主文件里，不在 `/etc/sudoers.d/`** ——
+  只看后者会误判成"admin 没有 sudo"（本次就先误判了一次）。
+  实测摘掉后控制台「远程连接」不受影响。
+
+· 全新系统上重做了全部部署：装环境（**新增 `step0-base.sh`** —— 上次那两个
+  setup 脚本只存在服务器上、随重装一起丢了）→ 安全基线六步 → 装回部署密钥
+  → 关密码登录 → 恢复数据（`data-merged`）→ 部署 → HTTPS → watchdog。
+· 后台管理员密码再次更换（新密码在本地「新后台管理员密码.txt」）。
+· 服务器 root 密码 = 重装时在控制台设的那个（本地「新服务器密码.txt」）。
+
+⏳ **仍未做**：9/21 那次攻击者有整整一周的 root，
+数据库里的 **PayPal Secret / Resend / DeepSeek / ARK / MiniMax 密钥**
+都要视为已泄露 —— **尚未轮换**。
+```
+
 ---
 
 ## 6. 回归测试脚本
