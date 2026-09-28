@@ -14,7 +14,9 @@
 
 LOG_TAG="[security-check $(date '+%F %T')]"
 ALERT=0
-alert() { echo "$LOG_TAG ⚠️  $1"; ALERT=1; }
+ALERT_LINES=""
+alert() { echo "$LOG_TAG ⚠️  $1"; ALERT=1; ALERT_LINES="${ALERT_LINES}⚠️  $1
+"; }
 info()  { echo "$LOG_TAG     $1"; }
 
 echo "======================================================================"
@@ -56,9 +58,11 @@ info "authorized_keys: root=$RK 行  admin=$AK 行（admin 有阿里云注入的
 [ "$RK" != "1" ] && alert "root 的 authorized_keys 不是 1 行（应该是我们的部署密钥）"
 
 # ── 7. 持久化位置（cron / shell 启动文件）───────────────────────
-CRON_N=$(crontab -l 2>/dev/null | grep -cvE '^\s*#|^\s*$|lowflame-watchdog|lowflame-security')
+# 排除我们自己装的任务（watchdog / 体检 / 备份）—— 新加任务时记得也加进来
+CRON_EXCLUDE='lowflame-watchdog|lowflame-security|lowflame-backup'
+CRON_N=$(crontab -l 2>/dev/null | grep -cvE "^\s*#|^\s*$|$CRON_EXCLUDE")
 info "非预期 crontab 条目: $CRON_N"
-[ "$CRON_N" != "0" ] && alert "crontab 里出现非预期条目：$(crontab -l 2>/dev/null | grep -vE 'lowflame-watchdog|lowflame-security|^\s*#')"
+[ "$CRON_N" != "0" ] && alert "crontab 里出现非预期条目：$(crontab -l 2>/dev/null | grep -vE "$CRON_EXCLUDE|^\s*#")"
 
 BAD_RC=$(grep -clE 'nohup|/var/tmp/|pgrep -f' /root/.bashrc /root/.profile 2>/dev/null | awk '{s+=$1} END{print s+0}')
 [ "$BAD_RC" != "0" ] && alert "bashrc/profile 里出现可疑行（历史上攻击者往这里塞守护）"
@@ -96,6 +100,70 @@ info "应用本机: HTTP $CODE"
 [ "$CODE" != "200" ] && alert "应用本机返回 $CODE"
 
 echo "$LOG_TAG  $([ $ALERT -eq 0 ] && echo '✅ 未发现异常' || echo '⚠️ 有异常，见上面标 ⚠️ 的行')"
+
+# ── 14. 有异常时发邮件通知（否则这份日志没人看就等于没有体检）────
+if [ $ALERT -eq 1 ]; then
+  # 从数据库取 Resend 密钥（应用本来就用它发邮件）。取不到就只记日志。
+  RESEND_KEY=$(node -e "
+    try {
+      const D = require('/var/www/lowflame/node_modules/better-sqlite3');
+      const db = new D('/var/www/lowflame/data/site.db', { readonly: true });
+      const s = JSON.parse(db.prepare(\"select value from settings where key='site_settings'\").get().value);
+      process.stdout.write(s.smtpPass || '');
+      db.close();
+    } catch (e) {}
+  " 2>/dev/null)
+  TO_MAIL=$(node -e "
+    try {
+      const D = require('/var/www/lowflame/node_modules/better-sqlite3');
+      const db = new D('/var/www/lowflame/data/site.db', { readonly: true });
+      const s = JSON.parse(db.prepare(\"select value from settings where key='site_settings'\").get().value);
+      process.stdout.write(s.adminEmail || s.supportEmail || '');
+      db.close();
+    } catch (e) {}
+  " 2>/dev/null)
+
+  FROM_MAIL=$(node -e "
+    try {
+      const D = require('/var/www/lowflame/node_modules/better-sqlite3');
+      const db = new D('/var/www/lowflame/data/site.db', { readonly: true });
+      const s = JSON.parse(db.prepare(\"select value from settings where key='site_settings'\").get().value);
+      process.stdout.write(s.smtpFromEmail || 'onboarding@resend.dev');
+      db.close();
+    } catch (e) {}
+  " 2>/dev/null)
+  [ -z "$FROM_MAIL" ] && FROM_MAIL='onboarding@resend.dev'
+
+  if [ -n "$RESEND_KEY" ] && [ -n "$TO_MAIL" ]; then
+    # ⚠️ 这几个变量必须**在构建 JSON 之前**就 export：之前漏了，导致
+    #    from 变成 'Low Flame Security <undefined>'，Resend 报 422（踩过）
+    export SC_BODY="$(printf '%s\n\nHost: %s\nTime: %s\n\nLog: /var/log/lowflame-security-check.log' "$ALERT_LINES" "$(hostname)" "$(date '+%F %T')")"
+    export SC_TO="$TO_MAIL"
+    export SC_FROM="$FROM_MAIL"
+
+    PAYLOAD=$(node -e "
+      process.stdout.write(JSON.stringify({
+        from: 'Low Flame Security <' + process.env.SC_FROM + '>',
+        to: [process.env.SC_TO],
+        subject: '[Low Flame] Server security check found anomalies',
+        text: process.env.SC_BODY || '',
+      }));
+    " 2>/dev/null)
+    RESP=$(curl -s -m 30 -X POST https://api.resend.com/emails \
+        -H "Authorization: Bearer $RESEND_KEY" \
+        -H 'Content-Type: application/json' \
+        -d "$PAYLOAD" 2>&1)
+    unset SC_BODY SC_TO SC_FROM
+    if echo "$RESP" | grep -q '"id"'; then
+      echo "$LOG_TAG  📧 已发送告警邮件到 $TO_MAIL"
+    else
+      echo "$LOG_TAG  ⚠️ 告警邮件发送失败：$(echo "$RESP" | head -c 200)"
+    fi
+  else
+    echo "$LOG_TAG  ⚠️ 取不到邮件密钥或收件人，未能发送告警 —— 请自行查看本日志"
+  fi
+fi
+
 echo "======================================================================"
 
 # 只有异常时才在最后再打一行醒目标记，方便 grep
