@@ -33,6 +33,15 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
 
+      // 🔒 降权运行：PM2 守护仍以 root 跑（所以 `pm2 restart lowflame` 的部署流程
+      //    完全不变），但**应用进程本身以专用低权限用户运行**。
+      //
+      // 为什么：这台机器被入侵过三次，其中矿机就是"拿到代码执行权"之后装上的。
+      // 应用以 root 跑的话，网页层面任何一处 RCE 就直接等于 root ——
+      // 降权后最多拿到一个无特权用户：装不了矿机、写不了系统目录、留不了持久化。
+      uid: 'lowflame',
+      gid: 'lowflame',
+
       // 内存超限自动重启（关键：防止应用拖死整台机器）
       max_memory_restart: '700M',
 
