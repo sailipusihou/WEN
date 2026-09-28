@@ -153,6 +153,24 @@ function pickRule(pathname: string, method: string): Rule | null {
   return best
 }
 
+/**
+ * 构造跳转 URL。
+ *
+ * ⚠️ 不能直接用 `new URL(path, request.url)` —— 中间件里拿到的 `request.url`
+ * 是**应用自己看到的地址**：nginx 反代到 127.0.0.1:3000，Next 于是认为主机是
+ * `localhost:3000`。拼出来就是 `https://localhost:3000/admin/login`，
+ * **外网根本访问不到**（实测：直接输 /admin 会被跳到这里，进不去后台）。
+ *
+ * 改用 nginx 传来的 Host 头重建；没有时回退到 nextUrl.host。
+ */
+function redirectTo(request: NextRequest, pathname: string, from?: string) {
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
+  const proto = request.headers.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+  const url = new URL(pathname, `${proto}://${host}`)
+  if (from) url.searchParams.set('redirect', from)
+  return NextResponse.redirect(url)
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const method = request.method.toUpperCase()
@@ -162,9 +180,7 @@ export function middleware(request: NextRequest) {
   const isAdminPage = (pathname === '/admin' || pathname.startsWith('/admin/')) && !isAdminLogin
   if (isAdminPage) {
     if (!request.cookies.get('admin_token')?.value) {
-      const url = new URL('/admin/login', request.url)
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
+      return redirectTo(request, '/admin/login', pathname)
     }
     return NextResponse.next()
   }
@@ -175,9 +191,7 @@ export function middleware(request: NextRequest) {
     pathname === '/messages' || pathname.startsWith('/messages/')) && !isPublicUserPage
   if (isUserPage) {
     if (!request.cookies.get('user_token')?.value) {
-      const url = new URL('/login', request.url)
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
+      return redirectTo(request, '/login', pathname)
     }
     return NextResponse.next()
   }
