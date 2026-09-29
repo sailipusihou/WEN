@@ -153,7 +153,19 @@ export function attachBundlesToProducts(db: any, products: Product[]): Product[]
       if (b && b.length) {
         // 灏介噺鎶婅鎼厤鍟嗗搧鐨勫畬鏁翠俊鎭寕涓婏紙鍚屼竴鎵瑰晢鍝侀噷鎵句笉鍒板氨鐣欑┖锛?
         // 鍓嶅彴浼氶€€鍥炵敤璇ュ晢鍝佺殑榛樿淇℃伅鍘绘煡锛?
-        ;(p as any).bundles = b.map(x => ({ ...x, product: fetchBundleProduct(x.bundleProductId) }))
+        // 嵌套的 product 要**剥掉它自己的 bundles**，否则构成循环引用：
+        // A.bundles[0].product 就是列表里那个 B 对象本身，而 B.bundles[0].product
+        // 又指回 A —— NextResponse.json 里的 JSON.stringify 会直接抛
+        // "Converting circular structure to JSON"，GET /api/products 整个 500
+        // （2026-09-29 在 sqlite 后端上复现过）。前台只需要搭配商品的
+        // 名称/图片/价格，不需要再嵌一层搭配。
+        ;(p as any).bundles = b.map(x => {
+          const bp = fetchBundleProduct(x.bundleProductId)
+          if (!bp) return { ...x, product: null }
+          const rest = { ...bp } as any
+          delete rest.bundles
+          return { ...x, product: rest }
+        })
       }
     }
   } catch {
