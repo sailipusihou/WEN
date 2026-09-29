@@ -1,7 +1,7 @@
 # 交接文档 — Low Flame 商城
 
 > 给接手这个项目的开发者（无论人或 AI）看的。
-> 最后更新：2026-09-16
+> 最后更新：2026-09-29
 
 ---
 
@@ -268,7 +268,7 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
          「AccessKey 管理」页只覆盖主账号；顺带看一眼 RAM 角色
     ☐ GitHub 密码（若与服务器密码相同）
     ☐ 核对 PayPal 有无异常交易
-· 🔴 next@15.1.0 有已知漏洞（CVE-2025-66478），npm 安装时明确告警，建议升级
+· ✅ next@15.1.0 的已知漏洞**已修**（2026-09-29 升到 15.5.26，详见下方第 4 次入侵记录）
 · 参考站还有几个元素没做：DELIVERY COST CALCULATOR 折叠运费计算器、
   WISHLIST(n) 带数字的收藏
 · 搭配商品各自的规格下拉
@@ -322,6 +322,56 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
 ⏳ **仍未做**：9/21 那次攻击者有整整一周的 root，
 数据库里的 **PayPal Secret / Resend / DeepSeek / ARK / MiniMax 密钥**
 都要视为已泄露 —— **尚未轮换**。
+```
+
+已完成（2026-09-29）—— **第四次入侵（Next.js 的 RCE），入口已堵上**：
+
+```
+· 9/28 16:46–21:45 攻击者**经 POST / 的 RSC 协议在应用里执行任意命令**
+  （Next.js「React flight protocol」RCE，CVE-2025-66478 / GHSA-9qr9-h5gf-34mp）。
+  应用代码没被改 —— 入口就是 Next.js 本身。
+  证据在 **/var/log/lowflame-error.log**（注意：不是 /root/.pm2/logs/，那里是空的）：
+    21:36:49  NODE:yes …（探测环境）
+    21:36:54  POOL 85.215.219.126:443 / DL …xmrig-x64.bin.gz / BIN /var/tmp/.c/.x
+    16:46 起多次  cat ~/.claude/.credentials.json   ← 他在偷 Claude Code 凭据
+· 上一轮（9/28 晚）已止血：杀矿机、删 /var/tmp/.c、iptables 封 85.215.219.126。
+  **但矿机在 9/29 06:17 的体检里又被看到在跑**（CPU 榜首 lowflame 99%）。
+  它是应用进程的子进程 —— **08:03 站点被打满、watchdog 自动重启应用时才被顺带杀掉**。
+  残留物 /home/lowflame/.c/.ex 与 /tmp/.r2s.boot（内容是矿机路径清单）已取证后清除，
+  副本在服务器 /root/quarantine-20260929/。本轮**没有** cron/systemd/at 持久化。
+· ✅ **根因已修：next 15.1.0 → 15.5.26**。只升 15.1.12 只堵被利用的这一条；
+  而本项目开了 AVIF 图片优化 + remotePatterns、middleware 又承担后台鉴权，
+  还落在「图片优化未认证 RCE <15.5.24」「中间件鉴权绕过 <15.2.3」
+  「中间件跳转 SSRF <15.4.7」里 —— 所以直接升到 15.5 线末版，一次清干净。
+  升完 `npm audit` 里 next 自身已无 critical/high。
+· ⚠️ **部署流程新踩到的坑：`fast-deploy.cjs` 只传 .next 与 public，不传依赖。**
+  服务器 node_modules 还是 15.1.0，新产物直接 MODULE_NOT_FOUND、全站 500
+  （已回滚过一次）。补救是把本地 node_modules/next 与 @next/env 打包传上去 ——
+  next 自身的依赖声明恰好只差这两个。**以后升 Next 必须同时更新服务器依赖**。
+  回退件留在服务器 /root/rollback.tar.gz 与 /root/next-15.1.0.bak。
+```
+
+🔴 **同时修掉一个 9/28 降权带出来的生产事故（此前一直没人发现）**：
+
+```
+· /var/www/lowflame/.env.local 是 -rw------- root root，而应用 9/28 起改跑
+  lowflame 用户 —— **应用读不到它**，于是 DATABASE_BACKEND=sqlite 从未生效，
+  线上一直退回 JSON 后端。后果：site.db 里的 16 条搭配、10 条规格、8 条赠品、
+  商品编码（GEN-0001…）**全都没上线**，前台商品页连搭配区与规格选择都不显示。
+  Next 15.5 会把这件事显式报成 `Failed to load env from .env.local [EACCES]`，
+  15.1 是静默的 —— 这也是升级顺带暴露出来的。
+· 但**放开权限不能单独做**：sqlite 这条路上 GET /api/products 会 500 ——
+  `attachBundlesToProducts` 把搭配商品对象原样嵌进 `bundles[].product`，而那个对象
+  就在同一个 products 数组里，A→B→A 构成循环引用，`JSON.stringify` 直接抛
+  "Converting circular structure to JSON"。已修（嵌套那层剥掉自己的 bundles，
+  variants 保留，搭配区仍能显示规格下拉）。
+· 2026-09-29 11:45 已 chown lowflame + chmod 600 并重启，线上确认为 sqlite
+  （接口返回 code=GEN-0001、搭配 2 条、规格 2 条），逐页 200。
+  切换前的数据快照在服务器 /root/pre-switch-backup-20260929.tar.gz。
+· ⚠️ **以后往应用目录放配置（.env.local 之类），属主必须是 lowflame**，否则应用读不到。
+
+⏳ 仍未做：服务器上的 git 检出还停在 24d3a86（它的 package.json 仍写 ^15.1.0），
+   而部署只传产物不传代码 —— 谁在服务器上跑 `npm install`，就会把 next 降回 15.1.0。
 ```
 
 ---
