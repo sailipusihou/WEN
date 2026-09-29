@@ -68,9 +68,14 @@ BAD_RC=$(grep -clE 'nohup|/var/tmp/|pgrep -f' /root/.bashrc /root/.profile 2>/de
 [ "$BAD_RC" != "0" ] && alert "bashrc/profile 里出现可疑行（历史上攻击者往这里塞守护）"
 
 # ── 8. 可疑文件与进程 ──────────────────────────────────────────
-SUS_FILES=$(ls -d /var/tmp/.font-unix /var/tmp/.systemd-private /tmp/.sysh /var/tmp/.c* 2>/dev/null | wc -l)
+# ⚠️ 下面这份清单要**同时**用于计数与告警文案：之前告警那行漏了 /var/tmp/.c*，
+#    结果 9/29 早上那封邮件只写了「出现历史恶意目录：」后面是空的，
+#    看不出到底是哪个路径中了（踩过）。
+SUS_PATHS='/var/tmp/.font-unix /var/tmp/.systemd-private /tmp/.sysh /var/tmp/.c* /tmp/.r2s.boot'
+SUS_LIST=$(ls -d $SUS_PATHS 2>/dev/null)
+SUS_FILES=$(echo "$SUS_LIST" | grep -c . )
 info "已知恶意路径残留: $SUS_FILES"
-[ "$SUS_FILES" != "0" ] && alert "出现历史恶意目录：$(ls -d /var/tmp/.font-unix /var/tmp/.systemd-private /tmp/.sysh 2>/dev/null | tr '\n' ' ')"
+[ "$SUS_FILES" != "0" ] && alert "出现历史恶意目录：$(echo "$SUS_LIST" | tr '\n' ' ')"
 
 SUS_PROC=$(ps aux | grep -icE 'xmrig|jajang|font-unix|_w[0-9]$|kinsing|kdevtmpfsi')
 SUS_PROC=$((SUS_PROC - 1))   # 减掉 grep 自己
