@@ -1,5 +1,6 @@
 import { getRepository } from '@/lib/repository'
 import ProductDetailClient from '@/components/product/ProductDetailClient'
+import { toPublicProduct, toPublicProducts } from '@/lib/public-product'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { convertPrice, formatPrice } from '@/lib/cart-types'
@@ -107,9 +108,9 @@ export default async function ProductPage({
   // 以便带上 ?ref= 之类的推广参数（归因要用）。
   return (
     <ProductDetailClient
-      product={product}
+      product={toPublicProduct(product)}
       reviews={reviews}
-      giftProducts={giftProducts}
+      giftProducts={toPublicProducts(giftProducts)}
       productUrl={`${getSiteBaseUrl()}/products/${id}`}
     />
   )

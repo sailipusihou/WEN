@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import LinkInBioClient from '@/components/referral/LinkInBioClient'
 import { getRepository } from '@/lib/repository'
 import { getReferralLinkByCode } from '@/lib/referral-tracking'
+import { toPublicProduct, toPublicProducts } from '@/lib/public-product'
 
 export const metadata: Metadata = {
   title: 'Link in Bio',
@@ -29,11 +30,11 @@ export default async function LinkInBioPage({
   const referralLink = referralCode ? getReferralLinkByCode(referralCode) || null : null
 
   const repo = getRepository()
-  const products = repo.products.listActive()
+  const products = toPublicProducts(repo.products.listActive())
 
   const heroProductId = requestedProductId || referralLink?.productId || ''
   const heroProduct =
-    (heroProductId ? repo.products.getById(heroProductId) : null) ||
+    (heroProductId ? toPublicProduct(repo.products.getById(heroProductId)) : null) ||
     products[0] ||
     null
 

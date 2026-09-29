@@ -3,6 +3,7 @@ import CategoryClient from '@/components/product/CategoryClient'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getSiteBaseUrl } from '@/lib/site-url'
+import { toPublicProducts } from '@/lib/public-product'
 
 // 修复 M11: 与 /products 一致强制动态渲染, 促销/价格变更后分类页即时刷新
 export const dynamic = 'force-dynamic'
@@ -73,7 +74,7 @@ export default async function CategoryPage({
   // 此前是渲染 "Collection not found" 但状态码 200（软 404），
   // 结果失效分类 URL 会被搜索引擎当成有效页收录，白白消耗抓取预算。
   if (!category) notFound()
-  const categoryProducts = repo.products.getByCategory(slug)
+  const categoryProducts = toPublicProducts(repo.products.getByCategory(slug))
 
   return <CategoryClient category={category} products={categoryProducts} />
 }

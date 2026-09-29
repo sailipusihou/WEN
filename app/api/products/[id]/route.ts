@@ -2,12 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { type Product, isValidProductCode } from '@/lib/db'
 import { getRepository } from '@/lib/repository'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, requireAdmin } from '@/lib/auth'
 import { validateId, validateString, sanitizeString, validatePrice } from '@/lib/validation'
 import { cleanLines, cleanSpecs, cleanFaqs } from '@/lib/pdp-content'
+import { toPublicProduct } from '@/lib/public-product'
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -17,7 +18,8 @@ export async function GET(
   if (!product) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   }
-  return NextResponse.json(product)
+  // 后台要成本价/供应商，前台不能看到（见 lib/public-product.ts）
+  return NextResponse.json('error' in requireAdmin(req) ? toPublicProduct(product) : product)
 }
 
 export async function PUT(

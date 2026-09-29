@@ -1,5 +1,6 @@
 import { getRepository } from '@/lib/repository'
 import AllProductsClient from './AllProductsClient'
+import { toPublicProducts } from '@/lib/public-product'
 import type { Metadata } from 'next'
 
 // 商品列表页禁用静态缓存 / 客户端 router cache — 保证改价后看到最新数据
@@ -26,6 +27,6 @@ export const metadata: Metadata = {
 
 export default async function AllProductsPage() {
   const repo = getRepository()
-  const products = repo.products.listActive()
+  const products = toPublicProducts(repo.products.listActive())
   return <AllProductsClient products={products} />
 }

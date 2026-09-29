@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepository } from '@/lib/repository'
+import { toPublicProducts } from '@/lib/public-product'
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q') || ''
-  const all = getRepository().products.listActive()
+  const all = toPublicProducts(getRepository().products.listActive())
   if (!q) return NextResponse.json(all.slice(0, 50))
   const query = q.toLowerCase()
   const results = all.filter(p =>

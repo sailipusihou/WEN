@@ -2,14 +2,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { type Product, generateProductCode, isValidProductCode } from '@/lib/db'
 import { getRepository } from '@/lib/repository'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, requireAdmin } from '@/lib/auth'
 import { validatePrice, validateString, sanitizeString } from '@/lib/validation'
 import { cleanLines, cleanSpecs, cleanFaqs } from '@/lib/pdp-content'
+import { toPublicProducts } from '@/lib/public-product'
 
 export async function GET(req: NextRequest) {
   const repo = getRepository()
   const products = repo.products.list()
   const { searchParams } = req.nextUrl
+
+  /**
+   * 这个接口同时服务前台和后台，两者的可见字段不一样：
+   *   后台（带管理员令牌）要用 costPrice 算毛利/库存金额、要看 supplierId
+   *   前台一个字都不能看到 —— 否则「查看源代码」就能拿到进价和供应商联系方式
+   * 所以按调用者身份决定是否做前台投影（见 lib/public-product.ts）。
+   */
+  const isAdmin = !('error' in requireAdmin(req))
 
   const category = searchParams.get('category')
   const search = searchParams.get('search') || searchParams.get('q')
@@ -110,7 +119,7 @@ export async function GET(req: NextRequest) {
     const start = (page - 1) * pageSize
     const paginated = filtered.slice(start, start + pageSize)
     return NextResponse.json({
-      items: paginated,
+      items: isAdmin ? paginated : toPublicProducts(paginated),
       pagination: {
         page,
         pageSize,
@@ -122,7 +131,7 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  return NextResponse.json(filtered)
+  return NextResponse.json(isAdmin ? filtered : toPublicProducts(filtered))
 }
 
 export async function POST(req: NextRequest) {

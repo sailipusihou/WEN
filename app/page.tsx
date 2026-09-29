@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { getRepository } from '@/lib/repository'
 import HomeClient from '@/components/layout/HomeClient'
+import { toPublicProducts } from '@/lib/public-product'
 import { getHomepageSampleReviews } from '@/lib/sample-reviews'
 import { getSiteBaseUrl } from '@/lib/site-url'
 import { convertPrice } from '@/lib/cart-types'
@@ -18,7 +19,7 @@ export default async function HomePage() {
   await headers()
   const repo = getRepository()
   const settings = repo.settings.get()
-  const allActive = repo.products.listActive()
+  const allActive = toPublicProducts(repo.products.listActive())
   let featuredProducts = allActive.filter(p => p.featured)
 
   if (settings.featuredProductIds?.length > 0) {
