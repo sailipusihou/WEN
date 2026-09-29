@@ -115,6 +115,10 @@ const USER_RULES: Rule[] = [
 // 靠「更深 = 更具体」压过上面的公开规则（例：/api/products/export 比 /api/products 深）
 const ADMIN_OVERRIDES: Rule[] = [
   { path: '/api/products/export', methods: ['GET'], kind: 'admin' },
+  // 导入模板只是后台「批量导入」用的 CSV 表头（里面列了 costPrice 等内部字段名），
+  // 但它落在公开前缀 /api/products/* 下，此前任何访客都能下载。
+  // 同深度时 pickRule 取更严格的 kind，所以这条能压过公开规则。
+  { path: '/api/products/template', methods: ['GET'], kind: 'admin' },
   { path: '/api/products/batch', methods: ['POST'], kind: 'admin' },
   { path: '/api/uploads', methods: ['POST'], kind: 'admin' },
   { path: '/api/avatars', methods: ['POST', 'PUT', 'DELETE'], kind: 'admin' },
