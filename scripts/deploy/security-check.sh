@@ -104,9 +104,30 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -m 20 http://localhost:3000/ 2>/de
 info "应用本机: HTTP $CODE"
 [ "$CODE" != "200" ] && alert "应用本机返回 $CODE"
 
+# ── 14. nginx 5xx（应用假死 / 502 的旁证）────────────────────────
+# 「应用本机 200」只证明体检这一刻活着：2026-09-30 白天出现过 2 次 502
+# （nginx 拿不到上游响应），而体检完全看不出来 —— 只能翻访问日志才发现。
+# 日志会轮转，所以不按日期统计，而是记一个累计值、每次只看「本轮新增」。
+NGX_LOG=/var/log/nginx/access.log
+STATE=/var/lib/lowflame-security/5xx.count
+if [ -r "$NGX_LOG" ]; then
+  NOW5=$(awk '$9 ~ /^5[0-9][0-9]$/ {n++} END{print n+0}' "$NGX_LOG" 2>/dev/null)
+  NOW5=${NOW5:-0}
+  mkdir -p "$(dirname "$STATE")"
+  PREV5=$(cat "$STATE" 2>/dev/null || echo 0)
+  # 轮转过（总数反而变小）→ 当作从 0 重新计
+  [ "$NOW5" -lt "${PREV5:-0}" ] && PREV5=0
+  NEW5=$((NOW5 - PREV5))
+  echo "$NOW5" > "$STATE"
+  info "nginx 5xx: 本轮新增 $NEW5，累计 $NOW5"
+  [ "$NEW5" -gt 5 ] && alert "nginx 本轮新增 $NEW5 次 5xx（累计 $NOW5）—— 应用可能假死过，查 /var/log/nginx/access.log"
+else
+  info "nginx 5xx: 读不到 $NGX_LOG"
+fi
+
 echo "$LOG_TAG  $([ $ALERT -eq 0 ] && echo '✅ 未发现异常' || echo '⚠️ 有异常，见上面标 ⚠️ 的行')"
 
-# ── 14. 有异常时发邮件通知（否则这份日志没人看就等于没有体检）────
+# ── 15. 有异常时发邮件通知（否则这份日志没人看就等于没有体检）────
 if [ $ALERT -eq 1 ]; then
   # 从数据库取 Resend 密钥（应用本来就用它发邮件）。取不到就只记日志。
   RESEND_KEY=$(node -e "
