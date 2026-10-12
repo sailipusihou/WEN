@@ -79,13 +79,9 @@ export default function Footer() {
     ? usableStored
     : categories.length > 0
       ? categories.map(c => ({ label: c.nameEn || c.name, href: `/category/${c.slug}` }))
-      : [
-          { label: "Tea Ceremony", href: "/category/tea-ceremony" },
-          { label: "Ceramic Art", href: "/category/ceramic-art" },
-          { label: "Incense Rituals", href: "/category/incense-rituals" },
-          { label: "Textile & Lacquer", href: "/category/textile-lacquer" },
-          { label: "Lighting & Décor", href: "/category/lighting-decor" },
-        ]
+      // 兜底：店里现在只有「龙泉青瓷」一个分类（2026-10-12 清空原有测试商品与其分类后），
+      // 旧的那 5 个分类已不存在，写在这里会被 SSR 渲染成死链。
+      : [{ label: "Longquan Celadon", href: "/category/celadon" }]
   const companyLinks = footer.companyLinks || [
     { label: "About", href: "/#philosophy" },
     { label: "Journal", href: "/#journal" },

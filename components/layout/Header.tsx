@@ -15,13 +15,12 @@ import type { Category } from '@/lib/products'
 // 修复：此前 6 个入口是写死的旧分类（cultural-gifts / home-decor / creative-gifts），
 // 点进去一律 "Collection not found"。现在改为读取后台真实分类，
 // 下面这份仅作为接口未就绪时的兜底占位。
+//
+// ⚠️ 2026-10-12：店里现在只有「龙泉青瓷」一个分类（原有 8 个测试商品与其分类已清空），
+//    所以兜底也收敛成这一个 —— 之前那 5 个旧分类在 SSR 阶段会被渲染进 HTML，
+//    而它们已经不存在了，搜索引擎会顺着抓到死链。
 const FALLBACK_COLLECTIONS = [
-  { label: 'Tea Ceremony', href: '/category/tea-ceremony', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80', desc: 'Celadon, Yixing ware, and the art of tea' },
-  { label: 'Ceramic Living', href: '/category/ceramic-art', image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&q=80', desc: 'Hand-thrown vessels for daily rituals' },
-  { label: 'Silk & Embroidery', href: '/products', image: 'https://images.unsplash.com/photo-1607532941432-5e0d3cba768b?w=400&q=80', desc: 'Suzhou double-sided embroidery' },
-  { label: 'Bamboo Craft', href: '/products', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&q=80', desc: 'Sustainable bamboo weaving' },
-  { label: 'Natural Incense', href: '/category/incense-rituals', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80', desc: 'Agarwood, sandalwood, ritual scents' },
-  { label: "Scholar's Desk", href: '/products', image: 'https://images.unsplash.com/photo-1496096265110-f83ad7f96608?w=400&q=80', desc: 'Brush pots, ink stones, writing sets' },
+  { label: 'Longquan Celadon', href: '/category/celadon', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80', desc: 'Hand-thrown celadon, fired in Longquan' },
 ]
 
 const CATEGORY_FALLBACK_IMAGES = [
