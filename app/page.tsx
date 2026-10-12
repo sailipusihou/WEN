@@ -7,8 +7,8 @@ import { getSiteBaseUrl } from '@/lib/site-url'
 import { convertPrice } from '@/lib/cart-types'
 
 export const metadata = {
-  title: 'Low Flame | Contemporary Craftsmanship',
-  description: 'Discover handcrafted ceramics, silk, bamboo, incense, and artisan objects that honor Chinese tradition and elevate everyday life.',
+  title: 'Low Flame | Longquan Celadon',
+  description: 'Hand-thrown Longquan celadon — tea sets, cups and dinnerware, made in the hills where the tradition began. Listed by UNESCO as Intangible Cultural Heritage.',
 }
 
 // 首页禁用静态缓存 / 客户端 router cache — 商品价格变更后立刻反映

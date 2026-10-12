@@ -19,13 +19,13 @@ import { WebVitals } from "@/components/WebVitals"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: { default: "Low Flame | Contemporary Craftsmanship", template: "%s | Low Flame" },
-  description: "Discover handcrafted ceramics, silk, bamboo, incense, and artisan objects that honor Chinese tradition and elevate everyday life. Worldwide shipping.",
-  keywords: ["contemporary craftsmanship", "modern Chinese design", "artisan objects", "celadon porcelain", "silk embroidery", "bamboo craft", "tea ceremony", "home decor", "cultural heritage", "Chinese aesthetics", "Asian aesthetics", "luxury homeware"],
+  title: { default: "Low Flame | Longquan Celadon", template: "%s | Low Flame" },
+  description: "Hand-thrown Longquan celadon — tea sets, cups and dinnerware, made in the hills where the tradition began. Listed by UNESCO as Intangible Cultural Heritage. Worldwide shipping.",
+  keywords: ["longquan celadon", "celadon tea set", "celadon cups", "celadon dinnerware", "handmade ceramics", "Chinese ceramics", "tea ceremony", "gift set", "cultural heritage", "handcrafted tableware"],
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Low Flame | Contemporary Craftsmanship",
-    description: "Ceramics, silk, bamboo, incense and artisan objects that carry stories, culture and emotional value.",
+    title: "Low Flame | Longquan Celadon",
+    description: "Hand-thrown Longquan celadon, fired in the tradition's home — tea sets, cups and dinnerware.",
     type: "website", locale: "en_US", siteName: "Low Flame",
   },
   robots: { index: true, follow: true },

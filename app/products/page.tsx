@@ -9,18 +9,18 @@ export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'All Products',
-  description: 'Browse our full collection of handcrafted handcrafted objects. Celadon, silk, bamboo, incense, and artisan objects that honor Chinese tradition and elevate everyday life.',
-  keywords: ['handcrafted art', 'handcrafted', 'celadon', 'silk', 'bamboo', 'incense', 'tea ceremony', 'home decor', 'cultural gifts'],
+  description: 'Browse the full Longquan celadon collection — tea sets, cups and dinnerware, hand-thrown and fired in the tradition’s home.',
+  keywords: ['longquan celadon', 'celadon', 'celadon tea set', 'celadon cups', 'celadon dinnerware', 'handmade ceramics', 'tea ceremony', 'gift set'],
   openGraph: {
     title: 'All Products | Low Flame',
-    description: 'Browse our full collection of handcrafted handcrafted objects.',
+    description: 'The full Longquan celadon collection — tea sets, cups and dinnerware.',
     type: 'website',
     url: 'https://lowflame.com/products',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'All Products | Low Flame',
-    description: 'Browse our full collection of handcrafted handcrafted objects.',
+    description: 'The full Longquan celadon collection — tea sets, cups and dinnerware.',
   },
   alternates: { canonical: '/products' },
 }

@@ -312,7 +312,7 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
               className="mt-5 text-sm md:text-base text-paper-light/95 font-sans font-light leading-relaxed max-w-md">
-              {hero.subtitle || "Celadon, silk, bamboo, and incense — each piece hand-selected from master craftspeople."}
+              {hero.subtitle || "Hand-thrown Longquan celadon — tea sets, cups and dinnerware, fired in the tradition's home."}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">

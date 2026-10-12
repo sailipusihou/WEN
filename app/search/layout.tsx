@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Search',
-  description: 'Search our collection of handcrafted handcrafted objects — celadon, silk, bamboo, incense and more.',
+  description: 'Search our Longquan celadon collection — tea sets, cups, dinnerware and travel sets.',
   robots: { index: false, follow: true },
   alternates: { canonical: '/search' },
 }

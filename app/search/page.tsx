@@ -8,7 +8,8 @@ import type { Product } from "@/lib/products"
 
 const PAGE_SIZE = 12
 
-const POPULAR_SEARCHES = ['celadon', 'silk', 'bamboo', 'tea', 'incense', 'ceramic']
+// 热门搜索词 —— 都指向店里真实有的东西（否则点进去是空结果）
+const POPULAR_SEARCHES = ['celadon', 'tea set', 'cup', 'dinner', 'travel', 'gift']
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
