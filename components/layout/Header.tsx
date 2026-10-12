@@ -9,8 +9,6 @@ import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
 import SearchBox from '@/components/ui/SearchBox'
 import OptimizedImage from '@/components/ui/OptimizedImage'
-import { fetchCategories } from '@/lib/use-categories'
-import type { Category } from '@/lib/products'
 
 // 修复：此前 6 个入口是写死的旧分类（cultural-gifts / home-decor / creative-gifts），
 // 点进去一律 "Collection not found"。现在改为读取后台真实分类，
@@ -19,8 +17,15 @@ import type { Category } from '@/lib/products'
 // ⚠️ 2026-10-12：店里现在只有「龙泉青瓷」一个分类（原有 8 个测试商品与其分类已清空），
 //    所以兜底也收敛成这一个 —— 之前那 5 个旧分类在 SSR 阶段会被渲染进 HTML，
 //    而它们已经不存在了，搜索引擎会顺着抓到死链。
+// ⚠️ 2026-10-12：下拉改为「按题材」四张卡（单杯 / 茶席套组 / 餐具 / 旅行套组），
+//    指向 /products?tag=… 的筛选结果。优先读后台设置里的 collections
+//    （后台 → 设置 → Collections，可自由增删改），读不到才用下面这份兜底。
+//    之前这里是写死的 5 个旧分类，SSR 阶段会被渲染进 HTML 而它们已不存在。
 const FALLBACK_COLLECTIONS = [
-  { label: 'Longquan Celadon', href: '/category/celadon', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80', desc: 'Hand-thrown celadon, fired in Longquan' },
+  { label: 'Tea Sets', href: '/products?tag=' + encodeURIComponent('Tea Sets'), image: '/api/uploads?file=img-1791816140355-zg6glo.jpeg', desc: 'Complete celadon tea sets' },
+  { label: 'Cups', href: '/products?tag=' + encodeURIComponent('Cups'), image: '/api/uploads?file=img-1791817770732-g808m8.jpeg', desc: 'Single cups, office and lidded' },
+  { label: 'Tableware', href: '/products?tag=' + encodeURIComponent('Tableware'), image: '/api/uploads?file=img-1791817795282-bm29tq.jpeg', desc: 'Dinner and bowl sets' },
+  { label: 'Travel Sets', href: '/products?tag=' + encodeURIComponent('Travel Sets'), image: '/api/uploads?file=img-1791816147828-ma1a3p.jpeg', desc: 'Celadon that folds and travels' },
 ]
 
 const CATEGORY_FALLBACK_IMAGES = [
@@ -56,21 +61,24 @@ export default function Header() {
   const [megaOpen, setMegaOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [siteSettings, setSiteSettings] = useState<any>(null)
-  const [categories, setCategories] = useState<Category[]>([])
   const megaRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLButtonElement>(null)
 
-  // 分类导航由后台真实分类驱动（在后台新增分类，这里自动出现）
-  useEffect(() => {
-    fetchCategories().then(setCategories).catch(() => {})
-  }, [])
-
-  const collections = categories.length > 0
-    ? categories.map((c, i) => ({
-        label: c.nameEn || c.name,
-        href: `/category/${c.slug}`,
+  /**
+   * 下拉里放什么：优先用后台设置的 collections（后台 → 设置 → Collections，
+   * 可增删改标题/描述/图片/slug）。slug 在这里当**题材**用 —— 拼成
+   * /products?tag=<slug>，指向筛选后的商品列表。
+   * 没配置时用下面的兜底（同样四张题材卡），保证 SSR 与首屏一致。
+   */
+  const storedCols: any[] = Array.isArray(siteSettings?.frontendContent?.collections)
+    ? siteSettings.frontendContent.collections
+    : []
+  const collections = storedCols.length > 0
+    ? storedCols.map((c: any, i: number) => ({
+        label: c.title || c.label || '',
+        href: c.href || (c.slug ? `/products?tag=${encodeURIComponent(String(c.slug))}` : '/products'),
         image: c.image || CATEGORY_FALLBACK_IMAGES[i % CATEGORY_FALLBACK_IMAGES.length],
-        desc: c.descriptionEn || c.description || '',
+        desc: c.description || c.subtitle || '',
       }))
     : FALLBACK_COLLECTIONS
 

@@ -283,7 +283,9 @@ function rowToCategory(row: any, productCount = 0): Category {
     nameEn: row.nameEn || '',
     description: row.description || '',
     descriptionEn: row.descriptionEn || '',
-    icon: row.icon || '棣冩憹',
+    // 别在这里兜底成某个字符 —— 之前写死的 '棣冩憹' 是编码事故留下的乱码，
+    // 它会把「没设图标」变成「图标是一串乱码」。空就让它空。
+    icon: row.icon || '',
     productCount,
     image: row.image || '',
   }
@@ -920,7 +922,7 @@ export const categoryRepo = {
     db.prepare(`
       INSERT INTO categories (id, name, nameEn, slug, description, descriptionEn, image, icon, sortOrder, active)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
-    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '棣冩憹')
+    `).run(id, category.name, category.nameEn || '', category.slug, category.description || '', category.descriptionEn || '', category.image || '', category.icon || '')
     return category
   },
 
@@ -932,7 +934,7 @@ export const categoryRepo = {
     db.prepare(`
       UPDATE categories SET name = ?, nameEn = ?, description = ?, descriptionEn = ?, image = ?, icon = ?, updatedAt = datetime('now')
       WHERE slug = ?
-    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '棣冩憹', slug)
+    `).run(merged.name, merged.nameEn || '', merged.description || '', merged.descriptionEn || '', merged.image || '', merged.icon || '', slug)
     return categoryRepo.getBySlug(slug) || null
   },
 

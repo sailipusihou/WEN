@@ -26,12 +26,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Description too long' }, { status: 400 })
     }
     // 清理输入
-    const cleanBody = {
-      ...body,
-      name: body.name ? sanitizeString(body.name) : body.name,
-      nameEn: body.nameEn ? sanitizeString(body.nameEn) : body.nameEn,
-      description: body.description ? sanitizeString(body.description) : body.description,
-      descriptionEn: body.descriptionEn ? sanitizeString(body.descriptionEn) : body.descriptionEn,
+    //
+    // ⚠️ 必须把 undefined 的键**删掉**，不能留着。仓库那边的 update 是
+    //    `{ ...existing, ...updates }`，键存在但值为 undefined 会把原有值覆盖成空 ——
+    //    表现为「只改一张封面图，结果分类描述被清空」（2026-10-12 踩到）。
+    const cleanBody: any = { ...body }
+    for (const k of ['name', 'nameEn', 'description', 'descriptionEn'] as const) {
+      if (cleanBody[k] !== undefined && cleanBody[k] !== null) cleanBody[k] = sanitizeString(cleanBody[k])
+    }
+    for (const k of Object.keys(cleanBody)) {
+      if (cleanBody[k] === undefined) delete cleanBody[k]
     }
     const repo = getRepository()
     repo.categories.add({ ...cleanBody, slug: body.slug })
@@ -59,12 +63,16 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Name too long' }, { status: 400 })
     }
     // 清理输入
-    const cleanBody = {
-      ...body,
-      name: body.name ? sanitizeString(body.name) : body.name,
-      nameEn: body.nameEn ? sanitizeString(body.nameEn) : body.nameEn,
-      description: body.description ? sanitizeString(body.description) : body.description,
-      descriptionEn: body.descriptionEn ? sanitizeString(body.descriptionEn) : body.descriptionEn,
+    //
+    // ⚠️ 必须把 undefined 的键**删掉**，不能留着。仓库那边的 update 是
+    //    `{ ...existing, ...updates }`，键存在但值为 undefined 会把原有值覆盖成空 ——
+    //    表现为「只改一张封面图，结果分类描述被清空」（2026-10-12 踩到）。
+    const cleanBody: any = { ...body }
+    for (const k of ['name', 'nameEn', 'description', 'descriptionEn'] as const) {
+      if (cleanBody[k] !== undefined && cleanBody[k] !== null) cleanBody[k] = sanitizeString(cleanBody[k])
+    }
+    for (const k of Object.keys(cleanBody)) {
+      if (cleanBody[k] === undefined) delete cleanBody[k]
     }
     const repo = getRepository()
     repo.categories.update(body.slug, cleanBody)

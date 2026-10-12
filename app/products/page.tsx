@@ -25,8 +25,20 @@ export const metadata: Metadata = {
   alternates: { canonical: '/products' },
 }
 
-export default async function AllProductsPage() {
+export default async function AllProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string }>
+}) {
+  const sp = await searchParams
+  const tag = typeof sp?.tag === 'string' ? sp.tag : ''
   const repo = getRepository()
-  const products = toPublicProducts(repo.products.listActive())
-  return <AllProductsClient products={products} />
+  let products = toPublicProducts(repo.products.listActive())
+  // ?tag=Cups 这类题材筛选 —— 页头 COLLECTIONS 下拉的卡片就指到这里
+  if (tag) {
+    products = products.filter(
+      p => (p.tags || []).includes(tag) || ((p as any).tagsEn || []).includes(tag)
+    )
+  }
+  return <AllProductsClient products={products} initialTag={tag} />
 }

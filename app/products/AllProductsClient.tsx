@@ -11,6 +11,9 @@ import type { Product } from "@/lib/products"
 import { useActivePromotions } from "@/lib/promotion-client"
 import { computePromotionForProduct } from "@/lib/promotion-shared"
 import { PromoSaleTag, promoPriceClass } from "@/components/product/PromoBadge"
+
+/** 题材标签的展示顺序（只列商品里确实存在的） */
+const THEME_TAGS = ['Tea Sets', 'Travel Sets', 'Cups', 'Tableware']
 import { useCategories } from "@/lib/use-categories"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
@@ -27,7 +30,7 @@ const PRICE_RANGES = [
   { label: '$200+', min: '200', max: '' },
 ]
 
-export default function AllProductsClient({ products: initialProducts }: { products: Product[] }) {
+export default function AllProductsClient({ products: initialProducts, initialTag = '' }: { products: Product[]; initialTag?: string }) {
   const { currency } = useCurrency()
   const { categories } = useCategories()
   // 修复 H16: 列表视图也展示促销价 (与网格 ProductCard 一致)
@@ -36,8 +39,19 @@ export default function AllProductsClient({ products: initialProducts }: { produ
   const [view, setView] = useState<"grid" | "list">("grid")
   const [sort, setSort] = useState<SortOption>('default')
   const [category, setCategory] = useState('')
+  // 题材筛选（?tag=）—— 与分类是两套维度：分类只有一个「龙泉青瓷」，
+  // 题材才是茶席套组 / 单杯 / 餐具 / 旅行套组。页头 COLLECTIONS 的卡片指到这里。
+  const [tag, setTag] = useState(initialTag)
   const [priceRange, setPriceRange] = useState(0)
   const [featuredOnly, setFeaturedOnly] = useState(false)
+  /**
+   * 题材筛选条固定列这四项。
+   *
+   * ⚠️ 不要从 products 反推 —— 那个数组是**已经筛过的**（服务端按 ?tag= 过滤过），
+   *    从它推导会导致「点进 Cups 之后，其余题材的按钮全部消失」，没法切回去。
+   *    真实存在的题材由 THEME_TAGS 固定给出（四个题材目前都有商品）。
+   */
+  const themeTags = THEME_TAGS
   const [showFilters, setShowFilters] = useState(false)
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [page, setPage] = useState(1)
@@ -56,12 +70,13 @@ export default function AllProductsClient({ products: initialProducts }: { produ
     })
     if (search.trim()) params.set('search', search.trim())
     if (category) params.set('category', category)
+    if (tag) params.set('tag', tag)
     const range = PRICE_RANGES[priceRange]
     if (range.min) params.set('minPrice', range.min)
     if (range.max) params.set('maxPrice', range.max)
     if (featuredOnly) params.set('featured', 'true')
     return params
-  }, [search, sort, category, priceRange, featuredOnly])
+  }, [search, sort, category, priceRange, featuredOnly, tag])
 
   // 搜索和筛选变化时重新加载第一页
   useEffect(() => {
@@ -136,7 +151,7 @@ export default function AllProductsClient({ products: initialProducts }: { produ
     setSort('default')
   }
 
-  const hasActiveFilters = search || category || priceRange > 0 || featuredOnly
+  const hasActiveFilters = search || category || priceRange > 0 || featuredOnly || tag
 
   return (
     <div className="bg-[#FBFAF7] min-h-screen">
@@ -233,6 +248,24 @@ export default function AllProductsClient({ products: initialProducts }: { produ
             className="bg-[#FFFFFF]/60 border border-[#EFE7D4]/50 p-5 mb-6 overflow-hidden"
           >
             <div className="flex flex-wrap gap-6">
+              {/* Collection（题材）—— 只在商品里确实存在这些标签时才显示 */}
+              {themeTags.length > 0 && (
+                <div>
+                  <h4 className="font-sans text-micro text-ink-soft/60 tracking-[0.24em] uppercase font-medium mb-2">Collection</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {[{ slug: '', label: 'All' }, ...themeTags.map(t => ({ slug: t, label: t }))].map(cat => (
+                      <button
+                        key={cat.slug || 'all'}
+                        type="button"
+                        onClick={() => setTag(cat.slug)}
+                        className={`px-3 py-1.5 text-xs font-sans transition-colors ${tag === cat.slug ? 'bg-ink text-white' : 'bg-[#FFFFFF]/80 text-[#4A3E2E] border border-[#EFE7D4] hover:border-[#A07C34]/50'}`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Category */}
               <div>
                 <h4 className="font-sans text-micro text-ink-soft/60 tracking-[0.24em] uppercase font-medium mb-2">Category</h4>
