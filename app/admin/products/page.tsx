@@ -146,12 +146,22 @@ export default function AdminProductsPage() {
           <h1 className="font-serif text-2xl md:text-3xl adm-text-primary">Products</h1>
           <p className="font-sans text-xs adm-text-secondary mt-1">{products.length} total · {products.filter(p => p.active).length} active</p>
         </div>
-        <button onClick={() => setShowImport(true)} className="inline-flex items-center gap-2 px-5 py-2.5 border border-indigo-400/30 text-indigo-400 font-serif text-sm tracking-wider hover:bg-indigo-500/10 transition-colors rounded-sm">
-          <Upload size={16} /> Batch Import
-        </button>
-        <Link href="/admin/products/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-seal-red text-white font-serif text-sm tracking-wider hover:bg-zhu-red-dark transition-colors rounded-sm">
-          <PlusCircle size={16} /> Add Product
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={() => setShowImport(true)} className="inline-flex items-center gap-2 px-5 py-2.5 border border-indigo-400/30 text-indigo-400 font-serif text-sm tracking-wider hover:bg-indigo-500/10 transition-colors rounded-sm">
+            <Upload size={16} /> Batch Import
+          </button>
+          {/* 导出 Excel（含缩略图）—— 服务端现生成，用 <a> 让浏览器直接下载，不走 fetch */}
+          <a
+            href="/api/products/export-xlsx"
+            className="inline-flex items-center gap-2 px-5 py-2.5 border border-emerald-400/30 text-emerald-400 font-serif text-sm tracking-wider hover:bg-emerald-500/10 transition-colors rounded-sm"
+            title="导出全部商品为 Excel，每个商品带缩略图"
+          >
+            <FileSpreadsheet size={16} /> Export Excel
+          </a>
+          <Link href="/admin/products/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-seal-red text-white font-serif text-sm tracking-wider hover:bg-zhu-red-dark transition-colors rounded-sm">
+            <PlusCircle size={16} /> Add Product
+          </Link>
+        </div>
       </div>
 
       {/* Search & Filters */}
