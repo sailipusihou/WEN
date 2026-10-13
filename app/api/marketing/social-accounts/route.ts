@@ -15,9 +15,22 @@ import { refreshLinkedInToken, getLinkedInUserInfo } from '@/lib/linkedin'
 import { refreshPinterestToken, getPinterestUserInfo } from '@/lib/pinterest'
 import { refreshYouTubeToken, getYouTubeUserInfo } from '@/lib/youtube'
 import { refreshTikTokToken, getTikTokUserInfo } from '@/lib/tiktok'
+import { storeAvatarLocally } from '@/lib/avatar-store'
+import { ProxyAgent } from 'undici'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+/**
+ * 本机需要走代理才能访问境外平台时（国内开发环境）用它；
+ * 服务器在美国是直连，PROXY_INIT 为空对象。与 lib/facebook.ts 同一套做法。
+ */
+const PROXY_URL = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || ''
+let proxyAgent: ProxyAgent | null = null
+if (PROXY_URL) {
+  try { proxyAgent = new ProxyAgent(PROXY_URL) } catch { /* 地址不合法就当没有代理 */ }
+}
+const PROXY_INIT: RequestInit = proxyAgent ? ({ dispatcher: proxyAgent } as any) : {}
 
 // 修复 C5: 非管理员只能管理自己的账号 (super_admin/admin 可管理全部)
 function canManageAccount(auth: any, account: any): boolean {
@@ -90,6 +103,9 @@ export async function POST(req: NextRequest) {
       // 修复 C5: 非管理员只能为自己连接账号, 不能指定任意 staffId
       const targetStaffId = ['super_admin', 'admin'].includes(auth.user.role) ? staffId : auth.user.id
 
+      // 头像落到本站再存 —— 第三方链接会过期，且域名在境内被屏蔽
+      const localAvatar = await storeAvatarLocally(platform, `${targetStaffId}-${username}`, avatar)
+
       const account = addSocialAccount({
         staffId: targetStaffId,
         staffName,
@@ -97,7 +113,7 @@ export async function POST(req: NextRequest) {
         platform,
         platformName,
         username,
-        avatar,
+        avatar: localAvatar || avatar,
         profileUrl,
       })
 
@@ -355,46 +371,47 @@ export async function POST(req: NextRequest) {
       const results: { id: string; username: string; platform: string; synced: boolean; error?: string }[] = []
 
       for (const account of accounts) {
-        if (!account.avatar && account.accessToken) {
-          try {
-            let avatarUrl = ''
-            const platform = account.platform
+        try {
+          let avatarUrl = account.avatar || ''
+          const platform = account.platform
 
-            if (platform === 'facebook') {
-              const res = await fetch(`https://graph.facebook.com/v18.0/me?fields=picture.type(large)&access_token=${account.accessToken}`)
-              if (res.ok) {
-                const data = await res.json()
-                avatarUrl = data.picture?.data?.url || ''
+          // ── 1. 有 token 就向平台要**最新的**头像地址 ──────────────────
+          // 老地址可能已经过期（实测 instagram 403 / facebook 404），必须重新取。
+          if (account.accessToken) {
+            try {
+              if (platform === 'facebook') {
+                const res = await fetch(`https://graph.facebook.com/v18.0/me?fields=picture.type(large)&access_token=${account.accessToken}`, PROXY_INIT)
+                if (res.ok) avatarUrl = (await res.json()).picture?.data?.url || avatarUrl
+              } else if (platform === 'instagram') {
+                const res = await fetch(`https://graph.instagram.com/me?fields=profile_picture_url&access_token=${account.accessToken}`, PROXY_INIT)
+                if (res.ok) avatarUrl = (await res.json()).profile_picture_url || avatarUrl
+              } else if (platform === 'pinterest') {
+                const res = await fetch('https://api.pinterest.com/v5/account', { ...PROXY_INIT, headers: { Authorization: `Bearer ${account.accessToken}` } })
+                if (res.ok) avatarUrl = (await res.json()).profile_image || avatarUrl
               }
-            } else if (platform === 'instagram') {
-              const res = await fetch(`https://graph.instagram.com/me?fields=profile_picture_url&access_token=${account.accessToken}`)
-              if (res.ok) {
-                const data = await res.json()
-                avatarUrl = data.profile_picture_url || ''
-              }
-            } else if (platform === 'pinterest') {
-              const res = await fetch('https://api.pinterest.com/v5/account', {
-                headers: { Authorization: `Bearer ${account.accessToken}` },
-              })
-              if (res.ok) {
-                const data = await res.json()
-                avatarUrl = data.profile_image || ''
-              }
-            } else if (platform === 'twitter') {
-              // Twitter/X uses OAuth 1.0a - avatar is already saved in callback
+              // twitter/x 走 OAuth 1.0a，没有对应的取头像接口 —— 直接本地化现有地址
+            } catch {
+              // 平台取不到就用现有的地址，别中断
             }
-
-            if (avatarUrl) {
-              updateSocialAccount(account.id, { avatar: avatarUrl })
-              results.push({ id: account.id, username: account.username, platform: account.platform, synced: true })
-            } else {
-              results.push({ id: account.id, username: account.username, platform: account.platform, synced: false, error: 'No avatar URL returned' })
-            }
-          } catch (e: any) {
-            results.push({ id: account.id, username: account.username, platform: account.platform, synced: false, error: e.message })
           }
-        } else {
-          results.push({ id: account.id, username: account.username, platform: account.platform, synced: false, error: account.avatar ? 'Already has avatar' : 'No access token' })
+
+          // ── 2. 把远程头像**下载到本站** ────────────────────────────────
+          // 这一步同时解决「链接过期」与「域名在境内被屏蔽」——
+          // 存成站内文件后不再依赖第三方 CDN。详见 lib/avatar-store.ts
+          const local = await storeAvatarLocally(platform, account.id, avatarUrl)
+          if (local && local !== account.avatar) {
+            updateSocialAccount(account.id, { avatar: local })
+            results.push({ id: account.id, username: account.username, platform, synced: true })
+          } else if (local) {
+            results.push({ id: account.id, username: account.username, platform, synced: false, error: '本地头像已是最新' })
+          } else {
+            results.push({
+              id: account.id, username: account.username, platform, synced: false,
+              error: avatarUrl ? '头像下载失败（原链接可能已失效，且平台未返回新地址）' : '没有头像地址',
+            })
+          }
+        } catch (e: any) {
+          results.push({ id: account.id, username: account.username, platform: account.platform, synced: false, error: e.message })
         }
       }
 
@@ -476,9 +493,11 @@ export async function POST(req: NextRequest) {
 
         if (synced) {
           const now = new Date().toISOString()
+          // 头像一律落到本站再存 —— 第三方链接会过期、且域名在境内被屏蔽
+          const localAvatar = await storeAvatarLocally(account.platform, account.id, updatedAvatar)
           updateSocialAccount(account.id, {
             username: updatedUsername,
-            avatar: updatedAvatar,
+            avatar: localAvatar || updatedAvatar,
             profileUrl: updatedProfileUrl,
             updatedAt: now,
           })

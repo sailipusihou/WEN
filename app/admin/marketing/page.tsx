@@ -3011,6 +3011,21 @@ export default function MarketingPage() {
     // 每5分钟检查在线状态
     const statusInterval = setInterval(() => handleCheckOnlineStatus(), 5 * 60 * 1000)
 
+    /**
+     * 切回这个标签页时立刻刷新一次。
+     *
+     * 为什么需要：状态是每 5 分钟才轮询一次的，用户切走再切回来时看到的
+     * 可能是最多 5 分钟前的旧状态 ——「网页开着却不是实时」的观感多半来自这里。
+     * visibilitychange 是零成本的补救：只在真的回到页面时才打一次请求。
+     */
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      handleCheckOnlineStatus()
+      loadAllComments()
+      loadAllConversations()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
     // 主动轮询：每10秒刷新私信和评论（SSE 实时事件即时更新 + 轮询兜底；无 messaging 权限时轮询是唯一通道）
     // 防重叠：上次轮询未完成则跳过本次（慢平台请求不堆积）
     let polling = false
@@ -3029,6 +3044,7 @@ export default function MarketingPage() {
       if (reconnectTimer) clearTimeout(reconnectTimer)
       clearInterval(pollInterval)
       clearInterval(statusInterval)
+      document.removeEventListener('visibilitychange', onVisible)
       sseConnectedRef.current = false
     }
   }, [])
