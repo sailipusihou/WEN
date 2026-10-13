@@ -28,6 +28,21 @@ export default async function HomePage() {
   }
 
   /**
+   * Journal 每篇文章挂 3 件相关商品（按文章上标的 `tag` 匹配题材）。
+   *
+   * 为什么在服务端挑：首页是 SEO 重点页，商品缩略图要**出现在首屏 HTML 里**，
+   * 而不是等客户端再拉一次接口。同一个 tag 只算一次，避免重复过滤。
+   */
+  const journalEntries: any[] = (settings.frontendContent as any)?.journal?.entries || []
+  const journalProducts: Record<string, any[]> = {}
+  for (const e of journalEntries) {
+    const t = typeof e?.tag === 'string' ? e.tag.trim() : ''
+    if (t && !journalProducts[t]) {
+      journalProducts[t] = allActive.filter((p: any) => (p.tags || []).includes(t)).slice(0, 3)
+    }
+  }
+
+  /**
    * 首页评价区数据。
    *
    * 真实评价优先 —— 只取已审核、未隐藏、未删除的（与商品详情页同一口径）。
@@ -124,6 +139,7 @@ export default async function HomePage() {
         featuredProducts={featuredProducts}
         heroBgImage={settings.heroBackgroundImage}
         initialContent={settings.frontendContent || null}
+        journalProducts={journalProducts}
         reviews={homepageReviews}
       />
     </>

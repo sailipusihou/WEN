@@ -28,7 +28,7 @@ const stagger = {
   transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
 }
 
-export default function HomeClient({ featuredProducts, heroBgImage = "", initialContent = null, reviews = [] }: { featuredProducts: Product[], heroBgImage?: string, initialContent?: any, reviews?: any[] }) {
+export default function HomeClient({ featuredProducts, heroBgImage = "", initialContent = null, journalProducts = {}, reviews = [] }: { featuredProducts: Product[], heroBgImage?: string, initialContent?: any, journalProducts?: Record<string, Product[]>, reviews?: any[] }) {
   const heroRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
   const heroParallax = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
@@ -515,8 +515,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {(journal.entries || []).map((entry: any, i: number) => {
-              // 修复 M10: 有链接的文章可点击跳转, 无链接不再显示假 cursor-pointer
-              const cardInner = (
+              const entryHref: string = entry.link || (entry.tag ? `/products?tag=${encodeURIComponent(entry.tag)}` : '')
+              /** 这篇文章挂的相关商品（服务端按 entry.tag 挑好传下来的） */
+              const prods: Product[] = entry.tag ? (journalProducts[entry.tag] || []) : []
+
+              // 文章本体（图片 + 标题 + 摘要）整体可点 —— 商品缩略图放在 Link 之外，
+              // 避免出现「链接套链接」的非法结构
+              const article = (
                 <>
                   <div className="relative aspect-[4/3] overflow-hidden bg-paper mb-4">
                     {entry.image && (
@@ -532,19 +537,63 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-micro text-ink-soft/66 font-sans tracking-[0.2em] uppercase mb-2">
-                    <span>{entry.date}</span>
-                    <span className="w-1 h-1 rounded-full bg-coral/30" />
-                    <span>{entry.readTime} min</span>
+                    {/* 题材标签（起源 / 釉色 / 使用）—— 让读者一眼知道这篇讲什么 */}
+                    {entry.label && (
+                      <>
+                        <span className="text-coral">{entry.label}</span>
+                        <span className="w-1 h-1 rounded-full bg-coral/30" />
+                      </>
+                    )}
+                    {entry.date && <span>{entry.date}</span>}
+                    {entry.date && entry.readTime && <span className="w-1 h-1 rounded-full bg-coral/30" />}
+                    {entry.readTime && <span>{entry.readTime} min</span>}
                   </div>
                   <h3 className="font-en text-base text-ink-deep font-semibold group-hover:text-coral transition-colors leading-snug">{entry.title}</h3>
                   <p className="font-sans text-micro text-ink-soft/79 mt-2 leading-relaxed line-clamp-2">{entry.excerpt}</p>
                 </>
               )
+
               return (
-                <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }} className={`group ${entry.link ? 'cursor-pointer' : ''}`}>
-                  {entry.link ? (
-                    <Link href={entry.link} className="block">{cardInner}</Link>
-                  ) : cardInner}
+                <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }} className="group flex flex-col">
+                  {entryHref ? (
+                    <Link href={entryHref} className="block">{article}</Link>
+                  ) : article}
+
+                  {/* 相关商品：这篇文章讲的东西，直接给出可以买的那几件 */}
+                  {prods.length > 0 && (
+                    <div className="mt-5 pt-4 flex items-center gap-3" style={{ borderTop: '1px solid rgba(74,58,36,0.12)' }}>
+                      <span className="font-sans text-micro tracking-[0.2em] uppercase text-ink-soft/55 shrink-0">Featuring</span>
+                      <div className="flex items-center gap-2">
+                        {prods.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/products/${p.id}`}
+                            title={p.nameEn || p.name}
+                            aria-label={p.nameEn || p.name}
+                            className="relative w-12 h-12 overflow-hidden transition-opacity hover:opacity-80"
+                            style={{ backgroundColor: 'var(--paper)' }}
+                          >
+                            <OptimizedImage
+                              src={p.image}
+                              alt={p.nameEn || p.name || 'Product'}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                              objectFit="cover"
+                            />
+                          </Link>
+                        ))}
+                      </div>
+                      {entryHref && (
+                        <Link
+                          href={entryHref}
+                          className="ml-auto font-sans text-micro tracking-[0.16em] uppercase text-coral hover:opacity-75 transition-opacity shrink-0"
+                        >
+                          Shop →
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               )
             })}
