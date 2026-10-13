@@ -2,6 +2,14 @@ import type { MetadataRoute } from 'next'
 import { getRepository } from '@/lib/repository'
 import { getSiteBaseUrl } from '@/lib/site-url'
 
+/**
+ * ⚠️ 必须动态生成。sitemap 的内容来自数据库（商品、分类、Journal 文章），
+ *    而 Next 默认会在构建时把它**静态生成并冻结** —— 上架新品或改文章后
+ *    sitemap 不会跟着变，搜索引擎看到的还是构建那一刻的快照（2026-10-13 踩到：
+ *    新写的三篇 Journal 文章一条都没进 sitemap，因为它们是构建之后才写进设置里的）。
+ */
+export const dynamic = 'force-dynamic'
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteBaseUrl()
   const now = new Date()
@@ -18,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   let productPages: MetadataRoute.Sitemap = []
   let categoryPages: MetadataRoute.Sitemap = []
+  let journalPages: MetadataRoute.Sitemap = []
 
   try {
     // 统一从当前后端 (SQLite) 读取, 与商品管理同源
@@ -40,7 +49,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))
+
+    // The Journal 的文章 —— 内容是商品来源与工艺，对搜索是有效内容页
+    const entries: any[] = (repo.settings.get() as any)?.frontendContent?.journal?.entries || []
+    journalPages = entries
+      .filter(e => e?.slug)
+      .map(e => ({
+        url: `${baseUrl}/journal/${e.slug}`,
+        lastModified: now,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
   } catch {}
 
-  return [...staticPages, ...productPages, ...categoryPages]
+  return [...staticPages, ...productPages, ...categoryPages, ...journalPages]
 }

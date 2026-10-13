@@ -515,7 +515,13 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {(journal.entries || []).map((entry: any, i: number) => {
-              const entryHref: string = entry.link || (entry.tag ? `/products?tag=${encodeURIComponent(entry.tag)}` : '')
+              // 卡片点进文章详情页；「Shop →」进题材筛选列表 —— 两个动作分开
+              const articleHref: string = entry.slug
+                ? `/journal/${entry.slug}`
+                : (entry.link || '')
+              const shopHref: string = entry.tag
+                ? `/products?tag=${encodeURIComponent(entry.tag)}`
+                : articleHref
               /** 这篇文章挂的相关商品（服务端按 entry.tag 挑好传下来的） */
               const prods: Product[] = entry.tag ? (journalProducts[entry.tag] || []) : []
 
@@ -555,8 +561,8 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
 
               return (
                 <motion.div key={i} {...stagger} transition={{ delay: i * 0.08 }} className="group flex flex-col">
-                  {entryHref ? (
-                    <Link href={entryHref} className="block">{article}</Link>
+                  {articleHref ? (
+                    <Link href={articleHref} className="block">{article}</Link>
                   ) : article}
 
                   {/* 相关商品：这篇文章讲的东西，直接给出可以买的那几件 */}
@@ -584,9 +590,9 @@ export default function HomeClient({ featuredProducts, heroBgImage = "", initial
                           </Link>
                         ))}
                       </div>
-                      {entryHref && (
+                      {shopHref && (
                         <Link
-                          href={entryHref}
+                          href={shopHref}
                           className="ml-auto font-sans text-micro tracking-[0.16em] uppercase text-coral hover:opacity-75 transition-opacity shrink-0"
                         >
                           Shop →
