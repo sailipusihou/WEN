@@ -19,6 +19,7 @@
 | **钱包/支付按钮点了没反应** | PayPal / Apple Pay / Google Pay 点击无响应 | 第三方支付组件会**吞掉 click**，必须用原生 `addEventListener` 绑在元素本身上，不能只靠组件的 `onClick` |
 | **测试发邮件的接口** | 会真的把邮件发给客户 | 所有外发接口都有 `dryRun`，**测试时永远先用 dryRun** |
 | **改了后台汇率却发现价格没变** | 后台「设置 → CNY/USD Rate」改了，商品售价纹丝不动 | 那个设置**只用于编辑表单的换算显示**，和售价没有任何联动。售价是导入时按「成本÷汇率×2.5」算好后写死的固定数字，**要改价必须重跑定价脚本**（见 §6） |
+| **把设置清空后，重启又长回来** | 后台清空某个文本设置 → 保存后确实是空的 → **重启服务后又变回原值** | 空字符串被当成「字段缺失」，被 `data/settings.json` 旧文件补回（见 §4.9）。**清空要两份存储一起清** |
 
 ---
 
@@ -232,6 +233,27 @@ const locale = (navigator.language || 'en_US').replace('-', '_')
 
 `settings.site_settings.siteLogo` 当前是 `/images/low-flame-logo.png`，
 所以**替换这个文件就能全站生效**。但如果用户在后台传了自定义 logo，那个会优先。
+
+### 4.9 把设置清空后，重启会自己长回来 —— 空字符串被当成「字段缺失」
+
+**症状**：在后台把某个文本设置清空（例如页头副标题 "Market"），保存后确实是空的，
+看起来生效了；**重启服务后又变回原来的值**。会让人以为"没保存成功"，反复重试都没用。
+
+**根因**：`lib/settings.ts` 的 `convergeSqliteSettings()` —— 启动时它拿
+`data/settings.json`（双后端时代留下的旧文件）去补齐 SQLite 里的字段，判据是：
+
+```js
+const missing = cur === undefined || cur === null || cur === ''
+if (missing) merged[key] = jsonSide[key]      // ← 空字符串也被判为"缺失"
+```
+
+所以 `siteTagline: ''` 会被旧 JSON 里的 `"Market"` 覆盖回去。**任何字符串字段都中招**。
+
+**怎么处理**：
+- 要清空某个设置，**两份存储都要清**（SQLite 的 `settings` 表 + `data/settings.json`），
+  只清一边就会被另一边填回来。
+- 更根本的修法是让 `missing` 只判 `undefined` / `null`（空字符串是合法值），
+  但这段收敛逻辑是所有字段"新装恢复"的兜底，改动会影响面很广 —— 要改请单独评估。
 
 ---
 
