@@ -19,6 +19,8 @@ import ProductCard from '@/components/product/ProductCard'
 import StickyBuyBar from '@/components/product/StickyBuyBar'
 import VariantOptionPicker from '@/components/product/VariantOptionPicker'
 import ShareRow from '@/components/product/ShareRow'
+import WhatsAppIcon from '@/components/ui/WhatsAppIcon'
+import { hasWhatsApp, waLink, waProductMessage } from '@/lib/whatsapp'
 import QuickViewModal from '@/components/product/QuickViewModal'
 import { parsePdpContent, cleanLines, cleanSpecs, cleanFaqs, DEFAULT_FAQS, DEFAULT_SHIPPING_NOTES } from '@/lib/pdp-content'
 import { useProductPrice, useDiscountedCartSubtotal } from '@/lib/promotion-client'
@@ -111,6 +113,8 @@ export default function ProductDetailClient({
   reviews: reviewsProp,
   giftProducts = [],
   productUrl,
+  whatsappNumber = '',
+  whatsappGreeting = '',
 }: {
   product: Product | null
   reviews: Review[]
@@ -118,6 +122,9 @@ export default function ProductDetailClient({
   giftProducts?: any[]
   /** 服务端拼好的本页地址，供分享栏首屏渲染用（客户端会换成带推广参数的实时地址） */
   productUrl?: string
+  /** WhatsApp 号码（来自后台设置）。留空则不渲染 WhatsApp 咨询入口 */
+  whatsappNumber?: string
+  whatsappGreeting?: string
 }) {
   const { addItem, addGiftItem, items: cartItems } = useCart()
   // 免邮进度/小计一律用「促销后」金额，与购物车页、结算页、服务端 calculateShipping 口径一致
@@ -1304,6 +1311,30 @@ export default function ProductDetailClient({
               <span>Ask about this piece</span>
               <span className="text-[12px]" style={{ color: GOLD }}>→</span>
             </Link>
+
+            {/* WhatsApp 咨询：后台填了号码才出现。点一下消息里就带着是哪件商品 */}
+            {hasWhatsApp(whatsappNumber) && (
+              <a
+                href={waLink(
+                  whatsappNumber,
+                  waProductMessage({
+                    name: product?.name,
+                    nameEn: product?.nameEn,
+                    price: product?.price,
+                    url: productUrl,
+                    greeting: whatsappGreeting,
+                  })
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pdp-btn inline-flex items-center gap-2 mt-3 px-5 py-3 font-sans text-[12px] font-semibold tracking-[0.06em] transition-all duration-300 w-full justify-center hover:-translate-y-px"
+                style={{ border: '1px solid rgba(37,211,102,0.45)', color: '#128C7E', borderRadius: 2, backgroundColor: 'rgba(37,211,102,0.08)' }}
+              >
+                <WhatsAppIcon size={15} style={{ color: '#25D366' }} />
+                <span>Ask on WhatsApp</span>
+                <span className="text-[12px]" style={{ color: '#25D366' }}>→</span>
+              </a>
+            )}
 
             {/* 信任条 */}
             <div className="flex flex-wrap gap-x-6 gap-y-2.5 mt-7 pt-6" style={{ borderTop: `1px solid ${LINE}` }}>

@@ -17,6 +17,16 @@ export async function generateMetadata(
   const repo = getRepository()
   const product = repo.products.getById(id)
 
+  /**
+   * 商品不存在时这里返回"Not Found"标题，由页面本体的 notFound() 渲染 404 页。
+   *
+   * ⚠️ 实测过：状态码仍是 **200**（软 404）。根因是这一段的 loading.tsx 造成流式渲染，
+   *    响应头在 notFound() 抛出之前就发出去了 —— 在 generateMetadata 里抛也一样没用。
+   *    要拿到真 404 只能去掉 loading.tsx，但那样每次跳转都没有加载反馈。
+   *    **这里选择保留加载提示**：软 404 只影响不存在的商品 id，站内没有任何链接指向
+   *    这类地址、sitemap 里也全是有效地址，搜索引擎基本碰不到；而加载反馈影响每一次
+   *    真实跳转（客户多在境外，链路慢）。详见交接文档。
+   */
   if (!product) {
     return {
       title: 'Product Not Found',
@@ -103,15 +113,19 @@ export default async function ProductPage({
     .map((gid: string) => repo.products.getById(gid))
     .filter((p: any) => p && p.active !== false)
 
+  // WhatsApp 咨询入口 —— 从后台设置读，没填号码时组件里不会渲染按钮
+  const s: any = repo.settings.get() || {}
+
   // 分享栏的初始地址由服务端给出 —— 这样分享按钮会出现在首屏 HTML 里，
-  // 而不是等客户端水合后才冒出来。客户端挂载后会用 window.location.href 覆盖它，
-  // 以便带上 ?ref= 之类的推广参数（归因要用）。
+  // 而不是等客户端水合后才冒出来。客户端挂载后会覆盖它，以便带上 ?ref= 推广参数。
   return (
     <ProductDetailClient
       product={toPublicProduct(product)}
       reviews={reviews}
       giftProducts={toPublicProducts(giftProducts)}
       productUrl={`${getSiteBaseUrl()}/products/${id}`}
+      whatsappNumber={s.whatsappNumber || ''}
+      whatsappGreeting={s.whatsappGreeting || ''}
     />
   )
 }

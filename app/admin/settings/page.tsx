@@ -2495,6 +2495,15 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
               <Field label="Reply-To Email"><Input value={settings.smtpReplyTo || ""} onChange={v => update("smtpReplyTo", v)} /></Field>
               <Field label="Footer Email"><Input value={settings.footerEmail || ""} onChange={v => update("footerEmail", v)} /></Field>
               <Field label="Footer Phone"><Input value={settings.footerPhone || ""} onChange={v => update("footerPhone", v)} /></Field>
+              <Field
+                label="WhatsApp Number"
+                desc="国际格式含国家码，如 +86 183 3734 0646。留空则站上不出现任何 WhatsApp 入口（页脚 / 商品页咨询）"
+              >
+                <Input value={settings.whatsappNumber || ""} onChange={v => update("whatsappNumber", v)} placeholder="+86 183 3734 0646" />
+              </Field>
+              <Field label="WhatsApp Greeting" desc="客户点 WhatsApp 咨询时预填的开场白；留空用内置文案">
+                <Input value={settings.whatsappGreeting || ""} onChange={v => update("whatsappGreeting", v)} placeholder="Hello! I have a question about this piece:" />
+              </Field>
             </div>
           </Section>
         )}

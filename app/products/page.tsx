@@ -1,5 +1,6 @@
 import { getRepository } from '@/lib/repository'
 import AllProductsClient from './AllProductsClient'
+import { PRODUCTS_PAGE_SIZE } from '@/lib/pagination'
 import { toPublicProducts } from '@/lib/public-product'
 import type { Metadata } from 'next'
 
@@ -40,5 +41,11 @@ export default async function AllProductsPage({
       p => (p.tags || []).includes(tag) || ((p as any).tagsEn || []).includes(tag)
     )
   }
-  return <AllProductsClient products={products} initialTag={tag} />
+  return (
+    <AllProductsClient
+      products={products.slice(0, PRODUCTS_PAGE_SIZE)}
+      initialTag={tag}
+      totalCount={products.length}
+    />
+  )
 }

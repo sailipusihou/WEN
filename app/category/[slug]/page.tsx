@@ -1,5 +1,6 @@
 import { getRepository } from '@/lib/repository'
 import CategoryClient from '@/components/product/CategoryClient'
+import { CATEGORY_PAGE_SIZE } from '@/lib/pagination'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getSiteBaseUrl } from '@/lib/site-url'
@@ -76,5 +77,21 @@ export default async function CategoryPage({
   if (!category) notFound()
   const categoryProducts = toPublicProducts(repo.products.getByCategory(slug))
 
-  return <CategoryClient category={category} products={categoryProducts} />
+  /**
+   * 首屏只放一屏（全量会把 HTML 撑到 880KB），其余由「Load more」去接口取。
+   *
+   * ⚠️ 排序必须和 /api/products 的默认排序**完全一致**（精选优先，同档保持原序），
+   *    否则首屏与接口返回的第 1 页对不上 —— 表现为「Load more 加载 24 件、
+   *    实际只多出 16 件」，因为重复的会被按 id 去重掉，越点越对不上。
+   *    JS 的 sort 是稳定的，所以同 featured 值内部仍保持数据库顺序。
+   */
+  const ordered = [...categoryProducts].sort((a, b) => Number(b.featured) - Number(a.featured))
+
+  return (
+    <CategoryClient
+      category={category}
+      products={ordered.slice(0, CATEGORY_PAGE_SIZE)}
+      totalCount={ordered.length}
+    />
+  )
 }

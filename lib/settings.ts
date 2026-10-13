@@ -238,6 +238,13 @@ export interface SiteSettings {
   aboutText: string
   footerEmail: string
   footerPhone: string
+  /**
+   * WhatsApp 号码（国际格式，含国家码；可带 +、空格、横线，展示与建链时会清洗）。
+   * 留空 = 站上不出现任何 WhatsApp 入口 —— 这样还没注册号的时候也不会露出死链。
+   */
+  whatsappNumber: string
+  /** 可选：给 WhatsApp 的默认问候语（留空用内置文案） */
+  whatsappGreeting: string
   currency: string
   // 人民币换算汇率 (USD→CNY, 商品编辑表单辅助换算用; 后台可配置)
   cnyUsdRate: number
@@ -540,6 +547,8 @@ export const DEFAULTS: SiteSettings = {
   aboutText: "Low Flame — contemporary craftsmanship with quiet character.",
   footerEmail: "hello@lowflame.store",
   footerPhone: "+86 183 3734 0646",
+  whatsappNumber: "",
+  whatsappGreeting: "",
   currency: "USD",
   shippingFreeThreshold: 416.67,
   // 默认换算汇率 7.2, 可在后台系统设置中修改

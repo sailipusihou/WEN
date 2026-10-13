@@ -4,6 +4,8 @@ import Link from "next/link"
 import { ArrowUpRight, ArrowUp } from "lucide-react"
 import { fetchCategories } from "@/lib/use-categories"
 import type { Category } from "@/lib/products"
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon"
+import { hasWhatsApp, waLink } from "@/lib/whatsapp"
 
 /* ---- 深色页脚的文字色阶（此前用 white/20~35，几乎看不见） ---- */
 const ON_DARK = 'rgba(248,246,242,0.92)'      // 主
@@ -179,6 +181,19 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            {/* WhatsApp 入口：后台填了号码才出现，没填就整块不渲染 */}
+            {hasWhatsApp(settings?.whatsappNumber) && (
+              <a
+                href={waLink(settings.whatsappNumber, settings.whatsappGreeting || undefined)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-full transition-opacity hover:opacity-85"
+                style={{ backgroundColor: 'rgba(37,211,102,0.16)', color: '#25D366', border: '1px solid rgba(37,211,102,0.38)' }}
+              >
+                <WhatsAppIcon size={13} />
+                <span className="font-sans text-[12px] tracking-[0.12em] uppercase font-semibold">WhatsApp</span>
+              </a>
+            )}
           </div>
         </div>
       </div>

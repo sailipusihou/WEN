@@ -11,6 +11,7 @@ import type { Product } from "@/lib/products"
 import { useActivePromotions } from "@/lib/promotion-client"
 import { computePromotionForProduct } from "@/lib/promotion-shared"
 import { PromoSaleTag, promoPriceClass } from "@/components/product/PromoBadge"
+import { PRODUCTS_PAGE_SIZE } from "@/lib/pagination"
 
 /** 题材标签的展示顺序（只列商品里确实存在的） */
 const THEME_TAGS = ['Tea Sets', 'Travel Sets', 'Cups', 'Tableware']
@@ -18,7 +19,8 @@ import { useCategories } from "@/lib/use-categories"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
 
-const PAGE_SIZE = 12
+/** 每页商品数。服务端首屏只渲染这一页的量，剩下的滚动加载 —— 别把全量塞进 HTML */
+const PAGE_SIZE = PRODUCTS_PAGE_SIZE
 
 // 分类筛选改为读取后台真实分类（此前硬编码 cultural-gifts/home-decor/creative-gifts，
 // 这三个 slug 在数据库里根本不存在，筛选结果恒为 0）
@@ -30,7 +32,20 @@ const PRICE_RANGES = [
   { label: '$200+', min: '200', max: '' },
 ]
 
-export default function AllProductsClient({ products: initialProducts, initialTag = '' }: { products: Product[]; initialTag?: string }) {
+export default function AllProductsClient({
+  products: initialProducts,
+  initialTag = '',
+  totalCount,
+}: {
+  products: Product[]
+  initialTag?: string
+  /**
+   * 服务端筛完后的**总数**。
+   * 服务端只把第一页塞进首屏（全量 160 件会把 HTML 撑到 880KB），
+   * 所以总数不能再用 initialProducts.length 推。
+   */
+  totalCount?: number
+}) {
   const { currency } = useCurrency()
   const { categories } = useCategories()
   // 修复 H16: 列表视图也展示促销价 (与网格 ProductCard 一致)
@@ -55,9 +70,10 @@ export default function AllProductsClient({ products: initialProducts, initialTa
   const [showFilters, setShowFilters] = useState(false)
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(initialProducts.length)
+  const [total, setTotal] = useState(totalCount ?? initialProducts.length)
   const [loading, setLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
+  // 首屏只带了第一页；总数大于首屏条数就说明后面还有
+  const [hasMore, setHasMore] = useState((totalCount ?? initialProducts.length) > initialProducts.length)
   const loaderRef = useRef<HTMLDivElement>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
