@@ -20,12 +20,32 @@ export default async function HomePage() {
   const repo = getRepository()
   const settings = repo.settings.get()
   const allActive = toPublicProducts(repo.products.listActive())
-  let featuredProducts = allActive.filter(p => p.featured)
 
-  if (settings.featuredProductIds?.length > 0) {
-    const selected = allActive.filter(p => settings.featuredProductIds.includes(p.id))
-    if (selected.length > 0) featuredProducts = selected
-  }
+  /**
+   * 首页商品区展示这几件。
+   *
+   * ⚠️ 取 4 的倍数：网格是 2 列（手机）/ 4 列（桌面），不是 4 的倍数时
+   *    最后一行会缺角（比如 10 件 = 两整行 + 半行），看着像没加载出来。
+   */
+  const HOME_PRODUCT_COUNT = 12
+
+  /**
+   * 精选打头，不足的用其余在售商品补齐。
+   *
+   * 为什么不是「只放精选」：店里手工设了 8 件精选，首页就只显示 8 件 ——
+   * 一家有 160 件商品的店，首屏之后只有两行东西，会显得很空。
+   * 补齐后仍有主次（精选在前），但版面是满的。
+   */
+  const featuredProducts = (() => {
+    let curated = allActive.filter(p => p.featured)
+    if (settings.featuredProductIds?.length > 0) {
+      const selected = allActive.filter(p => settings.featuredProductIds.includes(p.id))
+      if (selected.length > 0) curated = selected
+    }
+    if (curated.length >= HOME_PRODUCT_COUNT) return curated.slice(0, HOME_PRODUCT_COUNT)
+    const shown = new Set(curated.map(p => p.id))
+    return [...curated, ...allActive.filter(p => !shown.has(p.id))].slice(0, HOME_PRODUCT_COUNT)
+  })()
 
   /**
    * Journal 每篇文章挂 3 件相关商品（按文章上标的 `tag` 匹配题材）。
