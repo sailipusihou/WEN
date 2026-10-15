@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { Search, Grid3X3, List, ArrowUpLeft, Loader2, X, SlidersHorizontal } from "lucide-react"
+import { Search, Grid3X3, List, ArrowUpLeft, X, SlidersHorizontal } from "lucide-react"
 import ProductCard from "@/components/product/ProductCard"
 import { useCurrency } from "@/context/CurrencyContext"
 import { convertPrice, formatPrice } from "@/lib/cart-types"
@@ -15,6 +15,40 @@ import { PRODUCTS_PAGE_SIZE } from "@/lib/pagination"
 
 /** 题材标签的展示顺序（只列商品里确实存在的） */
 const THEME_TAGS = ['Tea Sets', 'Travel Sets', 'Cups', 'Tableware']
+
+/**
+ * 加载中的骨架屏。
+ *
+ * 为什么不能只放一个转圈图标：商品区如果整块空着，客户会以为「就这些了 / 没货了」
+ * 而离开。骨架屏占着和真实卡片一样的版面，一眼就知道「还在加载」。
+ */
+function ProductGridSkeleton({ count }: { count: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="animate-pulse" aria-hidden="true">
+          <div className="aspect-[4/5] bg-[#EFE9DA]" />
+          <div className="h-3 w-1/3 bg-[#EFE9DA] mt-4" />
+          <div className="h-4 w-2/3 bg-[#EFE9DA] mt-2" />
+          <div className="h-3 w-1/4 bg-[#EFE9DA] mt-3" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** 页码列表；页数多时只显示当前页附近，其余折叠成省略号 */
+function pageNumbers(current: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const out: (number | '…')[] = [1]
+  const from = Math.max(2, current - 1)
+  const to = Math.min(total - 1, current + 1)
+  if (from > 2) out.push('…')
+  for (let p = from; p <= to; p++) out.push(p)
+  if (to < total - 1) out.push('…')
+  out.push(total)
+  return out
+}
 import { useCategories } from "@/lib/use-categories"
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
@@ -72,10 +106,13 @@ export default function AllProductsClient({
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(totalCount ?? initialProducts.length)
   const [loading, setLoading] = useState(false)
-  // 首屏只带了第一页；总数大于首屏条数就说明后面还有
-  const [hasMore, setHasMore] = useState((totalCount ?? initialProducts.length) > initialProducts.length)
-  const loaderRef = useRef<HTMLDivElement>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** 总页数 —— 由总数与每页条数算出（不再用「还有没有下一页」的模糊判断） */
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  /** 翻页后要滚回商品区顶部，否则用户会停在页面底部一脸茫然 */
+  const gridTopRef = useRef<HTMLDivElement>(null)
+  /** 「跳到第几页」输入框 */
+  const [jumpTo, setJumpTo] = useState('')
 
   // 构建查询参数
   const buildParams = useCallback((pageNum: number) => {
@@ -106,11 +143,9 @@ export default function AllProductsClient({
           if (data.items) {
             setProducts(data.items)
             setTotal(data.pagination.total)
-            setHasMore(data.pagination.hasNext)
           } else {
             setProducts(data)
             setTotal(data.length)
-            setHasMore(false)
           }
           setPage(1)
         }
@@ -123,41 +158,36 @@ export default function AllProductsClient({
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current) }
   }, [buildParams])
 
-  // 无限滚动加载下一页
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return
+  /**
+   * 跳到第 n 页。
+   *
+   * 为什么改成点页码、而不是继续无限下滑：
+   *   · 下滑没有进度感 —— 用户不知道一共多少件、还要滑多久（这站有 160 件）
+   *   · 想回头找刚刚看过的商品，只能重新往下滑
+   * 翻页后把视图滚回商品区顶部；否则停在页尾，看到的位置还是旧的。
+   */
+  const goToPage = useCallback(async (n: number) => {
+    const target = Math.min(Math.max(1, Math.floor(n) || 1), totalPages)
+    if (loading || target === page) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/products?${buildParams(page + 1)}`)
+      const res = await fetch(`/api/products?${buildParams(target)}`)
       if (res.ok) {
         const data = await res.json()
-        if (data.items) {
-          setProducts(prev => [...prev, ...data.items])
-          setHasMore(data.pagination.hasNext)
-          setPage(prev => prev + 1)
-        }
+        const items = Array.isArray(data) ? data : (data.items || [])
+        setProducts(items)
+        if (data?.pagination?.total != null) setTotal(data.pagination.total)
+        setPage(target)
+        requestAnimationFrame(() => {
+          gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
       }
     } catch {
-      // 忽略错误
+      // 失败就保持原样，用户可以再点一次
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, page, buildParams])
-
-  // IntersectionObserver 触发无限滚动
-  useEffect(() => {
-    if (!loaderRef.current) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore()
-        }
-      },
-      { rootMargin: '200px' }
-    )
-    observer.observe(loaderRef.current)
-    return () => observer.disconnect()
-  }, [loadMore, hasMore, loading])
+  }, [loading, page, totalPages, buildParams])
 
   const clearFilters = () => {
     setSearch('')
@@ -340,7 +370,12 @@ export default function AllProductsClient({
           </motion.div>
         )}
 
-        {products.length === 0 && !loading ? (
+        {/* 翻页后滚回这个锚点 */}
+        <div ref={gridTopRef} className="scroll-mt-24" />
+
+        {loading ? (
+          <ProductGridSkeleton count={PAGE_SIZE} />
+        ) : products.length === 0 ? (
           <div className="text-center py-20">
             <p className="font-sans text-ink-soft/50 text-base">No objects found</p>
             {hasActiveFilters && (
@@ -406,17 +441,85 @@ export default function AllProductsClient({
           </div>
         )}
 
-        {/* Infinite scroll loader */}
-        <div ref={loaderRef} className="mt-12 flex justify-center">
-          {loading && (
-            <Loader2 size={24} className="text-[#8A6A2E] animate-spin" />
-          )}
-          {!hasMore && products.length > 0 && !loading && (
-            <p className="font-sans text-micro text-ink-soft/40 tracking-[0.18em] uppercase">
-              You&apos;ve reached the end
-            </p>
-          )}
-        </div>
+        {/* 分页 —— 加载中也保留（按钮置灰），避免翻页时布局跳动 */}
+        {totalPages > 1 && (
+          <nav className="mt-14 flex flex-col items-center gap-5" aria-label="Pagination">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <button
+                type="button"
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1 || loading}
+                className="px-3.5 py-2 text-[12px] font-sans tracking-[0.12em] uppercase border transition-colors disabled:opacity-35 disabled:cursor-not-allowed border-[#EFE7D4] text-ink hover:border-[#A07C34]/50"
+              >
+                ← Prev
+              </button>
+
+              {pageNumbers(page, totalPages).map((p, i) =>
+                p === '…' ? (
+                  <span key={`gap-${i}`} className="px-1.5 text-ink-soft/40 font-sans text-sm">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => goToPage(p as number)}
+                    disabled={loading}
+                    aria-current={p === page ? 'page' : undefined}
+                    className={`min-w-[38px] px-3 py-2 text-[13px] font-sans tabular-nums border transition-colors disabled:cursor-not-allowed ${
+                      p === page
+                        ? 'bg-ink text-paper-light border-ink'
+                        : 'border-[#EFE7D4] text-ink hover:border-[#A07C34]/50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages || loading}
+                className="px-3.5 py-2 text-[12px] font-sans tracking-[0.12em] uppercase border transition-colors disabled:opacity-35 disabled:cursor-not-allowed border-[#EFE7D4] text-ink hover:border-[#A07C34]/50"
+              >
+                Next →
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 font-sans text-micro text-ink-soft/60 flex-wrap justify-center">
+              <span>Page {page} of {totalPages}</span>
+              <span className="hidden sm:inline opacity-40">·</span>
+              <span className="hidden sm:inline">{total} pieces</span>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const n = parseInt(jumpTo, 10)
+                  if (!Number.isNaN(n)) goToPage(n)
+                  setJumpTo('')
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <label htmlFor="jump-page" className="hidden sm:inline">Jump to</label>
+                <input
+                  id="jump-page"
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={jumpTo}
+                  onChange={(e) => setJumpTo(e.target.value)}
+                  placeholder="#"
+                  className="w-14 px-2 py-1.5 text-center border border-[#EFE7D4] bg-[#FFFFFF]/80 text-ink text-[13px] focus:outline-none focus:border-[#A07C34]/50"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-2.5 py-1.5 border border-[#EFE7D4] hover:border-[#A07C34]/50 transition-colors text-[12px] disabled:opacity-40"
+                >
+                  Go
+                </button>
+              </form>
+            </div>
+          </nav>
+        )}
 
         <div className="mt-16 text-center">
           <Link
