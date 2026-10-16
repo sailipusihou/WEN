@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import Script from "next/script"
 // 自托管字体（避免构建时依赖 fonts.gstatic.com，服务器在部分网络环境下无法访问 Google Fonts）
 import '@fontsource/inter/300.css'
 import '@fontsource/inter/400.css'
@@ -16,6 +17,7 @@ import { ToastProvider } from "@/context/ToastContext"
 import { WishlistProvider } from "@/context/WishlistContext"
 import FrontendLayout from "@/components/layout/FrontendLayout"
 import { WebVitals } from "@/components/WebVitals"
+import { getRepository } from "@/lib/repository"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -38,7 +40,27 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  /**
+   * 站长验证与统计 ID 都存在后台设置里 —— 用户拿到值直接粘到后台即可，不用改代码。
+   *
+   * ⚠️ 两个值都要**先校验格式再输出**：它们会被拼进 HTML，
+   *    不校验就等于给「设置被写坏」留了一条注入路径。
+   */
+  let siteVerification = ''
+  let gaId = ''
+  try {
+    const s: any = getRepository().settings.get() || {}
+    // GSC 的验证码是 base64url 风格的一长串
+    const v = String(s.googleSiteVerification || '').trim()
+    if (/^[A-Za-z0-9_-]{10,120}$/.test(v)) siteVerification = v
+    // GA4 衡量 ID 形如 G-XXXXXXXXXX
+    const g = String(s.gaMeasurementId || '').trim().toUpperCase()
+    if (/^G-[A-Z0-9]{6,20}$/.test(g)) gaId = g
+  } catch {
+    // 设置读不到不影响页面渲染
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -46,11 +68,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             176×239 的竖版图在 16×16 的标签页里细线条会糊成一团 */}
         <link rel="icon" type="image/png" sizes="512x512" href="/images/low-flame-icon.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/images/low-flame-icon.png" />
+        {/* Google Search Console 验证 —— 填了才能在 GSC 后台看到展示/点击/关键词 */}
+        {siteVerification && <meta name="google-site-verification" content={siteVerification} />}
         <script dangerouslySetInnerHTML={{
           __html: `(function(){try{var t=localStorage.getItem("admin_theme");if(t==="light")document.documentElement.setAttribute("data-admin-theme","light");else if(t==="dark")document.documentElement.setAttribute("data-admin-theme","dark");}catch(e){}})()`
         }} />
       </head>
       <body className="antialiased">
+        {/* GA4：后台没填衡量 ID 就完全不加载任何第三方脚本 */}
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script
+              id="ga4-init"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`,
+              }}
+            />
+          </>
+        )}
         <WebVitals />
         <CurrencyProvider>
           <CartProvider>

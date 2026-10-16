@@ -116,16 +116,53 @@ export default async function ProductPage({
   // WhatsApp 咨询入口 —— 从后台设置读，没填号码时组件里不会渲染按钮
   const s: any = repo.settings.get() || {}
 
+  /**
+   * 结构化数据（JSON-LD）。
+   *
+   * 首页那份只覆盖前 6 件商品，而**富媒体结果是在商品页上生效的** ——
+   * 没有它，谷歌搜到你这款商品时只能给一条普通蓝链接，给不出价格和库存。
+   * 与首页保持同一口径：价格用显示币种（USD），**没有真实评价就不输出评分**
+   * （别把 0 条评价包装成有评分提交给搜索引擎）。
+   */
+  const productLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.nameEn || product.name,
+    description: product.subtitleEn || product.subtitle || product.descriptionEn || product.description,
+    image: [product.image, ...(product.detailImages || [])].filter(Boolean),
+    sku: product.code || product.id,
+    brand: { '@type': 'Brand', name: 'Low Flame' },
+    offers: {
+      '@type': 'Offer',
+      url: `${getSiteBaseUrl()}/products/${id}`,
+      price: convertPrice(product.price, 'USD'),
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+    ...((product.reviewCount > 0 && product.rating > 0) ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: product.rating,
+        reviewCount: product.reviewCount,
+      },
+    } : {}),
+  }
+  // 安全：值里含 </script> 时防止提前闭合注入
+  const escapeJson = (o: unknown) => JSON.stringify(o).replace(/</g, '\\u003c')
+
   // 分享栏的初始地址由服务端给出 —— 这样分享按钮会出现在首屏 HTML 里，
   // 而不是等客户端水合后才冒出来。客户端挂载后会覆盖它，以便带上 ?ref= 推广参数。
   return (
-    <ProductDetailClient
-      product={toPublicProduct(product)}
-      reviews={reviews}
-      giftProducts={toPublicProducts(giftProducts)}
-      productUrl={`${getSiteBaseUrl()}/products/${id}`}
-      whatsappNumber={s.whatsappNumber || ''}
-      whatsappGreeting={s.whatsappGreeting || ''}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: escapeJson(productLd) }} />
+      <ProductDetailClient
+        product={toPublicProduct(product)}
+        reviews={reviews}
+        giftProducts={toPublicProducts(giftProducts)}
+        productUrl={`${getSiteBaseUrl()}/products/${id}`}
+        whatsappNumber={s.whatsappNumber || ''}
+        whatsappGreeting={s.whatsappGreeting || ''}
+      />
+    </>
   )
 }

@@ -2504,6 +2504,18 @@ const [customRefModelInput, setCustomRefModelInput] = useState('')
               <Field label="WhatsApp Greeting" desc="客户点 WhatsApp 咨询时预填的开场白；留空用内置文案">
                 <Input value={settings.whatsappGreeting || ""} onChange={v => update("whatsappGreeting", v)} placeholder="Hello! I have a question about this piece:" />
               </Field>
+              <Field
+                label="Google 站长验证码"
+                desc="Search Console → 设置 → 所有权验证 → HTML 标记，把 content 的值粘这里。填了才能在 GSC 看到搜索展示次数 / 点击 / 关键词"
+              >
+                <Input value={settings.googleSiteVerification || ""} onChange={v => update("googleSiteVerification", v)} placeholder="abc123..." />
+              </Field>
+              <Field
+                label="Google Analytics 衡量 ID"
+                desc="形如 G-XXXXXXXXXX。填了才会加载 GA4 统计脚本；留空则站上不加载任何第三方统计"
+              >
+                <Input value={settings.gaMeasurementId || ""} onChange={v => update("gaMeasurementId", v)} placeholder="G-XXXXXXXXXX" />
+              </Field>
             </div>
           </Section>
         )}

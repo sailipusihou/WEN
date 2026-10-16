@@ -245,6 +245,16 @@ export interface SiteSettings {
   whatsappNumber: string
   /** 可选：给 WhatsApp 的默认问候语（留空用内置文案） */
   whatsappGreeting: string
+  /**
+   * Google Search Console 的验证码（<meta name="google-site-verification"> 的 content）。
+   * 填了才能在 GSC 后台看到「搜索展示次数 / 点击 / 关键词」—— 这些数据只有谷歌能给。
+   */
+  googleSiteVerification: string
+  /**
+   * Google Analytics 4 的衡量 ID（形如 G-XXXXXXXXXX）。填了才会注入统计脚本。
+   * 留空 = 站上不加载任何第三方统计（默认不装，避免白送用户数据）。
+   */
+  gaMeasurementId: string
   currency: string
   // 人民币换算汇率 (USD→CNY, 商品编辑表单辅助换算用; 后台可配置)
   cnyUsdRate: number
@@ -549,6 +559,8 @@ export const DEFAULTS: SiteSettings = {
   footerPhone: "+86 183 3734 0646",
   whatsappNumber: "",
   whatsappGreeting: "",
+  googleSiteVerification: "",
+  gaMeasurementId: "",
   currency: "USD",
   shippingFreeThreshold: 416.67,
   // 默认换算汇率 7.2, 可在后台系统设置中修改
