@@ -153,6 +153,94 @@ function findOrderByCaptureId(captureId: string) {
   }
 }
 
+/** 取 PayPal access token（服务端调用用） */
+async function getAccessToken(config: { base: string; clientId: string; secret: string }): Promise<string | null> {
+  try {
+    const res = await fetch(`${config.base}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${config.clientId}:${config.secret}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+      signal: AbortSignal.timeout(15000),
+    })
+    const j = await res.json()
+    return j.access_token || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 等这么久再补捕获。
+ *
+ * ⚠️ 不能抢在浏览器前面：扣款正常是由**买家浏览器**在客户点完同意后立刻发起的，
+ *    如果服务端此时抢先捕获，客户那边的 capture 会拿到 ORDER_ALREADY_CAPTURED，
+ *    页面上反而显示"支付失败" —— 明明付成功了却吓客户一跳。
+ *    等 20 秒足够浏览器那条走完；真的走完了，下面的补捕获会得到"已捕获"，无害。
+ */
+const CAPTURE_RETRY_DELAY_MS = 20000
+
+/**
+ * 客户「已批准但还没扣款」时，由服务端补一次捕获。
+ *
+ * 为什么需要：capture 是买家浏览器发起的。客户在 PayPal 里点完同意、
+ * 还没等那个请求回来就关掉页面 / 断网 —— PayPal 侧订单停在 APPROVED，
+ * 浏览器不会再发起任何请求，于是**永远不会扣款**：客户以为付了钱，
+ * 实际一分没扣，订单一直挂着 unpaid。（本文件顶部的注释早就写了这个场景，
+ * 但 ORDER.APPROVED 分支此前只记日志，兜底其实没有生效。）
+ *
+ * 幂等：PayPal-Request-Id 按订单号固定，重复调用拿到的是同一次 capture；
+ * 浏览器那边已经成功过则返回 ORDER_ALREADY_CAPTURED —— 属正常，忽略即可。
+ *
+ * 捕获成功后 PayPal 会推送 PAYMENT.CAPTURE.COMPLETED，
+ * 由那个分支统一落库（这里不直接改订单状态，避免两处逻辑分叉）。
+ */
+async function captureApprovedOrder(paypalOrderId: string): Promise<void> {
+  await new Promise((r) => setTimeout(r, CAPTURE_RETRY_DELAY_MS))
+
+  const config = getPayPalConfig()
+  if (!config.clientId || !config.secret) return
+
+  // 只处理本站自己的订单 —— 防止被伪造事件骗着去捕获别人的订单
+  const order = findOrderByPaypalOrderId(paypalOrderId)
+  if (!order) {
+    console.warn(`[PayPal Webhook] 补捕获跳过：本站没有对应订单 paypalOrderId=${paypalOrderId}`)
+    return
+  }
+  // 已经付过了就什么都不用做
+  if ((order as any).paymentStatus === 'paid') return
+
+  const token = await getAccessToken(config as any)
+  if (!token) {
+    console.error(`[PayPal Webhook] 补捕获失败：取不到 access token paypalOrderId=${paypalOrderId}`)
+    return
+  }
+
+  const res = await fetch(`${config.base}/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'PayPal-Request-Id': `webhook-capture-${paypalOrderId}`,
+    },
+    body: JSON.stringify({}),
+    signal: AbortSignal.timeout(30000),
+  })
+  const data = await res.json().catch(() => ({} as any))
+
+  if (data.status === 'COMPLETED') {
+    console.log(`[PayPal Webhook] ✅ 补捕获成功 paypalOrderId=${paypalOrderId} —— 客户批准后未跳回本站，服务端补扣款`)
+  } else {
+    const issue = data?.details?.[0]?.issue || ''
+    console.log(
+      `[PayPal Webhook] 补捕获未完成 status=${data.status || res.status} name=${data.name || ''} issue=${issue} ` +
+      `paypalOrderId=${paypalOrderId}（ORDER_ALREADY_CAPTURED = 浏览器侧已成功，属正常）`
+    )
+  }
+}
+
 export async function POST(req: NextRequest) {
   let rawBody = ''
   try {
@@ -298,8 +386,24 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // ===== 客户已批准、但还没扣款 —— 由服务端补一次捕获 =====
+      // capture 是买家浏览器发起的；客户点完同意就关页面 / 断网时它永远不会发生。
+      // 这里补一次（延迟执行，不抢浏览器那条 —— 理由见 captureApprovedOrder）。
+      case 'CHECKOUT.ORDER.APPROVED': {
+        const { paypalOrderId } = extractIds(resource)
+        if (paypalOrderId) {
+          // 故意不 await：先把 200 返回给 PayPal（它要求及时响应，否则会重推），
+          // 补捕获在后台延迟执行。这里是常驻 Node 进程（pm2），后台任务能活下来。
+          void captureApprovedOrder(paypalOrderId).catch((e) =>
+            console.error('[PayPal Webhook] 补捕获异常:', e)
+          )
+        } else {
+          console.warn('[PayPal Webhook] ORDER.APPROVED 事件里取不到订单号，跳过补捕获')
+        }
+        break
+      }
+
       // ===== 仅记录，便于排查 =====
-      case 'CHECKOUT.ORDER.APPROVED':
       case 'CHECKOUT.ORDER.COMPLETED':
       case 'PAYMENT.CAPTURE.PENDING': {
         console.log(`[PayPal Webhook] 事件 ${eventType} 已记录（无需变更订单）`)
